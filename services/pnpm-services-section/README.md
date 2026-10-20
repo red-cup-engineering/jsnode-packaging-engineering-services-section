@@ -31,6 +31,14 @@ string, a caller's `approved` field and review prose do not establish eligibilit
 GitHub `COMMENTED` is not automatically rejection or approval: the existing
 source receiver makes the judgment under the applicable integration rule.
 
+This component is evidence-comparison machinery, not the Group ownership
+authority. Before enabling it, the composing owner must establish that the
+immutable repository ID and package-to-source mapping belong to the existing
+Group-owned source index. Authenticated receiving of an external or client
+repository does not suffice. A namespace string, caller flag, or generic allowed
+repository list is not that ownership proof. This production binding remains
+unimplemented and must be exercised before any effective first-party exemption.
+
 PNPM owns eligibility and native policy projection. The original npm publication
 owner owns pinned source/artifact production, verification results, lock creation
 and frozen installation. The existing GitHub owner owns authenticated source
