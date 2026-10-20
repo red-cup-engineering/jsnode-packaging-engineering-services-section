@@ -114,7 +114,7 @@ publication owner under review:
 ```sh
 QUALIFIED_PNPM_ENTRY=/qualified/pnpm/bin/pnpm.mjs \
 PUBLICATION_COMMAND_MODULE=/publication/src/package-manager.mjs \
-node --test --test-concurrency=1 test/pnpm-native-release-age.test.mjs
+node --test --test-concurrency=1 test/native-release-age.test.mjs
 ```
 
 The existing Code `test/**/*.test.mjs` runner discovers the same test. Without

@@ -5,7 +5,6 @@
   "type": "module",
   "private": false,
   "dependencies": {"semver": "7.7.2"},
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/jsnode-packaging-services-section.git",
@@ -18,7 +17,7 @@
   },
   "files": ["src", "README.md", "package.json", "test/first-party-qualification.test.mjs"],
   "receivingTests": ["test/first-party-qualification.test.mjs"],
-  "scripts": {"test": "node --test test/*.test.mjs"},
-  "publishConfig": {"registry": "https://registry.561.group/", "access": "public", "provenance": true},
+  "scripts": {"test": "node --test test/first-party-qualification.test.mjs"},
+  "publishConfig": {"registry": "https://registry.561.group/"},
   "engines": {"node": ">=24.2.0"}
 }
