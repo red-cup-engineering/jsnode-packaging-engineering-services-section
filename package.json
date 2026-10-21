@@ -5,5 +5,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/jsnode-packaging-services-section.git"
+  },
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
   }
 }
