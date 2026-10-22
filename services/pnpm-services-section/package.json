@@ -4,7 +4,9 @@
   "description": "Derives exact first-party release-age eligibility from received source and verified artifact evidence, preserving native PNPM policy for other selections.",
   "type": "module",
   "private": false,
-  "dependencies": {"semver": "7.7.2"},
+  "dependencies": {
+    "semver": "7.7.2"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/jsnode-packaging-services-section.git",
@@ -13,11 +15,28 @@
   "exports": {
     "./first-party-qualification": "./src/first-party-qualification.mjs",
     "./native-policy": "./src/native-policy.mjs",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./native-observation": "./src/native-observation.mjs"
   },
-  "files": ["src", "README.md", "package.json", "test/first-party-qualification.test.mjs"],
-  "receivingTests": ["test/first-party-qualification.test.mjs"],
-  "scripts": {"test": "node --test test/first-party-qualification.test.mjs"},
-  "publishConfig": {"registry": "https://registry.561.group/"},
-  "engines": {"node": ">=24.2.0"}
+  "files": [
+    "src",
+    "README.md",
+    "package.json",
+    "test/first-party-qualification.test.mjs",
+    "test/native-observation.test.mjs",
+    "test/native-observation-native.test.mjs"
+  ],
+  "receivingTests": [
+    "test/first-party-qualification.test.mjs",
+    "test/native-observation.test.mjs"
+  ],
+  "scripts": {
+    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs"
+  },
+  "publishConfig": {
+    "registry": "https://registry.561.group/"
+  },
+  "engines": {
+    "node": ">=24.2.0"
+  }
 }
