@@ -1,13 +1,11 @@
 import { lstat, mkdtemp, open, readFile, realpath, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { execFile } from 'node:child_process';
-import { promisify, isDeepStrictEqual } from 'node:util';
-import { dirname, isAbsolute, join, relative } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
+import { isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const run = promisify(execFile), hash = bytes => createHash('sha256').update(bytes).digest('hex');
-const distributionSHA256 = 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810';
+import { hash, regular, provider } from './native-provider.mjs';
+const providerPath = fileURLToPath(new URL('./native-provider.mjs', import.meta.url));
 const servicePath = fileURLToPath(import.meta.url);
 const preloadPath = fileURLToPath(new URL('./native-observation-preload.mjs', import.meta.url));
 const variable = 'PNPM_NATIVE_OBSERVATION_CONFIG';
@@ -30,40 +28,15 @@ function record(value, keys, required = []) {
   return value;
 }
 const below = (root, path) => { const rel = relative(root, path); return rel === '' || (!rel.startsWith('../') && rel !== '..' && !isAbsolute(rel)); };
-async function regular(path, limit) {
-  const stat = await lstat(path);
-  if (!stat.isFile() || stat.size > limit || await realpath(path) !== path) throw new TypeError('observation supplier must be a bounded unredirected file');
-  return readFile(path);
-}
-async function provider(program, args, cwd, expected, probeVersion = true) {
-  if (process.version !== 'v24.19.0' || program !== process.execPath || !isAbsolute(args[0] ?? '')) throw new TypeError('observation requires qualified Node24.19.0 and explicit PNPM entry');
-  if (process.env.NODE_OPTIONS !== undefined || process.env[variable] !== undefined) throw new TypeError('observation refuses conflicting ambient preload configuration');
-  const entry = await realpath(args[0]), bytes = await regular(entry, 1048576);
-  const root = dirname(dirname(entry)), manifestPath = join(root, 'package.json');
-  const manifestBytes = await regular(manifestPath, 1048576), manifest = JSON.parse(manifestBytes);
-  if (manifest.name !== 'pnpm' || manifest.version !== '11.28.5' || typeof manifest.bin?.pnpm !== 'string'
-    || await realpath(join(root, manifest.bin.pnpm)) !== entry) throw new TypeError('observation requires original PNPM11.28.5');
-  const distPath = join(root, 'dist', 'pnpm.mjs'), dist = await regular(distPath, 67108864);
-  if (hash(dist) !== distributionSHA256) throw new TypeError('unqualified PNPM observation distribution');
-  const selected = { manager: { name: 'pnpm', version: manifest.version, entrySHA256: hash(bytes) }, provider: {
-    entry, entrySHA256: hash(bytes), manifestPath, manifestSHA256: hash(manifestBytes), distPath,
-    distSHA256: hash(dist), shimTargetFormat: 'pnpm11-cmd-shim-target' } };
-  if (expected && !isDeepStrictEqual(selected, expected)) throw new TypeError('native provider custody changed');
-  if (probeVersion) {
-    const version = (await run(program, [...args, '--version'], { cwd, timeout: 10000, maxBuffer: 65536 })).stdout.trim();
-    if (version !== manifest.version) throw new TypeError('native provider version changed');
-  }
-  return selected;
-}
 async function supplier() {
   const manifestPath = fileURLToPath(new URL('../package.json', import.meta.url));
-  const [service, preload, manifestBytes] = await Promise.all([
-    regular(servicePath, 1048576), regular(preloadPath, 1048576), regular(manifestPath, 1048576)]);
+  const [service, preload, manifestBytes, providerBytes] = await Promise.all([
+    regular(servicePath, 1048576), regular(preloadPath, 1048576), regular(manifestPath, 1048576), regular(providerPath, 1048576)]);
   const manifest = JSON.parse(manifestBytes);
   if (manifest.name !== '@red-cup-engineering/pnpm-engineering-services-section'
     || manifest.exports?.['./native-observation'] !== './src/native-observation.mjs') throw new TypeError('observation public supplier identity differs');
   return { name: manifest.name, version: manifest.version, manifestPath, manifestSHA256: hash(manifestBytes),
-    publicExport: './native-observation', closure: [{ path: servicePath, sha256: hash(service) }, { path: preloadPath, sha256: hash(preload) }],
+    publicExport: './native-observation', closure: [{ path: servicePath, sha256: hash(service) }, { path: preloadPath, sha256: hash(preload) }, { path: providerPath, sha256: hash(providerBytes) }],
     externalImports: 'node-builtins-only' };
 }
 function validateRequest(input, context) {

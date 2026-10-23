@@ -17,7 +17,8 @@
     "./native-policy": "./src/native-policy.mjs",
     "./package.json": "./package.json",
     "./native-observation": "./src/native-observation.mjs",
-    "./native-metadata-preparation": "./src/native-metadata-preparation.mjs"
+    "./native-metadata-preparation": "./src/native-metadata-preparation.mjs",
+    "./native-installation": "./src/native-installation.mjs"
   },
   "files": [
     "src",
@@ -28,15 +29,19 @@
     "test/native-observation-native.test.mjs",
     "test/native-metadata-preparation.test.mjs",
     "test/native-metadata-preparation-native.test.mjs",
-    "native-metadata-preparation.spec.md"
+    "native-metadata-preparation.spec.md",
+    "test/native-installation.test.mjs",
+    "test/native-installation-native.test.mjs",
+    "native-installation.spec.md"
   ],
   "receivingTests": [
     "test/first-party-qualification.test.mjs",
     "test/native-observation.test.mjs",
-    "test/native-metadata-preparation.test.mjs"
+    "test/native-metadata-preparation.test.mjs",
+    "test/native-installation.test.mjs"
   ],
   "scripts": {
-    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs"
+    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs"
   },
   "publishConfig": {
     "registry": "https://registry.561.group/"

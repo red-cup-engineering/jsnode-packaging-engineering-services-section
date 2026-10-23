@@ -306,3 +306,15 @@ derivation using effective registry/server type/name/version. Do not substitute 
 metadata-advertised acquisition URL by assumption. This service observes selected
 endpoints; it does not introduce another resolver or authenticate configuration
 from a caller-supplied digest.
+
+### Received registry archives without changing native identity
+
+`./native-installation` exposes the source-composed prepare/revalidate/receive
+service specified in `native-installation.spec.md`. It delegates selected exact
+received archives through the ORIGINAL native integrity-bound localTarball
+extension while retaining native registry keys, strict policy and installed
+receiving. It does not install, download, write a store index or claim that archive
+reuse solves policy metadata. The existing observation API remains compatible.
+The closed effective configuration profile refuses hook/plugin conflicts before
+provider probes. Current direct-JavaScript qualification is separate from future
+issued dependency migration and original-consumer admission.
