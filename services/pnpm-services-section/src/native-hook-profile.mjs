@@ -81,3 +81,25 @@ export async function receiveHookFreeProfile(cwd, args) {
   return { kind: 'pnpm.closed-hook-free-profile.v1', cwd: resolve(cwd), environment,
     files: [workspace, global].map(({text, ...identity}) => identity), absent, ignoreWorkspace: false };
 }
+
+// Outdated uses an exact owner-generated query, not the install option grammar.
+// This deliberately narrower config profile admits no user/global config files.
+export async function receiveMetadataConfigurationProfile(query, environment) {
+  const cwd = query.directory;
+  if (process.platform !== 'linux' || !isAbsolute(cwd) || await realpath(cwd) !== cwd)
+    throw new TypeError('real Linux metadata directory required');
+  for (const [name, text] of Object.entries(query.files)) {
+    if ((await regular(join(cwd, name), 1048576)).toString('utf8') !== text) throw new TypeError('metadata projection changed');
+  }
+  const home = environment.HOME, xdg = environment.XDG_CONFIG_HOME;
+  if (!isAbsolute(home ?? '') || (xdg !== undefined && !isAbsolute(xdg))) throw new TypeError('explicit configuration home required');
+  const configDir = join(xdg ?? join(home, '.config'), 'pnpm');
+  const paths = [join(home, '.npmrc'), ...['config.yaml', 'auth.ini', 'rc'].map(name => join(configDir, name)),
+    '/etc/npmrc', resolve(process.execPath, '../../etc/npmrc'), ...['.pnpmfile.mjs', '.pnpmfile.cjs'].map(name => join(cwd, name))];
+  for (const path of paths) {
+    try { await lstat(path); throw new TypeError('metadata configuration source outside closed profile'); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  return { kind: 'pnpm.closed-metadata-profile.v1', cwd, absent: paths,
+    files: Object.entries(query.files).map(([name, text]) => ({ path: join(cwd, name), sha256: hash(text) })) };
+}

@@ -32,16 +32,21 @@
     "native-metadata-preparation.spec.md",
     "test/native-installation.test.mjs",
     "test/native-installation-native.test.mjs",
-    "native-installation.spec.md"
+    "native-installation.spec.md",
+    "test/native-metadata-session.test.mjs",
+    "test/native-metadata-session-native.test.mjs",
+    "test/native-metadata-session-fixture.mjs",
+    "native-metadata-session.spec.md"
   ],
   "receivingTests": [
     "test/first-party-qualification.test.mjs",
     "test/native-observation.test.mjs",
     "test/native-metadata-preparation.test.mjs",
-    "test/native-installation.test.mjs"
+    "test/native-installation.test.mjs",
+    "test/native-metadata-session.test.mjs"
   ],
   "scripts": {
-    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs"
+    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs test/native-metadata-session.test.mjs"
   },
   "publishConfig": {
     "registry": "https://registry.561.group/"
