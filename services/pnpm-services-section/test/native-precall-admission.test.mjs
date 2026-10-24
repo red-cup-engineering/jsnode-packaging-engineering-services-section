@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {receiveNativePrecallAdmission,assertNativePrecallAdmission,deriveNativeLifecycleDisabledInstallArguments} from '../src/native-precall-admission.mjs';
+import {receiveNativePrecallAdmission,assertNativePrecallAdmission,deriveNativeLifecycleDisabledInstallArguments,deriveNativeOfflineFrozenInstallArguments,receiveNativeOfflineInstall} from '../src/native-precall-admission.mjs';
 const run=promisify(execFile);
 const supplier=process.env.PNPM_PRECALL_TEST_SUPPLIER;
 const newsroom=process.env.PNPM_PRECALL_TEST_CONSUMER;
@@ -159,4 +159,84 @@ test('actual registry spelling and non-executable PATH precedence are qualified'
   await assertNativePrecallAdmission(cap);
   await chmod(join(first,'pnpm'),0o700);
   await assert.rejects(assertNativePrecallAdmission(cap));
+});
+
+async function offlineFixture(t) {
+  const f = await fixture(t), cacheRoot = join(f.root, 'allocation');
+  await mkdir(cacheRoot, {mode: 0o700});
+  await mkdir(join(cacheRoot, 'pnpm-metadata')); await mkdir(join(cacheRoot, 'pnpm-store'));
+  const original = f.originalArgs.slice(); original[5] = join(cacheRoot, 'pnpm-metadata'); original[7] = join(cacheRoot, 'pnpm-store');
+  return {...f, cacheRoot, input: {...f.input, qualificationMode: 'offline-frozen', cacheRoot,
+    originalInstallArguments: original, installArguments: deriveNativeOfflineFrozenInstallArguments(original)}};
+}
+test('offline derivation is explicit, idempotent and cannot enter the online profile', async t => {
+  const f = await offlineFixture(t), args = f.input.installArguments;
+  assert.deepEqual(args.slice(-3), ['--ignore-scripts','--offline','--reporter=ndjson']);
+  assert.deepEqual(deriveNativeOfflineFrozenInstallArguments(args), args);
+  const cap = await receiveNativePrecallAdmission(f.input);
+  assert.equal(cap.kind, 'pnpm.publisher-offline-precall-profile.v1');
+  await assertNativePrecallAdmission(cap, {cwd:f.cwd,program:'pnpm',arguments:args});
+  await assert.rejects(assertNativePrecallAdmission(cap), /must be received/);
+  await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:['--version']}), /must be received/);
+  await assert.rejects(receiveNativePrecallAdmission({...f.input,qualificationMode:undefined,cacheRoot:undefined}), /suppression/);
+  for (const extra of ['--online','--offline=false','--reporter=append-only']) assert.throws(() => deriveNativeOfflineFrozenInstallArguments([...args,extra]));
+});
+test('offline admission binds exact private allocation and refuses redirected children', async t => {
+  const f=await offlineFixture(t);
+  await assert.rejects(receiveNativePrecallAdmission({...f.input,cacheRoot:f.cwd}), /overlaps/);
+  await chmod(f.cacheRoot,0o755); await assert.rejects(receiveNativePrecallAdmission(f.input), /private/); await chmod(f.cacheRoot,0o700);
+  const cap=await receiveNativePrecallAdmission(f.input);
+  await rm(join(f.cacheRoot,'pnpm-store'),{recursive:true});await symlink(join(f.cacheRoot,'pnpm-metadata'),join(f.cacheRoot,'pnpm-store'));
+  await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.input.installArguments}), /unredirected/);
+});
+test('offline cached success cannot authorize a producer or erase retained history', async t => {
+  const f=await offlineFixture(t), history=join(f.cacheRoot,'pnpm-metadata','lockfile-verified.jsonl');
+  const bytes='retained original history fixture\n';await writeFile(history,bytes);
+  const cap=await receiveNativePrecallAdmission(f.input), now=Date.now(),lockfilePath=join(f.cwd,'pnpm-lock.yaml');
+  const stdout=JSON.stringify({name:'pnpm:lockfile-verification',status:'cached',time:now,pid:123,level:'debug',lockfilePath,verifiedAt:new Date(now-1000).toISOString()})+'\n';
+  await assert.rejects(receiveNativeOfflineInstall(cap,{stdout,terminal:{invoked:true,code:0,signal:null},observation:{startedAt:now-100,endedAt:now+100,complete:true},lockfilePath}), /fresh native verification not received/);
+  assert.equal(await readFile(history,'utf8'),bytes);await assert.rejects(assertNativePrecallAdmission(cap),/capability is closed/);
+});
+function syntheticFreshResult(f) {
+ const now=Date.now(),lockfilePath=join(f.cwd,'pnpm-lock.yaml');
+ const start={name:'pnpm:lockfile-verification',status:'started',time:now,pid:123,level:'debug',entries:1,lockfilePath};
+ return {stdout:[start,{...start,status:'done',time:now+1,elapsedMs:1}].map(x=>JSON.stringify(x)+'\n').join(''),
+ terminal:{invoked:true,code:0,signal:null},observation:{startedAt:now-100,endedAt:now+100,complete:true},lockfilePath};
+}
+test('synthetic state assay receives one verdict transition, binds it and prohibits reinstall',async t=>{
+ const f=await offlineFixture(t),cap=await receiveNativePrecallAdmission(f.input),result=syntheticFreshResult(f);
+ const path=join(f.cacheRoot,'pnpm-metadata','lockfile-verified.jsonl');
+ // Synthetic fixture is state-machine evidence only, never native policy receiving.
+ await writeFile(path,JSON.stringify({lockfile:{path:result.lockfilePath},verifiedAt:new Date(result.observation.startedAt+100).toISOString()})+'\n');
+ const receipt=await receiveNativeOfflineInstall(cap,result);assert.equal(receipt.policyVerification,'fresh-native');
+ assert.equal(receipt.priorVerdict.exists,false);assert.equal(receipt.verdict.exists,true);
+ await assertNativePrecallAdmission(cap);
+ await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.input.installArguments}),/single-use/);
+ await assert.rejects(receiveNativeOfflineInstall(cap,result),/already received/);
+ await writeFile(path,'changed\n');await assert.rejects(assertNativePrecallAdmission(cap),/changed/);
+});
+test('unpersisted fresh report or unrelated verdict cannot discharge the transition',async t=>{
+ const f=await offlineFixture(t),path=join(f.cacheRoot,'pnpm-metadata','lockfile-verified.jsonl');
+ await writeFile(path,'original unrelated history\n');
+ const cap=await receiveNativePrecallAdmission(f.input),result=syntheticFreshResult(f);
+ await assert.rejects(receiveNativeOfflineInstall(cap,result),error=>{
+  assert.match(error.message,/persistence unestablished/);assert.equal(error.nativeOfflineEvidence.capabilityClosed,true);
+  assert.equal(error.nativeOfflineEvidence.verification.accepted,true);return true;
+ });
+ await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.input.installArguments}),/closed/);
+ const next=await receiveNativePrecallAdmission(f.input);
+ await writeFile(path,JSON.stringify({lockfile:{path:'/another/lock'},verifiedAt:new Date().toISOString()})+'\n');
+ await assert.rejects(receiveNativeOfflineInstall(next,result),/matching native verification verdict/);
+});
+test('changed observer is rejected before replacement code can execute',async t=>{
+ const f=await offlineFixture(t),owner=join(f.root,'owner');await mkdir(join(owner,'src'),{recursive:true});
+ for(const name of ['native-precall-admission.mjs','native-observation.mjs','native-provider.mjs','native-hook-profile.mjs'])
+  await copyFile(new URL('../src/'+name,import.meta.url),join(owner,'src',name));
+ await copyFile(new URL('../package.json',import.meta.url),join(owner,'package.json'));
+ const own=await import(new URL('file://'+join(owner,'src','native-precall-admission.mjs')));
+ const cap=await own.receiveNativePrecallAdmission(f.input);
+ await writeFile(join(owner,'src','native-observation.mjs'),'throw new Error("REPLACEMENT_EXECUTED");\n');
+ await assert.rejects(own.receiveNativeOfflineInstall(cap,syntheticFreshResult(f)),error=>{
+  assert.match(error.message,/changed during installation/);assert.doesNotMatch(error.message,/REPLACEMENT_EXECUTED/);return true;
+ });
 });

@@ -25,3 +25,70 @@ PPA-8. The named transformation accepts only the exact original publisher frozen
 ## Receiving and failure semantics
 
 PPA-9. Tests must cover unchanged real consumer configuration, original provider version/inventory and frozen fixture installation; pre-call refusals for default/renamed/global hooks, configuration dependencies, alternate manifests, token-helper inputs, manager/runtime activation, lifecycle absence, wrong provider, unsupported command, changed sources/environment and forged capability. No refused input launches PNPM. Actual application installation, source generation, published dependency integration and receiving are separate obligations. Qualification against candidate owner source must not be reported as installed/published owner capability.
+
+## Explicit offline frozen publisher qualification
+
+PPA-10. `qualificationMode: "offline-frozen"` is an explicit additional profile,
+not a fallback or a new default. The separately named owner transformation
+`deriveNativeOfflineFrozenInstallArguments` retains the original frozen vector,
+adds native lifecycle suppression, `--offline` and `--reporter=ndjson`, and is
+idempotent on that exact derived vector. Contradictory aliases and extra flags
+refuse. Original PNPM 11.28.5 declares offline as Boolean; no config-string
+coercion is substituted. Online profile v1 semantics are unchanged.
+
+PPA-11. Offline admission requires `cacheRoot`, a caller-exclusively allocated,
+private, owned, real absolute directory disjoint from source. Its existing
+`pnpm-metadata` and `pnpm-store` children must be owned and unredirected, and match
+the exact command paths. Bind their physical identities together with unchanged
+source manifest/lock/policy/registry and provider identities. Existing native
+verification history is retained as input, not removed or treated as a fresh
+verdict. The caller retains sole-writer allocation custody from acquisition
+through terminal receiving; this is not an adversarial same-UID writer sandbox.
+No global-cache hash, metadata relabeling, synthetic index or cache controller is
+introduced. Nested native cache state must originate in the original native
+acquisition route and remain within that allocation.
+
+PPA-12. `receiveNativeOfflineInstall(capability,result)` receives the actual
+original runner's bounded complete stdout, terminal result and observed operation
+interval through the original observation reporter receiver. Only a fresh
+native started→done verification may advance this profile. Native cached success,
+failed/partial/ambiguous output or unsuccessful process termination refuses.
+Native 11.28.5 may trust a prior lock-content-hash/policy verdict without reading
+current metadata: cached is not fresh sufficiency. Refusal can follow a completed
+local install, which remains owned but must not enter Code generation or package
+publication. There is no online retry, policy change or rollback deleting cache
+history. Caller cancellation/uncertain runners preserve original work custody.
+
+PPA-13. Receiving revalidates every authored/provider/context/cache-allocation
+identity and permits only the native verification-history transition. It records
+both prior and post-install verdict identities, then binds the post-install state
+for later producer assertions. Before receiving, only the exact install vector
+is admissible; producer entry/version/inventory cannot bypass this gate. This
+process-local transition is not a serialized authorization or a cross-worker
+replay contract. A subsequent routine job must independently receive its own
+fresh-native result; an unsupported cached result remains refused and owned.
+
+PPA-14. Native timestamps, operation bounds and emitted verifiedAt are observed
+replay inputs, not a supplied exact cutoff or a latest-registry claim. The
+unchanged native release-age policy is authoritative. In this exact distribution,
+minimumReleaseAgeStrict is not minimum-release-age-ignore-missing-time; the latter
+default is true. A successful native result does not prove every package had a
+publish timestamp. Never silently strengthen or weaken the original source policy.
+
+PPA-15. Receive online regression, exact offline derivation, cache redirection and
+source drift refusals, cached-success refusal, bounded reporter failure modes,
+and native offline fresh verification in a network-isolated fixture. Missing or
+wrong-origin metadata must refuse on the fresh native path; an existing applicable
+verdict is tested separately as unsupported cached success. Actual Newsroom source,
+complete native inputs, generation, packing and consumer receiving remain later
+conditions and cannot be replaced by a smaller fixture.
+
+PPA-16. Any receiving attempt consumes the installation transition. Failure
+closes the capability; success permits producer reads but refuses another install.
+The original native verdict writer can swallow a persistence failure, so fresh
+reporter success alone is insufficient for persisted-history receiving. Require
+changed history with an emitted record for this exact lock path and verifiedAt
+inside the observed operation, retaining that original record's digest. Do not
+recompute native private lock hashes or replay native policy. Use the statically
+loaded original reporter receiver only after revalidating admitted source/context;
+a changed helper must not be dynamically evaluated before custody rejection.

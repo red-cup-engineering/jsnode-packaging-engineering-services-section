@@ -39,7 +39,8 @@
     "test/native-metadata-session-fixture.mjs",
     "native-metadata-session.spec.md",
     "native-precall-admission.spec.md",
-    "test/native-precall-admission.test.mjs"
+    "test/native-precall-admission.test.mjs",
+    "test/native-offline-verification.test.mjs"
   ],
   "receivingTests": [
     "test/first-party-qualification.test.mjs",
@@ -47,10 +48,11 @@
     "test/native-metadata-preparation.test.mjs",
     "test/native-installation.test.mjs",
     "test/native-metadata-session.test.mjs",
-    "test/native-precall-admission.test.mjs"
+    "test/native-precall-admission.test.mjs",
+    "test/native-offline-verification.test.mjs"
   ],
   "scripts": {
-    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs test/native-metadata-session.test.mjs test/native-precall-admission.test.mjs",
+    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs test/native-metadata-session.test.mjs test/native-precall-admission.test.mjs test/native-offline-verification.test.mjs",
     "test:ci": "node scripts/receive-native-ci.mjs"
   },
   "publishConfig": {
