@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/red-cup-engineering/jsnode-packaging-services-section.git",
+    "url": "git+https://github.com/red-cup-engineering/jsnode-packaging-engineering-services-section.git",
     "directory": "services/pnpm-services-section"
   },
   "exports": {
