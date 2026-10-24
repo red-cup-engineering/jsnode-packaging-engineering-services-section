@@ -318,3 +318,16 @@ reuse solves policy metadata. The existing observation API remains compatible.
 The closed effective configuration profile refuses hook/plugin conflicts before
 provider probes. Current direct-JavaScript qualification is separate from future
 issued dependency migration and original-consumer admission.
+
+## Reproducible native source and archive CI
+
+The owner lock now includes the exact development-only PNPM11.28.5 supplier and
+existing dependencies. With Node24.19.0, frozen-install the unchanged owner lock
+with scripts disabled, then run the named test:ci script. It executes the existing
+receivingTests from source and the actual natively packed/installed archive,
+rejects unexplained skips, and retains output/digest receipts. This test entrypoint
+does not publish a release or grant a first-party exemption. Public CI explicitly
+omits the real private Newsroom configuration case and the separately enrolled
+native diagnostics listed in ci-native-qualification.json. Their original supplier
+and archive-reader obligations remain open; source/installed fixture success is
+not live application receiving. See native-ci-receiving.spec.md.

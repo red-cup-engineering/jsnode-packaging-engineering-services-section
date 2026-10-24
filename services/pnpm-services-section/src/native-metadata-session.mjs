@@ -47,6 +47,9 @@ function receiveEnvironment(input, policy) {
   if (Object.keys(policy.stable).some(key => !Object.hasOwn(result,key)) || Object.keys(policy.relays).some(key => !Object.hasOwn(result,key))) throw new TypeError('environment input absent');
   return { values: freeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: hash(JSON.stringify(result)) } };
 }
+// Reuse unchanged transport admission for source-owned CI receiving.
+export { receiveEnvironment as receiveNativeTransportEnvironment };
+
 async function absent(path) {
   try { await lstat(path); throw new TypeError('fresh native mirror must be absent'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
