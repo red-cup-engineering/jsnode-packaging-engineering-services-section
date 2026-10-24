@@ -4,5 +4,5 @@
 	branch = main
 [submodule "npm-services-section"]
 	path = services/npm-services-section
-	url = https://github.com/red-cup-engineering/npm-services-section.git
+	url = https://github.com/red-cup-engineering/npm-engineering-services-section.git
 	branch = main
