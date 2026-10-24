@@ -220,3 +220,65 @@ export function createNativeObservationService(options = {}) {
     }
   });
 }
+
+/** Receives an already-settled native NDJSON stream. This is a bounded
+ * observation, not evidence issuance or a replacement for PNPM policy. The
+ * invoking owner binds command/provider/source custody and complete capture. */
+export function receiveNativeOfflineVerification(input) {
+  record(input, ['stdout', 'terminal', 'observation', 'lockfilePath'], ['stdout', 'terminal', 'observation', 'lockfilePath']);
+  record(input.terminal, ['invoked', 'code', 'signal'], ['invoked', 'code', 'signal']);
+  record(input.observation, ['startedAt', 'endedAt', 'complete'], ['startedAt', 'endedAt', 'complete']);
+  const { stdout, terminal, observation, lockfilePath } = input;
+  const epoch = value => Number.isSafeInteger(value) && value >= 0 && value <= 8640000000000000;
+  if ((!Buffer.isBuffer(stdout) && typeof stdout !== 'string')
+    || typeof lockfilePath !== 'string' || lockfilePath.length > 4096 || !isAbsolute(lockfilePath) || lockfilePath.includes('\0')
+    || !epoch(observation.startedAt) || !epoch(observation.endedAt) || observation.endedAt < observation.startedAt
+    || observation.endedAt - observation.startedAt > 86400000 || typeof observation.complete !== 'boolean'
+    || typeof terminal.invoked !== 'boolean' || !(terminal.code === null || (Number.isInteger(terminal.code) && terminal.code >= 0 && terminal.code <= 255))
+    || !(terminal.signal === null || (typeof terminal.signal === 'string' && /^SIG[A-Z0-9]{1,20}$/u.test(terminal.signal))))
+    throw new TypeError('bounded settled native verification observation required');
+  if (stdout.length > 8388608) throw new TypeError('native verification stream exceeds eight MiB');
+  const bytes = Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout);
+  if (bytes.length > 8388608) throw new TypeError('native verification stream exceeds eight MiB');
+  const text = bytes.toString('utf8');
+  const events = []; let records = 0, discarded = 0, partial = !observation.complete || !bytes.equals(Buffer.from(text)) || (typeof stdout === 'string' && stdout !== text);
+  let malformed = false;
+  if (text.length && !text.endsWith('\n')) partial = true;
+  for (const line of lines(text)) {
+    if (!line.trim()) continue;
+    if (++records > 100000 || Buffer.byteLength(line) > 65536) { partial = true; break; }
+    let value; try { value = JSON.parse(line); } catch { partial = true; continue; }
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) { partial = true; continue; }
+    if (value.name !== 'pnpm:lockfile-verification') { discarded++; continue; }
+    if (events.length >= 16) { partial = true; break; }
+    const event = {};
+    for (const field of ['name', 'status', 'time', 'pid', 'level', 'entries', 'elapsedMs', 'lockfilePath', 'verifiedAt']) {
+      if (Object.hasOwn(value, field)) event[field] = value[field];
+    }
+    events.push(event);
+    if (!['started', 'done', 'failed', 'cached'].includes(value.status)
+      || value.level !== 'debug' || !epoch(value.time) || value.time < observation.startedAt || value.time > observation.endedAt
+      || !Number.isSafeInteger(value.pid) || value.pid < 1 || value.lockfilePath !== lockfilePath) malformed = true;
+    if (value.status === 'cached') {
+      if (Object.hasOwn(value, 'verifiedAt') && (typeof value.verifiedAt !== 'string' || value.verifiedAt.length > 64
+        || !Number.isFinite(Date.parse(value.verifiedAt)))) malformed = true;
+    } else if (!Number.isSafeInteger(value.entries) || value.entries < 1) malformed = true;
+    if (['done', 'failed'].includes(value.status) && (!Number.isSafeInteger(value.elapsedMs) || value.elapsedMs < 0
+      || value.elapsedMs > observation.endedAt - observation.startedAt)) malformed = true;
+  }
+  let reason;
+  if (!terminal.invoked || terminal.code !== 0 || terminal.signal !== null) reason = 'native-install-not-successful';
+  else if (partial) reason = 'native-reporter-partial';
+  else if (malformed) reason = 'native-verification-malformed';
+  else if (events.some(event => event.status === 'cached')) reason = 'native-prior-verdict-reused';
+  else if (events.some(event => event.status === 'failed')) reason = 'native-verification-failed';
+  else if (events.length !== 2 || events[0].status !== 'started' || events[1].status !== 'done') reason = 'native-verification-sequence-incomplete-or-ambiguous';
+  else if (events[0].entries !== events[1].entries || events[0].pid !== events[1].pid
+    || events[1].time < events[0].time) reason = 'native-verification-sequence-inconsistent';
+  else reason = 'fresh-native-verification-observed';
+  return Object.freeze({ kind: 'pnpm.native-offline-verification.observation.v1', accepted: reason === 'fresh-native-verification-observed', reason,
+    terminal: Object.freeze({ ...terminal }), observation: Object.freeze({ ...observation }), lockfilePath,
+    stream: Object.freeze({ bytes: bytes.length, sha256: hash(bytes), records, discarded, partial,
+      representation: Buffer.isBuffer(stdout) ? 'original-bytes' : 'utf8-representation' }),
+    events: Object.freeze(events.map(event => Object.freeze(event))) });
+}
