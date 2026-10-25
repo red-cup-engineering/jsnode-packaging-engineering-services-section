@@ -8,10 +8,12 @@ import { inspectHookFreeYaml } from './native-hook-profile.mjs';
 import { hash, regular, provider } from './native-provider.mjs';
 import { receiveNativeTransportEnvironment } from './native-transport-environment.mjs';
 import { boundedClone } from './native-metadata-data.mjs';
-import { receiveNativeOfflineVerification } from './native-observation.mjs';
+import { receiveNativeOfflineVerification, receiveNativeCachedVerification } from './native-observation.mjs';
 
 const capabilities = new WeakMap();
 const offlineMode = 'offline-frozen';
+const preparedOfflineMode = 'prepared-offline-frozen';
+const preparedOnlineMode = 'prepared-online-frozen';
 const lockRefresh = 'lockfile-refresh';
 const offlineLockRefresh = 'offline-lockfile-refresh';
 const inheritedTransport = 'inherited-native-transport';
@@ -60,6 +62,22 @@ export function deriveNativeOfflineFrozenInstallArguments(originalArguments) {
   const base = alreadyOffline ? originalArguments.slice(0, 10) : originalArguments;
   return Object.freeze([...deriveNativeLifecycleDisabledInstallArguments(base), '--offline', '--reporter=ndjson']);
 }
+/** Explicitly request the original verifier path instead of workspace-state
+ * optimistic reuse. No policy, history, source timestamp or legacy mode changes. */
+export function deriveNativePreparedOfflineInstallArguments(originalArguments) {
+  const alreadyPrepared = Array.isArray(originalArguments) && originalArguments.length === 13
+    && originalArguments[12] === '--no-optimistic-repeat-install';
+  return Object.freeze([...deriveNativeOfflineFrozenInstallArguments(alreadyPrepared ? originalArguments.slice(0, 12) : originalArguments),
+    '--no-optimistic-repeat-install']);
+}
+/** Suppress only the native install's unrelated package-manager update lookup.
+ * Ordinary lifecycle-disabled callers and consumer policy remain unchanged. */
+export function deriveNativePreparedOnlineInstallArguments(originalArguments) {
+  const alreadyPrepared = Array.isArray(originalArguments) && originalArguments.length === 11
+    && originalArguments[10] === '--config.update-notifier=false';
+  return Object.freeze([...deriveNativeLifecycleDisabledInstallArguments(alreadyPrepared ? originalArguments.slice(0, 10) : originalArguments),
+    '--config.update-notifier=false']);
+}
 async function cacheCustody(input) {
   const root = input.cacheRoot;
   if (typeof root !== 'string' || !isAbsolute(root) || resolve(root) !== root) refusal('explicit normalized cache allocation required');
@@ -80,6 +98,14 @@ function commands(args, mode, operation) {
     const derived = mode === offlineLockRefresh ? deriveNativeOfflineLockfileRefreshArguments(args) : deriveNativeLockfileRefreshArguments(args);
     if (!isDeepStrictEqual(args, derived)) refusal('explicit lockfile-only lifecycle suppression required');
     return [args.slice()];
+  }
+  if (mode === preparedOfflineMode) {
+    if (!isDeepStrictEqual(args, deriveNativePreparedOfflineInstallArguments(args))) refusal('explicit prepared offline verifier grammar required');
+    return [args.slice(), ['--version']];
+  }
+  if (mode === preparedOnlineMode) {
+    if (!isDeepStrictEqual(args, deriveNativePreparedOnlineInstallArguments(args))) refusal('explicit prepared online grammar required');
+    return [args.slice(), ['--version']];
   }
   if (mode === offlineMode) {
     if (!Array.isArray(args) || args.length !== 12 || args[10] !== '--offline' || args[11] !== '--reporter=ndjson') refusal('explicit offline reporter grammar required');
@@ -157,13 +183,17 @@ async function snapshot(input) {
   const launch = environment(input), env = launch.values;
   if (process.platform !== 'linux' || !isAbsolute(input.cwd) || await realpath(input.cwd) !== input.cwd) refusal('real Linux root required');
   const allowedCommands = commands(input.installArguments, input.qualificationMode, input.operation);
-  const offline = [offlineMode, offlineLockRefresh].includes(input.qualificationMode);
+  const offline = [offlineMode, offlineLockRefresh, preparedOfflineMode].includes(input.qualificationMode);
   const refreshing = input.operation === lockRefresh;
   const derived = refreshing ? (offline ? deriveNativeOfflineLockfileRefreshArguments : deriveNativeLockfileRefreshArguments)(input.originalInstallArguments)
+    : input.qualificationMode === preparedOfflineMode ? deriveNativePreparedOfflineInstallArguments(input.originalInstallArguments)
+    : input.qualificationMode === preparedOnlineMode ? deriveNativePreparedOnlineInstallArguments(input.originalInstallArguments)
     : offline ? deriveNativeOfflineFrozenInstallArguments(input.originalInstallArguments)
     : deriveNativeLifecycleDisabledInstallArguments(input.originalInstallArguments);
   if (!isDeepStrictEqual(derived, input.installArguments)) refusal('original and derived command differ');
   const transformation = {kind: refreshing ? (offline ? 'pnpm.publisher-offline-lockfile-refresh.v1' : 'pnpm.publisher-lockfile-refresh.v1')
+    : input.qualificationMode === preparedOfflineMode ? 'pnpm.prepared-offline-frozen.v1'
+    : input.qualificationMode === preparedOnlineMode ? 'pnpm.prepared-online-frozen.v1'
     : offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
   transformation.identity = hash(JSON.stringify(transformation));
   const selected = await executable(input.pnpm, env);
@@ -206,9 +236,11 @@ async function snapshot(input) {
   files.push(await identity(fileURLToPath(new URL('../package.json', import.meta.url)), true));
   files.push(await identity(fileURLToPath(new URL('native-observation.mjs', import.meta.url)), true));
   return {kind: refreshing ? 'pnpm.publisher-lockfile-refresh-precall-profile.v1'
+    : input.qualificationMode === preparedOfflineMode ? 'pnpm.prepared-offline-precall-profile.v1'
+    : input.qualificationMode === preparedOnlineMode ? 'pnpm.prepared-online-precall-profile.v1'
     : offline ? 'pnpm.publisher-offline-precall-profile.v1' : 'pnpm.publisher-precall-profile.v1',
     sourceProfile: input.sourceProfile ?? 'root-package-legacy-manager-pin',
-    ...(offline ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
+    ...(offline || input.qualificationMode === preparedOnlineMode || input.preparedCache ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
     files: files.map(({text,...file}) => file)};
 }
 /** Static admission of the actual original publisher child. No process is run. */
@@ -219,8 +251,9 @@ export async function receiveNativePrecallAdmission(input) {
     || (input.environmentProfile === undefined && (input.environment !== undefined || input.environmentPolicy !== undefined))) refusal('explicit environment and transport policy must be paired');
   if (input.operation !== undefined && input.operation !== lockRefresh) refusal('unsupported operation');
   if (input.sourceProfile !== undefined && input.sourceProfile !== noManagerPin) refusal('unsupported source profile');
-  if (input.qualificationMode !== undefined && ![offlineMode, offlineLockRefresh].includes(input.qualificationMode)) refusal('unsupported qualification mode');
-  if (input.operation === lockRefresh && input.qualificationMode === offlineMode
+  if (input.qualificationMode !== undefined && ![offlineMode, offlineLockRefresh, preparedOfflineMode, preparedOnlineMode].includes(input.qualificationMode)) refusal('unsupported qualification mode');
+  if (input.operation === lockRefresh && input.qualificationMode === preparedOnlineMode) refusal('prepared qualification does not match operation');
+  if (input.operation === lockRefresh && [offlineMode, preparedOfflineMode].includes(input.qualificationMode)
     || input.operation !== lockRefresh && input.qualificationMode === offlineLockRefresh) refusal('offline qualification does not match operation');
   if (input.qualificationMode === undefined && input.cacheRoot !== undefined) refusal('cache admission requires explicit offline mode');
   const frozen = {cwd: input.cwd, pnpm: input.pnpm,
@@ -241,6 +274,9 @@ export async function assertNativePrecallAdmission(capability, command) {
   const state = capabilities.get(capability); if (!state) refusal('unrecognized process-local capability');
   if (command !== undefined && !ownRecord(command)) refusal('own-data command required');
   if (state.lockRefreshClosed) refusal('lock refresh receiving consumed the capability');
+  if (state.preparedClosed) refusal('prepared installation capability is closed');
+  if (state.input.qualificationMode === preparedOfflineMode && command === undefined) refusal('prepared offline profile permits exact commands only, not producer entry');
+  if (state.input.qualificationMode === preparedOnlineMode && command === undefined) refusal('prepared online profile permits exact commands only, not producer entry');
   if (state.input.environmentProfile === inheritedTransport && command === undefined) refusal('explicit launch environment requires an exact command; producer entry is not admitted');
   if (state.input.operation === lockRefresh && command === undefined) refusal('lock refresh permits only its exact command, not producer entry');
   if (state.offlineFailed) refusal('offline receiving failed; capability is closed');
@@ -288,6 +324,7 @@ export async function receiveNativeLockfileRefresh(capability, result) {
       || !Number.isSafeInteger(observation.endedAt) || observation.startedAt < 0
       || observation.endedAt < observation.startedAt)
       refusal('complete successful original lock-refresh execution required');
+    state.refreshed = {snapshot: current, interval: {...observation}};
     return Object.freeze({kind: 'pnpm.publisher-lockfile-refresh.v1', admissionIdentity: capability.identity,
       sourceProfile: current.sourceProfile, offline: state.input.qualificationMode === offlineLockRefresh,
       beforeLock: Object.freeze({...beforeLock}), afterLock: Object.freeze({...lockOf(current)}),
@@ -349,6 +386,105 @@ export async function receiveNativeOfflineInstall(capability, result) {
       admissionIdentity: capability.identity, policyVerification: verification?.reason ?? 'context-or-persistence-unreceived',
       verification: verification ?? null, priorVerdict: publicIdentity(state.received.cache.verdict),
       postVerdict: publicIdentity(current?.cache.verdict), localInstallationMayExist: true, capabilityClosed: true});
+    throw error;
+  }
+}
+
+
+function sharedPreparedCustody(value) {
+  return {...value, kind: undefined, allowedCommands: undefined, transformation: undefined};
+}
+async function preparedHistory(snapshot, interval) {
+  const path = join(snapshot.cwd, 'pnpm-lock.yaml'), history = snapshot.cache?.verdict;
+  if (!history?.exists || !history.text.endsWith('\n')) refusal('prepared native history is absent or partial');
+  let selected;
+  for (const line of history.text.split('\n')) {
+    if (!line) continue;
+    let row; try { row = JSON.parse(line); } catch { continue; }
+    // Match the original native byPath index's valid-key selection, then apply
+    // the narrower received grammar. Never skip a later malformed matching row.
+    if (typeof row?.lockfile?.hash === 'string' && row.lockfile.path === path) selected = {line, row};
+  }
+  const row = selected?.row, at = Date.parse(row?.verifiedAt);
+  const stat = await lstat(path, {bigint: true});
+  if (!stat.isFile() || !row || !Number.isFinite(at) || typeof row.verifiedAt !== 'string'
+    || !row.lockfile.hash || row.lockfile.size !== Number(stat.size)
+    || row.lockfile.mtimeNs !== String(stat.mtimeNs) || row.lockfile.inode !== String(stat.ino)
+    || !ownRecord(row.policy) || (interval && (at < interval.startedAt || at > interval.endedAt)))
+    refusal('prepared same-path native history/stat causality is unreceived');
+  return {lineSHA256: hash(selected.line), row: boundedClone(row, 1048576),
+    stat: {size: Number(stat.size), mtimeNs: String(stat.mtimeNs), inode: String(stat.ino)}};
+}
+function preparedTerminal(result) {
+  const terminal = result?.terminal, observation = result?.observation;
+  if (terminal?.invoked !== true || terminal.code !== 0 || terminal.signal !== null
+    || terminal.timedOut !== false || terminal.truncated !== false || terminal.failedToStart !== false
+    || observation?.complete !== true || !Number.isSafeInteger(observation.startedAt)
+    || !Number.isSafeInteger(observation.endedAt) || observation.startedAt < 0
+    || observation.endedAt < observation.startedAt) refusal('successful complete original prepared execution required');
+}
+/** Original process-local predecessor only; not a serialized receiving receipt.
+ * Semantic lock delta and complete artifact-effect admission remain at composer. */
+export async function receiveNativePreparedInstallAdmission(predecessor, options = {}) {
+  if (!ownRecord(options) || Object.keys(options).some(key => key !== 'offline')) refusal('own-data prepared options required');
+  const offline = own(options, 'offline') ? options.offline : false;
+  const previous = capabilities.get(predecessor);
+  if (typeof offline !== 'boolean' || !previous || previous.preparedNextConsumed
+    || !(previous.refreshed || previous.preparedReceived)) refusal('original received process-local preparation required');
+  previous.preparedNextConsumed = true;
+  const checkpoint = previous.preparedReceived ?? previous.refreshed;
+  const priorNow = await snapshot(previous.input);
+  if (!isDeepStrictEqual(priorNow, checkpoint.snapshot)) refusal('prepared predecessor source or history changed');
+  const history = await preparedHistory(priorNow, previous.refreshed?.interval);
+  const originalInstallArguments = previous.input.originalInstallArguments.slice(0,9);
+  originalInstallArguments[1] = '--frozen-lockfile';
+  const installArguments = (offline ? deriveNativePreparedOfflineInstallArguments : deriveNativePreparedOnlineInstallArguments)(originalInstallArguments);
+  const input = {...previous.input, operation: undefined, qualificationMode: offline ? preparedOfflineMode : preparedOnlineMode,
+    cacheRoot: previous.input.cacheRoot, originalInstallArguments, installArguments, preparedCache: true};
+  const current = await snapshot(input);
+  if (!isDeepStrictEqual(sharedPreparedCustody(current), sharedPreparedCustody(priorNow))) refusal('prepared operation changes original custody');
+  const capability = Object.freeze({kind: 'pnpm.prepared-native-installation-precall.v1',
+    identity: hash(JSON.stringify(current)), offline, predecessorIdentity: predecessor.identity,
+    transformation: Object.freeze({...current.transformation})});
+  capabilities.set(capability, {input, received: current, preparedHistory: history, offlineReceived: false});
+  return capability;
+}
+/** Online materialization has no reporter claim; optional offline receiving
+ * binds the native cached decision to the actual held original refresh history. */
+export async function receiveNativePreparedInstall(capability, result) {
+  const state = capabilities.get(capability);
+  if (!state?.preparedHistory || state.preparedClosed) refusal('unrecognized or closed prepared installation');
+  state.preparedClosed = true;
+  let current, verification;
+  try {
+    preparedTerminal(result);
+    current = await snapshot(state.input);
+    if (!isDeepStrictEqual(current, state.received)) refusal('prepared source, lock, provider or native history changed');
+    const history = await preparedHistory(current);
+    if (!isDeepStrictEqual(history, state.preparedHistory)) refusal('prepared native history/stat changed');
+    if (capability.offline) {
+      if (result.lockfilePath !== join(state.input.cwd, 'pnpm-lock.yaml')) refusal('another prepared source lock');
+      verification = receiveNativeCachedVerification({stdout: result.stdout, lockfilePath: result.lockfilePath,
+        terminal: {invoked: true, code: 0, signal: null}, observation: result.observation}, history.row.verifiedAt);
+      if (!verification.accepted) refusal('prepared cached native verification unreceived: ' + verification.reason);
+    }
+    state.preparedReceived = {snapshot: current};
+    return Object.freeze({kind: 'pnpm.prepared-native-installation.v1', admissionIdentity: capability.identity,
+      predecessorIdentity: capability.predecessorIdentity, offline: capability.offline,
+      nativeProvider: Object.freeze(boundedClone(current.supplier, 65536)),
+      nativeExecutionReceived: true, policyVerification: capability.offline ? 'cached-native' : 'not-observed',
+      freshPolicyRecomputationReceived: false, verification: verification ?? null,
+      persistedVerification: Object.freeze({verifiedAt: history.row.verifiedAt,
+        lockfilePath: history.row.lockfile.path, opaqueSemanticHash: history.row.lockfile.hash,
+        policy: Object.freeze(history.row.policy), recordSHA256: history.lineSHA256}),
+      lockSemanticsReceived: false, installedArtifactMembersReceived: false});
+  } catch (error) {
+    const publicHistory = value => value ? (({text, ...identity}) => Object.freeze(identity))(value) : null;
+    error.nativePreparedEvidence = Object.freeze({kind: 'pnpm.prepared-native-installation-refusal.v1',
+      admissionIdentity: capability.identity, verification: verification ?? null,
+      priorNativeHistory: publicHistory(state.received.cache?.verdict),
+      postNativeHistory: publicHistory(current?.cache?.verdict), postCustodyReadFailed: !current,
+      localChangesMayExist: true, capabilityClosed: true});
     throw error;
   }
 }
