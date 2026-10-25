@@ -10,6 +10,9 @@ import { receiveNativeOfflineVerification } from './native-observation.mjs';
 
 const capabilities = new WeakMap();
 const offlineMode = 'offline-frozen';
+const lockRefresh = 'lockfile-refresh';
+const offlineLockRefresh = 'offline-lockfile-refresh';
+const noManagerPin = 'root-package-no-manager-pin';
 const own = (value, key) => Object.hasOwn(value, key);
 const refusal = reason => { throw new TypeError(`native pre-call profile: ${reason}`); };
 const shimHash = '67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad';
@@ -18,10 +21,10 @@ function registry(value) {
   let url; try { url = new URL(value); } catch { refusal('invalid registry'); }
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || (url.href !== value && url.href !== value + '/') || url.pathname !== '/') refusal('unsupported registry');
 }
-function originalInstall(args) {
+function originalInstall(args, operation) {
   if (!Array.isArray(args) || args.some(arg => typeof arg !== 'string')) refusal('invalid command arguments');
-  if (args.length !== 9 || args[0] !== 'install' || args[1] !== '--frozen-lockfile' || args[2] !== '--registry'
-      || args[4] !== '--cache-dir' || args[6] !== '--store-dir' || args[8] !== '--config.prefer-offline=false') refusal('unsupported frozen-install grammar');
+  if (args.length !== 9 || args[0] !== 'install' || args[1] !== (operation === lockRefresh ? '--no-frozen-lockfile' : '--frozen-lockfile') || args[2] !== '--registry'
+      || args[4] !== '--cache-dir' || args[6] !== '--store-dir' || args[8] !== '--config.prefer-offline=false') refusal('unsupported original install grammar');
   registry(args[3]);
   for (const index of [5, 7]) if (!isAbsolute(args[index]) || resolve(args[index]) !== args[index]) refusal('cache and store must be normalized absolute paths');
   return args.slice();
@@ -30,6 +33,20 @@ function originalInstall(args) {
 export function deriveNativeLifecycleDisabledInstallArguments(originalArguments) {
   const alreadyDisabled = Array.isArray(originalArguments) && originalArguments.length === 10 && originalArguments[9] === '--ignore-scripts';
   return Object.freeze([...originalInstall(alreadyDisabled ? originalArguments.slice(0, -1) : originalArguments), '--ignore-scripts']);
+}
+/** No linking or lifecycles requested; native resolution may still fetch archives. */
+export function deriveNativeLockfileRefreshArguments(originalArguments) {
+  const derived = Array.isArray(originalArguments) && originalArguments.length === 11
+    && originalArguments[9] === '--lockfile-only' && originalArguments[10] === '--ignore-scripts';
+  return Object.freeze([...originalInstall(derived ? originalArguments.slice(0, 9) : originalArguments, lockRefresh),
+    '--lockfile-only', '--ignore-scripts']);
+}
+/** Explicit native offline resolution over the caller's admitted cache closure. */
+export function deriveNativeOfflineLockfileRefreshArguments(originalArguments) {
+  const derived = Array.isArray(originalArguments) && originalArguments.length === 13
+    && originalArguments[11] === '--offline' && originalArguments[12] === '--reporter=ndjson';
+  return Object.freeze([...deriveNativeLockfileRefreshArguments(derived ? originalArguments.slice(0, 11) : originalArguments),
+    '--offline', '--reporter=ndjson']);
 }
 /** Explicit offline qualification, never automatic fallback or policy rewriting. */
 export function deriveNativeOfflineFrozenInstallArguments(originalArguments) {
@@ -53,7 +70,12 @@ async function cacheCustody(input) {
   if (input.installArguments[5] !== directories[1].path || input.installArguments[7] !== directories[2].path) refusal('command cache paths differ from allocation');
   return {directories, verdict: await identity(join(root, 'pnpm-metadata', 'lockfile-verified.jsonl'), false, 8388608)};
 }
-function commands(args, mode) {
+function commands(args, mode, operation) {
+  if (operation === lockRefresh) {
+    const derived = mode === offlineLockRefresh ? deriveNativeOfflineLockfileRefreshArguments(args) : deriveNativeLockfileRefreshArguments(args);
+    if (!isDeepStrictEqual(args, derived)) refusal('explicit lockfile-only lifecycle suppression required');
+    return [args.slice()];
+  }
   if (mode === offlineMode) {
     if (!Array.isArray(args) || args.length !== 12 || args[10] !== '--offline' || args[11] !== '--reporter=ndjson') refusal('explicit offline reporter grammar required');
     commands(args.slice(0, 10));
@@ -119,12 +141,15 @@ function npmrc(text) {
 async function snapshot(input) {
   const env = environment();
   if (process.platform !== 'linux' || !isAbsolute(input.cwd) || await realpath(input.cwd) !== input.cwd) refusal('real Linux root required');
-  const allowedCommands = commands(input.installArguments, input.qualificationMode);
-  const offline = input.qualificationMode === offlineMode;
-  const derived = offline ? deriveNativeOfflineFrozenInstallArguments(input.originalInstallArguments)
+  const allowedCommands = commands(input.installArguments, input.qualificationMode, input.operation);
+  const offline = [offlineMode, offlineLockRefresh].includes(input.qualificationMode);
+  const refreshing = input.operation === lockRefresh;
+  const derived = refreshing ? (offline ? deriveNativeOfflineLockfileRefreshArguments : deriveNativeLockfileRefreshArguments)(input.originalInstallArguments)
+    : offline ? deriveNativeOfflineFrozenInstallArguments(input.originalInstallArguments)
     : deriveNativeLifecycleDisabledInstallArguments(input.originalInstallArguments);
   if (!isDeepStrictEqual(derived, input.installArguments)) refusal('original and derived command differ');
-  const transformation = {kind: offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
+  const transformation = {kind: refreshing ? (offline ? 'pnpm.publisher-offline-lockfile-refresh.v1' : 'pnpm.publisher-lockfile-refresh.v1')
+    : offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
   transformation.identity = hash(JSON.stringify(transformation));
   const selected = await executable(input.pnpm);
   if (await executable('node') !== await realpath(process.execPath)) refusal('PATH Node differs from receiving runtime');
@@ -143,7 +168,8 @@ async function snapshot(input) {
   const nodePath = await realpath(process.execPath), nodeBytes = await regular(nodePath, 268435456);
   files.push({path: nodePath, exists: true, sha256: hash(nodeBytes), bytes: nodeBytes.length});
   const manifest = await identity(join(input.cwd, 'package.json'), true), pkg = JSON.parse(manifest.text);
-  if (!plain(pkg) || pkg.packageManager !== 'pnpm@11.28.5') refusal('exact legacy manager pin required');
+  if (!plain(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager') : pkg.packageManager !== 'pnpm@11.28.5'))
+    refusal(input.sourceProfile === noManagerPin ? 'no manager declaration permitted in explicit no-pin profile' : 'exact legacy manager pin required');
   for (const field of ['engines','devEngines']) if (own(pkg, field)) {
     if (!plain(pkg[field]) || own(pkg[field], 'runtime') || own(pkg[field], 'packageManager')) refusal('manager/runtime activation declaration unsupported');
   }
@@ -159,15 +185,25 @@ async function snapshot(input) {
   for (const name of ['native-precall-admission.mjs','native-hook-profile.mjs','native-provider.mjs']) files.push(await identity(fileURLToPath(new URL(name, import.meta.url)), true));
   files.push(await identity(fileURLToPath(new URL('../package.json', import.meta.url)), true));
   files.push(await identity(fileURLToPath(new URL('native-observation.mjs', import.meta.url)), true));
-  return {kind: offline ? 'pnpm.publisher-offline-precall-profile.v1' : 'pnpm.publisher-precall-profile.v1', ...(offline ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: env, supplier, allowedCommands, transformation,
+  return {kind: refreshing ? 'pnpm.publisher-lockfile-refresh-precall-profile.v1'
+    : offline ? 'pnpm.publisher-offline-precall-profile.v1' : 'pnpm.publisher-precall-profile.v1',
+    sourceProfile: input.sourceProfile ?? 'root-package-legacy-manager-pin',
+    ...(offline ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: env, supplier, allowedCommands, transformation,
     files: files.map(({text,...file}) => file)};
 }
 /** Static admission of the actual original publisher child. No process is run. */
 export async function receiveNativePrecallAdmission(input) {
-  if (!plain(input) || Object.keys(input).some(key => !['cwd','pnpm','installArguments','originalInstallArguments','qualificationMode','cacheRoot'].includes(key)) || typeof input.pnpm !== 'string') refusal('invalid admission request');
-  if (input.qualificationMode !== undefined && input.qualificationMode !== offlineMode) refusal('unsupported qualification mode');
+  if (!plain(input) || Object.keys(input).some(key => !['cwd','pnpm','installArguments','originalInstallArguments','qualificationMode','cacheRoot','operation','sourceProfile'].includes(key)) || typeof input.pnpm !== 'string') refusal('invalid admission request');
+  if (input.operation !== undefined && input.operation !== lockRefresh) refusal('unsupported operation');
+  if (input.sourceProfile !== undefined && input.sourceProfile !== noManagerPin) refusal('unsupported source profile');
+  if (input.qualificationMode !== undefined && ![offlineMode, offlineLockRefresh].includes(input.qualificationMode)) refusal('unsupported qualification mode');
+  if (input.operation === lockRefresh && input.qualificationMode === offlineMode
+    || input.operation !== lockRefresh && input.qualificationMode === offlineLockRefresh) refusal('offline qualification does not match operation');
   if (input.qualificationMode === undefined && input.cacheRoot !== undefined) refusal('cache admission requires explicit offline mode');
-  const frozen = {cwd: input.cwd, pnpm: input.pnpm, ...(input.qualificationMode === undefined ? {} : {qualificationMode: input.qualificationMode, cacheRoot: input.cacheRoot}), installArguments: input.installArguments?.slice(), originalInstallArguments: input.originalInstallArguments?.slice()};
+  const frozen = {cwd: input.cwd, pnpm: input.pnpm,
+    ...(input.operation === undefined ? {} : {operation: input.operation}),
+    ...(input.sourceProfile === undefined ? {} : {sourceProfile: input.sourceProfile}),
+    ...(input.qualificationMode === undefined ? {} : {qualificationMode: input.qualificationMode, cacheRoot: input.cacheRoot}), installArguments: input.installArguments?.slice(), originalInstallArguments: input.originalInstallArguments?.slice()};
   const received = await snapshot(frozen);
   const transformation = Object.freeze({...received.transformation, originalArguments: Object.freeze(received.transformation.originalArguments.slice()), derivedArguments: Object.freeze(received.transformation.derivedArguments.slice())});
   const capability = Object.freeze({kind: received.kind, identity: hash(JSON.stringify(received)), transformation});
@@ -177,6 +213,8 @@ export async function receiveNativePrecallAdmission(input) {
 /** Call before each native operation or original producer entry. Caller retains sole-writer custody. */
 export async function assertNativePrecallAdmission(capability, command) {
   const state = capabilities.get(capability); if (!state) refusal('unrecognized process-local capability');
+  if (state.lockRefreshClosed) refusal('lock refresh receiving consumed the capability');
+  if (state.input.operation === lockRefresh && command === undefined) refusal('lock refresh permits only its exact command, not producer entry');
   if (state.offlineFailed) refusal('offline receiving failed; capability is closed');
   if (state.offlineReceived && command !== undefined && isDeepStrictEqual(command.arguments, state.input.installArguments)) refusal('offline installation capability is single-use');
   if (state.input.qualificationMode === offlineMode && !state.offlineReceived
@@ -189,6 +227,54 @@ export async function assertNativePrecallAdmission(capability, command) {
       || !current.allowedCommands.some(args => isDeepStrictEqual(args, command.arguments))) refusal('command outside admitted set');
   }
   return capability.identity;
+}
+
+/** Lock preparation is not native frozen verification or installed receiving. */
+export async function receiveNativeLockfileRefresh(capability, result) {
+  const state = capabilities.get(capability);
+  if (!state || state.input.operation !== lockRefresh || state.lockRefreshClosed)
+    refusal('unrecognized or already received lock refresh');
+  state.lockRefreshClosed = true;
+  const path = join(state.input.cwd, 'pnpm-lock.yaml');
+  const lockOf = value => value?.files.find(file => file.path === path) ?? null;
+  const beforeLock = lockOf(state.received);
+  const publicHistory = value => value ? (({text, ...identity}) => Object.freeze(identity))(value) : null;
+  let current;
+  try {
+    current = await snapshot(state.input);
+    // The original native lock writer can append verification history while
+    // resolving. Retain that transition; it is NOT fresh frozen verification.
+    const withoutLock = value => ({...value, files: value.files.filter(file => file.path !== path),
+      ...(value.cache ? {cache: {...value.cache, verdict: undefined}} : {})});
+    if (!isDeepStrictEqual(withoutLock(current), withoutLock(state.received))) {
+      const changed = Object.keys(current).filter(key => !isDeepStrictEqual(withoutLock(current)[key], withoutLock(state.received)[key]));
+      refusal('admitted source, policy, provider or context changed during lock refresh: ' + changed.join(', '));
+    }
+    const terminal = result?.terminal, observation = result?.observation;
+    if (terminal?.invoked !== true || terminal.code !== 0 || terminal.signal !== null
+      || terminal.timedOut !== false || terminal.truncated !== false || terminal.failedToStart !== false
+      || observation?.complete !== true || !Number.isSafeInteger(observation.startedAt)
+      || !Number.isSafeInteger(observation.endedAt) || observation.startedAt < 0
+      || observation.endedAt < observation.startedAt)
+      refusal('complete successful original lock-refresh execution required');
+    return Object.freeze({kind: 'pnpm.publisher-lockfile-refresh.v1', admissionIdentity: capability.identity,
+      sourceProfile: current.sourceProfile, offline: state.input.qualificationMode === offlineLockRefresh,
+      beforeLock: Object.freeze({...beforeLock}), afterLock: Object.freeze({...lockOf(current)}),
+      priorNativeHistory: publicHistory(state.received.cache?.verdict),
+      nativeHistory: publicHistory(current.cache?.verdict),
+      terminal: Object.freeze({invoked: true, code: 0, signal: null,
+        timedOut: false, truncated: false, failedToStart: false}),
+      observation: Object.freeze({startedAt: observation.startedAt, endedAt: observation.endedAt, complete: true}),
+      lockSemanticsReceived: false, nativeFrozenVerificationReceived: false, installationReceived: false});
+  } catch (error) {
+    error.nativeLockRefreshEvidence = Object.freeze({kind: 'pnpm.publisher-lockfile-refresh-refusal.v1',
+      admissionIdentity: capability.identity, beforeLock: Object.freeze({...beforeLock}),
+      afterLock: lockOf(current) ? Object.freeze({...lockOf(current)}) : null,
+      priorNativeHistory: publicHistory(state.received.cache?.verdict),
+      nativeHistory: publicHistory(current?.cache?.verdict),
+      localChangesMayExist: true, capabilityClosed: true});
+    throw error;
+  }
 }
 
 /** Receive only the original install's fresh-native result. Local installation may
