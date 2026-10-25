@@ -85,3 +85,21 @@ The service writes each phase receipt exclusively and reads it back before retur
 The original JavascriptNodeCommandExecutionResult@1 requires error to be a string. A successful original async executor returns the empty string, not null; null is refused as a malformed result, while nonempty error evidence blocks acceptance. Query parent, cache root and receipt root must remain unredirected real directories at request custody checks; every phase write separately checks the receipt root. These are path custody checks, not a race-proof filesystem sandbox. If evidence storage itself is unavailable, the service refuses; the trusted caller must retain its original execution receipt rather than claim service persistence succeeded.
 
 Qualification is split precisely: 19 new local state cases cover request/identity/shape/state errors, including wrong wanted identity; six original-executor loopback cases cover normal producer/reader, offline missing file, canonical missing-time default with warning, HTTP500, native request timeout and caller-reported unknown. The unknown case deliberately withholds a retained successful executor receipt from service admission; it is not a simulated OS crash or proof of recovery. No wrong-package server response or full policy verifier is claimed by these six cases.
+
+## Shared transport role correction and consumer composition
+
+The existing pure transport validator now resides in the private
+native-transport-environment.mjs owner module and retains its existing public
+re-export. The metadata source identity includes that helper. Its relay role
+predicate excludes NODE_USE_ENV_PROXY, which is a stable exact Node activation
+scalar (for example '1'), not a URL; the previous suffix predicate incorrectly
+refused this currently inherited input. All existing URL credential/host/protocol
+rules and independent alias values remain unchanged. Original source-owned
+precall admission composes this same validator with its worker-only grammar and
+binds CA bytes/configuration absences; it does not import or recreate the metadata
+writer. Local role/state receiving does not settle the async executor's known
+normal-close descendant-custody gap or authorize a native run.
+
+Malformed relay URLs now produce a fixed refusal without the URL parser's raw
+input property. This preserves shape refusal without leaking an unadmitted value
+through an exception. Credential-bearing URL refusal remains unchanged.

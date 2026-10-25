@@ -161,3 +161,51 @@ recompute native private lock hashes or replay native policy. Use the statically
 loaded original reporter receiver only after revalidating admitted source/context;
 a changed helper must not be dynamically evaluated before custody rejection.
 
+
+## Explicit inherited native transport composition
+
+PPA-23. The original publisher worker grammar remains the default. A separately
+selected `environmentProfile: 'inherited-native-transport'` accepts an explicit
+own-data `environment` and the original metadata service's `environmentPolicy`
+(stable exact fingerprints and role-specific relay protocol/hostname identities).
+It composes the unchanged closed worker fields with that one transport grammar,
+not a second transport allowlist. Every other field refuses. NPM_CONFIG_PREFIX
+is refused as configuration selection rather than classified as transport.
+No process environment is filtered/reset, proxy removed, runtime preload added,
+CA changed, route selected, or executable launched by this component. The caller
+must capture the inherited transport inputs once for this launch, preserve every
+admitted role/alias value and use the resulting original worker environment.
+Unrelated parent application variables are not command inputs; source composition
+must not pass arbitrary process.env to a receipt-echoing executor.
+
+PPA-24. Explicit admission resolves PNPM and Node using that environment's PATH,
+checks the selected HOME/XDG_CONFIG_HOME native global absences, and binds regular
+unredirected NODE_EXTRA_CA_CERTS/SSL_CERT_FILE bytes. It retains exact source,
+configuration, empty worker npmrc and provider custody from the existing profile.
+The private shared transport helper is factored from native-metadata-session,
+without importing the metadata/semver effectful composition into precall.
+Both owners bind this helper in their source identity. NODE_USE_ENV_PROXY is a
+stable scalar, not a relay URL; uppercase/lowercase HTTP/HTTPS/ALL/NPM relay roles
+retain their original independent values, with no invented alias equivalence.
+
+PPA-25. Admission snapshots the complete environment and policy as own data;
+caller mutation cannot replace held inputs. `assertNativePrecallAdmission` for
+an explicit-profile command requires its `environment` to equal the admitted
+snapshot, in addition to the exact cwd/program/arguments. The caller passes
+that same launch object unchanged to its original executor. Explicit-profile
+capabilities never admit an undefined-command producer entry: the producer would
+need its own exact environment-bearing launch contract. Default legacy producer
+entry semantics are unchanged. Ports may vary only
+between separately admitted launch snapshots, not between admission, assertion
+and receiving. Public capability/receiving summaries disclose identities only.
+Credential-bearing relays, extra settings/preloads, missing stable fields,
+changed protocol/host/alias value, redirected/changed CA and appeared global
+configuration refuse before the dependent native call.
+
+PPA-26. This source profile is static admission, not a new process controller.
+It does not fix the existing async executor0.3.1 detached-group lifetime gap:
+normal child close does not establish all-descendant quiescence, and native
+PNPM error handling can spawn ps through pidtree. A supported original supervised
+binding remains necessary before real acquisition/refresh. Metadata-native
+readability, bounded receipt tails, exact lock semantics, full graph resources
+and frozen installed receiving remain distinct obligations.
