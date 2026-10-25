@@ -23,7 +23,47 @@ its absence or skip is not evidence for the component's required receiving suite
 
 ## Requirements and responsibility
 
-The accepted bounded policy permits a fresh first-party artifact only when its
+### Current default house policy and the narrower optional qualification route
+
+The current Group rule `packages-consume-exact-registry-releases`, received at
+`561-group/561-group-services-section` commit
+`433a35f3a403fd8cee10dbc0d6830e4f16f0bafc`, blob
+`df9759fd4d98f988abf1c0851e0e8d8ce822d3d0`, requires exact immutable registry
+releases without a default age delay for Group-owned packages. It explicitly
+selects the existing source-owned house scopes through native PNPM policy while
+retaining integrity and meaningful receiving. The original publication owner's
+`src/release-wave.mjs` HOUSE_SCOPES and authored native policy at
+`4a2afe8029891a501b82317a7899934964b1c214` supply the existing scope population.
+
+`projectHousePackageNativePolicy` in the existing `./native-policy` export
+projects that identified source rule, retaining the consumer's explicitly chosen
+positive external age threshold and explicit strict=true. It does not infer ownership from a
+namespace, caller approval, package version or arbitrary repository list. The
+original composing owner must independently establish the actual Group-owned
+repository/package/source mapping, configured registry, immutable release SRI
+and meaningful receiving before migrating its authored policy. Its return value
+is a deterministic policy proposal, not an authority ticket or installed result.
+No per-release exception list is generated or accepted. A reviewed authored
+policy migration precedes native resolution; native auto-added exclusions remain
+unplanned input drift and must be refused by original receiving.
+
+The exact-artifact qualification design below remains a separately selectable
+stricter route, with its own unimplemented production custody bindings. It is not
+a universal prerequisite that reinstates the default delay superseded by the
+current Group rule. Neither route supplies missing npm/GitHub authority records
+or turns source, packed, published and installed evidence into one identity.
+
+The pre-call owner also supplies an explicit root-only, no-manager-pin source
+profile and a script-disabled lockfile-refresh command. This is not a promise
+of metadata-only execution: original PNPM can still fetch archives while
+refreshing a lock. See PPA-17 through PPA-22 in
+`native-precall-admission.spec.md` for effects, custody and separate frozen
+receiving obligations. The default pinned/frozen and offline contracts are
+unchanged.
+
+### Optional exact-artifact qualification route
+
+This separately selected bounded policy permits a fresh first-party artifact only when its
 exact source revision, packed integrity, declared dependency closure, meaningful
 test evidence and independently authorized receiving can all be established.
 Namespace membership, version freshness, a successful merge, an opaque evidence
@@ -37,7 +77,7 @@ immutable repository ID and package-to-source mapping belong to the existing
 Group-owned source index. Authenticated receiving of an external or client
 repository does not suffice. A namespace string, caller flag, or generic allowed
 repository list is not that ownership proof. This production binding remains
-unimplemented and must be exercised before any effective first-party exemption.
+unimplemented and must be exercised before this exact-artifact route enables an exemption.
 
 PNPM owns eligibility and native policy projection. The original npm publication
 owner owns pinned source/artifact production, verification results, lock creation
@@ -331,3 +371,4 @@ omits the real private Newsroom configuration case and the separately enrolled
 native diagnostics listed in ci-native-qualification.json. Their original supplier
 and archive-reader obligations remain open; source/installed fixture success is
 not live application receiving. See native-ci-receiving.spec.md.
+

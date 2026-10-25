@@ -1,5 +1,73 @@
 # Native publisher pre-call admission
 
+## Explicit single-package lock refresh refinement
+
+PPA-17. The standalone registry consumer needs a source-owned native policy and
+lock refresh without performing the original npm `update-lock` full install.
+`operation: "lockfile-refresh"` is a separately selected refinement, not a change
+to the original frozen profiles. `deriveNativeLockfileRefreshArguments` accepts
+only the original nine-token publisher update vector (`install
+--no-frozen-lockfile --registry URL --cache-dir ABS --store-dir ABS
+--config.prefer-offline=false`) and appends `--lockfile-only --ignore-scripts`.
+The exact derived vector is idempotent. Aliases, extra flags, offline-frozen composition
+and contradictory arguments refuse. No release-age, trust or registry setting is
+injected. The source policy must already be explicitly authored and received.
+
+PPA-18. `sourceProfile: "root-package-no-manager-pin"` explicitly permits an
+absent manifest packageManager, while continuing to refuse all manager/runtime
+activation declarations. It retains the original real local root-only
+`packages: []` policy file, exact registry configuration, provider bytes,
+closed worker environment and absent hooks/global configuration. This is one
+standalone package, not workspace dependency resolution. It does not admit
+absent-policy or ancestor-workspace discovery. The original legacy-pin profile
+remains the default. The new source profile is also usable for separately
+admitted ordinary frozen installation; no frozen receipt is implied by refresh.
+
+PPA-19. A refresh capability admits only its exact refresh command, never a
+producer entry, version probe or inventory operation. The original caller owns
+the bounded runner, complete registry-only closure, actual artifact/cache/store
+effects, exclusive custody and available capacity. Native lockfile-only sets
+skipFetch, but the qualified PNPM distribution can still fetch an archive when
+its manifest is missing, integrity changed or the fetcher requires it. Therefore
+this contract does not promise metadata-only execution or zero archive/store
+writes. It introduces no alternate resolver, fetcher, executor or cache writer.
+Frozen plus lockfile-only also does not execute the native frozen installation
+verification path; it must not be used as an age/trust/install receipt.
+
+PPA-20. `receiveNativeLockfileRefresh(capability, result)` consumes any receiving
+attempt. It requires the original runner's complete finite operation interval
+and terminal invoked=true/code=0/signal=null/timedOut=false/truncated=false/
+failedToStart=false. It re-reads the entire pre-call snapshot and permits only
+the intended root pnpm-lock.yaml byte change and original native verification-
+history transition. Before/after history identities are retained, not treated
+as fresh frozen verification. Manifest, policy presence/bytes,
+registry inputs, provider, environment and implementation changes refuse. The
+returned lock identities are execution/custody evidence, not semantic lock,
+artifact, age, trust or installation qualification. Failure/uncertain execution
+closes the capability and retains available changed-input evidence; no rollback,
+cleanup, retry or newly created exclusion is accepted. The original publisher
+must independently receive the complete native lock and perform its separately
+admitted frozen installation before tests/publication/consumer acceptance.
+
+PPA-21. Verify exact derivation, explicit no-pin admission, default-profile and
+runtime refusals, forged/stale capability, command isolation, one-shot terminal
+receiving and policy/manifest/provider drift after both successful and failed
+execution. Native synthetic receiving must separately show lifecycle refusal,
+no consumer linking, truthful possible archive fetching and unchanged authored
+policy. It is not actual Flow installation or first-party artifact qualification.
+
+PPA-22. Explicit `qualificationMode: "offline-lockfile-refresh"` adds only native
+`--offline --reporter=ndjson` through `deriveNativeOfflineLockfileRefreshArguments`.
+It requires the existing private owned cacheRoot/pnpm-metadata/pnpm-store custody
+and exact command-path binding, without introducing a nonnative cache writer. The caller
+must receive the complete registry-only metadata/available archive closure and
+exclude exotic resolutions before invocation. Original native missing metadata
+or archives refuse; there is no online fallback. The original snapshot retains
+verification history rather than treating it as fresh policy evidence. This
+does not reuse offline-frozen receiving, because lock refresh is not frozen
+installation or fresh age/trust verification. Offline registry transport and
+possible native archive/store effects remain separately qualified observations.
+
 ## Requirements
 
 PPA-1. PNPM Engineering owns admission of executable configuration before the first native package-manager call. The publisher needs lifecycle-disabled frozen installation followed by Code's original version and root workspace inventory. Calling the manager to discover configuration is not admission: PNPM 11.28.5 handles manager/runtime declarations, configuration dependencies and hooks before returning from common command startup, including version and list. No parser is copied into the publisher.
@@ -92,3 +160,4 @@ inside the observed operation, retaining that original record's digest. Do not
 recompute native private lock hashes or replay native policy. Use the statically
 loaded original reporter receiver only after revalidating admitted source/context;
 a changed helper must not be dynamically evaluated before custody rejection.
+

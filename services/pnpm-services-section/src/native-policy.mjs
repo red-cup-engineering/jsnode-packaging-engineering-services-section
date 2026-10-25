@@ -4,6 +4,41 @@ import { assessFirstPartyEligibility, dependencyClosureDigest } from './first-pa
 const dependencyFields = ['dependencies', 'devDependencies', 'optionalDependencies'];
 const withoutPeers = version => String(version).split('(')[0];
 
+// Current Group rule blob df9759fd4d98f988abf1c0851e0e8d8ce822d3d0;
+// existing publication-owner HOUSE_SCOPES at 4a2afe8029891a501b82317a7899934964b1c214.
+// These are the rule's native projection, never proof that a release is owned.
+const houseScopePatterns = Object.freeze(['@561-group/*', '@causeway-services/*',
+  '@coesite-operations/*', '@emsenn/*', '@emsweb/*', '@harmonious-union/*',
+  '@koios-news/*', '@lenticule-science/*', '@red-cup-engineering/*',
+  '@red-cup-science/*', '@rsc-quiescent/*', '@turntide-islands/*',
+  '@union-officer-academy/*']);
+
+/** Pure proposal for an explicit source-policy migration. The original owner
+ * independently receives Group source/registry/artifact identity before use.
+ * This result is not a qualification ticket and never installs or writes. */
+export function projectHousePackageNativePolicy(policy) {
+  if (!policy || typeof policy !== 'object' || Array.isArray(policy)
+    || ![Object.prototype, null].includes(Object.getPrototypeOf(policy))
+    || !Object.hasOwn(policy, 'minimumReleaseAge') || !Object.hasOwn(policy, 'minimumReleaseAgeStrict')
+    || Reflect.ownKeys(policy).some(key => typeof key !== 'string'
+      || !['minimumReleaseAge', 'minimumReleaseAgeStrict', 'minimumReleaseAgeExclude'].includes(key)
+      || !Object.hasOwn(Object.getOwnPropertyDescriptor(policy, key), 'value'))
+    || !Number.isSafeInteger(policy.minimumReleaseAge) || policy.minimumReleaseAge < 1
+    || policy.minimumReleaseAgeStrict !== true)
+    throw new TypeError('explicit positive external age and strict native policy required');
+  if (Object.hasOwn(policy, 'minimumReleaseAgeExclude')) {
+    const exclusions=policy.minimumReleaseAgeExclude;
+    if (!Array.isArray(exclusions) || Object.getPrototypeOf(exclusions)!==Array.prototype
+      || exclusions.length!==houseScopePatterns.length || Reflect.ownKeys(exclusions).length!==houseScopePatterns.length+1
+      || houseScopePatterns.some((expected,index)=>{
+        const descriptor=Object.getOwnPropertyDescriptor(exclusions,String(index));
+        return !descriptor || !Object.hasOwn(descriptor,'value') || descriptor.value!==expected;
+      })) throw new TypeError('preexisting age exclusions require original source-policy reconciliation');
+  }
+  return Object.freeze({minimumReleaseAge: policy.minimumReleaseAge,
+    minimumReleaseAgeStrict: true, minimumReleaseAgeExclude: houseScopePatterns});
+}
+
 /** Check the complete parsed single-importer registry closure. Parsing remains
  * with the native PNPM owner; unknown lock layouts fail rather than being
  * approximated with regular-expression YAML reading. */
