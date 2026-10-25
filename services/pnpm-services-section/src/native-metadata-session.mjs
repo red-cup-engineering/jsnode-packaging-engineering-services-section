@@ -19,36 +19,8 @@ const own = (value, allowed, required = allowed) => {
 };
 const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
 const copy = value => JSON.parse(JSON.stringify(value));
-const environmentKeys = new Set(['PATH','HOME','XDG_CONFIG_HOME','NODE_USE_ENV_PROXY','NODE_EXTRA_CA_CERTS','SSL_CERT_FILE',
-  'HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy','NO_PROXY','no_proxy',
-  'NPM_CONFIG_PROXY','NPM_CONFIG_HTTP_PROXY','NPM_CONFIG_HTTPS_PROXY','NPM_CONFIG_NOPROXY',
-  'npm_config_proxy','npm_config_http_proxy','npm_config_https_proxy','npm_config_noproxy',
-  'NPM_CONFIG_PREFIX','NPM_CONFIG_AUDIT','NPM_CONFIG_FUND']);
-const relay = key => /proxy$/iu.test(key) && !/no_?proxy$/iu.test(key);
-function receiveEnvironment(input, policy) {
-  own(input, [...environmentKeys], ['PATH','HOME']);
-  own(policy, ['stable','relays']);
-  own(policy.stable, [...environmentKeys], []); own(policy.relays, [...environmentKeys].filter(relay), []);
-  const result = {}, stable = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value !== 'string' || value.length > 8192 || /[\0\r\n]/u.test(value)) throw new TypeError('bounded environment value required');
-    if (relay(key)) {
-      const expected = policy.relays[key]; own(expected, ['protocol','hostnameSHA256']);
-      if (!['http:','https:','socks5:','socks5h:'].includes(expected.protocol) || !/^[a-f0-9]{64}$/u.test(expected.hostnameSHA256)) throw new TypeError('fixed relay role required');
-      const url = new URL(value);
-      if (url.protocol !== expected.protocol || hash(url.hostname) !== expected.hostnameSHA256 || url.username || url.password || url.search || url.hash
-        || !['','/'].includes(url.pathname) || !url.port || Number(url.port) < 1) throw new TypeError('relay role changed or credential bearing');
-    } else {
-      if (typeof policy.stable[key] !== 'string' || !/^[a-f0-9]{64}$/u.test(policy.stable[key]) || hash(value) !== policy.stable[key]) throw new TypeError('stable environment changed');
-      stable[key] = hash(value);
-    }
-    result[key] = value;
-  }
-  if (Object.keys(policy.stable).some(key => !Object.hasOwn(result,key)) || Object.keys(policy.relays).some(key => !Object.hasOwn(result,key))) throw new TypeError('environment input absent');
-  return { values: freeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: hash(JSON.stringify(result)) } };
-}
-// Reuse unchanged transport admission for source-owned CI receiving.
-export { receiveEnvironment as receiveNativeTransportEnvironment };
+import { receiveNativeTransportEnvironment as receiveEnvironment } from './native-transport-environment.mjs';
+export { receiveNativeTransportEnvironment } from './native-transport-environment.mjs';
 
 async function absent(path) {
   try { await lstat(path); throw new TypeError('fresh native mirror must be absent'); }
@@ -58,7 +30,7 @@ async function directory(path) {
   if (typeof path !== 'string' || !isAbsolute(path) || await realpath(path) !== path || !(await lstat(path)).isDirectory()) throw new TypeError('real existing private directory required');
 }
 async function sourceIdentity() {
-  const files = ['package.json','src/native-metadata-session.mjs','src/native-metadata-data.mjs','src/native-metadata-preparation.mjs','src/native-provider.mjs','src/native-hook-profile.mjs'];
+  const files = ['package.json','src/native-metadata-session.mjs','src/native-metadata-data.mjs','src/native-transport-environment.mjs','src/native-metadata-preparation.mjs','src/native-provider.mjs','src/native-hook-profile.mjs'];
   const local = [];
   for (const path of files) local.push({path:join(root,path),sha256:hash(await regular(join(root,path),1048576))});
   const resolved = createRequire(import.meta.url).resolve('semver/package.json'), manifestPath = await realpath(resolved), dependencyRoot = dirname(manifestPath);

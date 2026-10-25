@@ -230,7 +230,7 @@ test('unpersisted fresh report or unrelated verdict cannot discharge the transit
 });
 test('changed observer is rejected before replacement code can execute',async t=>{
  const f=await offlineFixture(t),owner=join(f.root,'owner');await mkdir(join(owner,'src'),{recursive:true});
- for(const name of ['native-precall-admission.mjs','native-observation.mjs','native-provider.mjs','native-hook-profile.mjs'])
+ for(const name of ['native-precall-admission.mjs','native-observation.mjs','native-provider.mjs','native-hook-profile.mjs','native-transport-environment.mjs','native-metadata-data.mjs'])
   await copyFile(new URL('../src/'+name,import.meta.url),join(owner,'src',name));
  await copyFile(new URL('../package.json',import.meta.url),join(owner,'package.json'));
  const own=await import(new URL('file://'+join(owner,'src','native-precall-admission.mjs')));

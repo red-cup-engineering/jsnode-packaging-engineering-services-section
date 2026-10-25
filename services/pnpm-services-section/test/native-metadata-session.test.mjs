@@ -111,3 +111,30 @@ test('native null error is not the original executor result contract',options,as
  const f=await fixture(t),p=await f.service.prepare(f.input),launch=await f.service.revalidate(p.ticket,{phase:'producer',environment:f.input.environment});
  await assert.rejects(f.service.receive(p.ticket,{phase:'producer',executionReceipt:execution(launch.request,{error:null})}),/result contract/);
 });
+
+// NODE_USE_ENV_PROXY belongs to stable Node activation inputs, not URL roles.
+test('transport accepts exact stable Node proxy activation without classifying it as a relay', async () => {
+  const { receiveNativeTransportEnvironment } = await import('../src/native-metadata-session.mjs');
+  const { createHash } = await import('node:crypto');
+  const hash = text => createHash('sha256').update(text).digest('hex');
+  const environment = {PATH:'/usr/bin',HOME:'/private/home',NODE_USE_ENV_PROXY:'1'};
+  const policy = {stable:Object.fromEntries(Object.entries(environment).map(([key,value])=>[key,hash(value)])),relays:{}};
+  const received = receiveNativeTransportEnvironment(environment,policy);
+  assert.deepEqual(received.values,environment);
+  assert.throws(()=>receiveNativeTransportEnvironment({...environment,NODE_USE_ENV_PROXY:'0'},policy),/stable/);
+});
+
+test('malformed transport errors cannot disclose raw relay input', async () => {
+  const { receiveNativeTransportEnvironment } = await import('../src/native-metadata-session.mjs');
+  const environment={PATH:'/usr/bin',HOME:'/private/home',HTTPS_PROXY:'not a URL synthetic-secret'};
+  assert.throws(()=>receiveNativeTransportEnvironment(environment,{stable:{PATH:sha(environment.PATH),HOME:sha(environment.HOME)},
+    relays:{HTTPS_PROXY:{protocol:'http:',hostnameSHA256:sha('relay.example')}}}),error=>{
+      assert.equal(error.message,'malformed relay URL');assert.equal(Object.hasOwn(error,'input'),false);return true;
+    });
+});
+
+test('the public metadata subpath exposes its shared transport contract', async () => {
+  const publicApi=await import('../src/native-metadata-preparation.mjs');
+  const owner=await import('../src/native-metadata-session.mjs');
+  assert.equal(publicApi.receiveNativeTransportEnvironment,owner.receiveNativeTransportEnvironment);
+});

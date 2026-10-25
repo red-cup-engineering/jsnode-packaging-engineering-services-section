@@ -6,17 +6,22 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { inspectHookFreeYaml } from './native-hook-profile.mjs';
 import { hash, regular, provider } from './native-provider.mjs';
+import { receiveNativeTransportEnvironment } from './native-transport-environment.mjs';
+import { boundedClone } from './native-metadata-data.mjs';
 import { receiveNativeOfflineVerification } from './native-observation.mjs';
 
 const capabilities = new WeakMap();
 const offlineMode = 'offline-frozen';
 const lockRefresh = 'lockfile-refresh';
 const offlineLockRefresh = 'offline-lockfile-refresh';
+const inheritedTransport = 'inherited-native-transport';
 const noManagerPin = 'root-package-no-manager-pin';
 const own = (value, key) => Object.hasOwn(value, key);
 const refusal = reason => { throw new TypeError(`native pre-call profile: ${reason}`); };
 const shimHash = '67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const ownRecord = value => plain(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))
+  && Reflect.ownKeys(value).every(key => typeof key === 'string' && Object.getOwnPropertyDescriptor(value,key).enumerable && Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value')); 
 function registry(value) {
   let url; try { url = new URL(value); } catch { refusal('invalid registry'); }
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || (url.href !== value && url.href !== value + '/') || url.pathname !== '/') refusal('unsupported registry');
@@ -93,13 +98,13 @@ async function absent(path) {
   try { await lstat(path); } catch (error) { if (error.code === 'ENOENT') return {path, exists: false}; throw error; }
   refusal('unexpected configuration or alternate manifest at ' + path);
 }
-async function executable(name) {
+async function executable(name, env = process.env) {
   if (name.includes('/')) {
     if (!isAbsolute(name)) refusal('relative executable');
     await access(name, constants.X_OK);
     return realpath(name);
   }
-  for (const part of (process.env.PATH ?? '').split(':')) {
+  for (const part of (env.PATH ?? '').split(':')) {
     if (!isAbsolute(part)) refusal('PATH must contain only absolute directories');
     const path = join(part, name);
     try { const stat = await lstat(path); if (stat.isFile() || stat.isSymbolicLink()) { await access(path, constants.X_OK); return await realpath(path); } }
@@ -107,15 +112,25 @@ async function executable(name) {
   }
   refusal('executable not found');
 }
-function environment() {
-  const allowed = new Set(['PATH','LANG','LC_ALL','TZ','SystemRoot','WINDIR','HOME','TMPDIR','TEMP','TMP',
-    'npm_config_userconfig','npm_config_globalconfig','npm_config_ignore_scripts','npm_config_update_notifier','npm_config_audit','npm_config_fund']);
-  for (const key of Object.keys(process.env)) if (!allowed.has(key)) refusal('unsupported launch environment field ' + key);
+const workerKeys = new Set(['PATH','LANG','LC_ALL','TZ','SystemRoot','WINDIR','HOME','TMPDIR','TEMP','TMP',
+  'npm_config_userconfig','npm_config_globalconfig','npm_config_ignore_scripts','npm_config_update_notifier','npm_config_audit','npm_config_fund']);
+function environment(input) {
+  const explicit = input.environmentProfile === inheritedTransport;
+  const values = explicit ? input.environment : process.env;
+  // Only this already qualified transport grammar may widen the worker grammar.
+  // PATH/HOME are shared stable inputs; all other worker fields stay worker-owned.
+  const transport = explicit ? Object.fromEntries(Object.entries(values).filter(([key]) => !workerKeys.has(key) || ['PATH','HOME'].includes(key))) : null;
+  if (explicit) {
+    if (Object.hasOwn(values, 'NPM_CONFIG_PREFIX')) refusal('unsupported inherited prefix configuration');
+    receiveNativeTransportEnvironment(transport, input.environmentPolicy);
+  } else for (const key of Object.keys(values)) if (!workerKeys.has(key)) refusal('unsupported launch environment field ' + key);
+  for (const value of Object.values(values)) if (typeof value !== 'string' || value.length > 8192 || /[\0\r\n]/u.test(value)) refusal('bounded own-data environment required');
   for (const key of ['HOME','TMPDIR','TEMP','TMP','npm_config_userconfig','npm_config_globalconfig'])
-    if (!isAbsolute(process.env[key] ?? '') || resolve(process.env[key]) !== process.env[key]) refusal('missing or non-normalized environment path ' + key);
-  if (process.env.npm_config_ignore_scripts !== 'true') refusal('original worker npm control required');
-  for (const key of ['npm_config_update_notifier','npm_config_audit','npm_config_fund']) if (process.env[key] !== 'false') refusal('original worker control required: ' + key);
-  return hash(JSON.stringify(Object.keys(process.env).sort().map(key => [key, process.env[key]])));
+    if (!isAbsolute(values[key] ?? '') || resolve(values[key]) !== values[key]) refusal('missing or non-normalized environment path ' + key);
+  if (values.npm_config_ignore_scripts !== 'true') refusal('original worker npm control required');
+  for (const key of ['npm_config_update_notifier','npm_config_audit','npm_config_fund']) if (values[key] !== 'false') refusal('original worker control required: ' + key);
+  if (values.XDG_CONFIG_HOME !== undefined && (!isAbsolute(values.XDG_CONFIG_HOME) || resolve(values.XDG_CONFIG_HOME) !== values.XDG_CONFIG_HOME)) refusal('non-normalized configuration home');
+  return {values, sha256: hash(JSON.stringify(Object.keys(values).sort().map(key => [key, values[key]])))};
 }
 function workspace(text) {
   inspectHookFreeYaml(text);
@@ -139,7 +154,7 @@ function npmrc(text) {
   }
 }
 async function snapshot(input) {
-  const env = environment();
+  const launch = environment(input), env = launch.values;
   if (process.platform !== 'linux' || !isAbsolute(input.cwd) || await realpath(input.cwd) !== input.cwd) refusal('real Linux root required');
   const allowedCommands = commands(input.installArguments, input.qualificationMode, input.operation);
   const offline = [offlineMode, offlineLockRefresh].includes(input.qualificationMode);
@@ -151,8 +166,8 @@ async function snapshot(input) {
   const transformation = {kind: refreshing ? (offline ? 'pnpm.publisher-offline-lockfile-refresh.v1' : 'pnpm.publisher-lockfile-refresh.v1')
     : offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
   transformation.identity = hash(JSON.stringify(transformation));
-  const selected = await executable(input.pnpm);
-  if (await executable('node') !== await realpath(process.execPath)) refusal('PATH Node differs from receiving runtime');
+  const selected = await executable(input.pnpm, env);
+  if (await executable('node', env) !== await realpath(process.execPath)) refusal('PATH Node differs from receiving runtime');
   const root = dirname(dirname(selected)), entry = join(root, 'bin', 'pnpm.mjs');
   const supplier = await provider(process.execPath, [entry], input.cwd, undefined, false);
   if (supplier.provider.entrySHA256 !== 'ff3224d46b47fbb24a7e9fe15fededef7e00892d07d4e376b6762d4899906bfd'
@@ -177,23 +192,31 @@ async function snapshot(input) {
   const rc = await identity(join(input.cwd, '.npmrc')); if (rc.exists) npmrc(rc.text);
   files.push(manifest, ws, rc, await identity(join(input.cwd, 'pnpm-lock.yaml'), true));
   for (const key of ['npm_config_userconfig','npm_config_globalconfig']) {
-    const file = await identity(process.env[key], true); if (file.bytes !== 0) refusal('original empty worker config required'); files.push(file);
+    const file = await identity(env[key], true); if (file.bytes !== 0) refusal('original empty worker config required'); files.push(file);
   }
-  const home = process.env.HOME;
-  for (const path of [join(home,'.npmrc'), join(home,'.config','pnpm','config.yaml'), join(home,'.config','pnpm','auth.ini'),
+  const home = env.HOME, configHome = env.XDG_CONFIG_HOME ?? join(home, '.config');
+  for (const key of ['NODE_EXTRA_CA_CERTS','SSL_CERT_FILE']) if (env[key]) {
+    if (!isAbsolute(env[key]) || resolve(env[key]) !== env[key]) refusal('non-normalized CA input');
+    files.push(await identity(env[key], true, 1048576));
+  }
+  for (const path of [join(home,'.npmrc'), join(configHome,'pnpm','config.yaml'), join(configHome,'pnpm','auth.ini'),
+    ...(input.environmentProfile === inheritedTransport ? [join(configHome,'pnpm','rc')] : []),
     ...['package.json5','package.yaml','.pnpmfile.cjs','.pnpmfile.mjs'].map(name => join(input.cwd,name))]) files.push(await absent(path));
-  for (const name of ['native-precall-admission.mjs','native-hook-profile.mjs','native-provider.mjs']) files.push(await identity(fileURLToPath(new URL(name, import.meta.url)), true));
+  for (const name of ['native-precall-admission.mjs','native-hook-profile.mjs','native-provider.mjs','native-transport-environment.mjs','native-metadata-data.mjs']) files.push(await identity(fileURLToPath(new URL(name, import.meta.url)), true));
   files.push(await identity(fileURLToPath(new URL('../package.json', import.meta.url)), true));
   files.push(await identity(fileURLToPath(new URL('native-observation.mjs', import.meta.url)), true));
   return {kind: refreshing ? 'pnpm.publisher-lockfile-refresh-precall-profile.v1'
     : offline ? 'pnpm.publisher-offline-precall-profile.v1' : 'pnpm.publisher-precall-profile.v1',
     sourceProfile: input.sourceProfile ?? 'root-package-legacy-manager-pin',
-    ...(offline ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: env, supplier, allowedCommands, transformation,
+    ...(offline ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
     files: files.map(({text,...file}) => file)};
 }
 /** Static admission of the actual original publisher child. No process is run. */
 export async function receiveNativePrecallAdmission(input) {
-  if (!plain(input) || Object.keys(input).some(key => !['cwd','pnpm','installArguments','originalInstallArguments','qualificationMode','cacheRoot','operation','sourceProfile'].includes(key)) || typeof input.pnpm !== 'string') refusal('invalid admission request');
+  if (!ownRecord(input) || Object.keys(input).some(key => !['cwd','pnpm','installArguments','originalInstallArguments','qualificationMode','cacheRoot','operation','sourceProfile','environmentProfile','environment','environmentPolicy'].includes(key)) || typeof input.pnpm !== 'string') refusal('invalid admission request');
+  if (input.environmentProfile !== undefined && input.environmentProfile !== inheritedTransport) refusal('unsupported environment profile');
+  if ((input.environmentProfile === inheritedTransport) !== (input.environment !== undefined && input.environmentPolicy !== undefined)
+    || (input.environmentProfile === undefined && (input.environment !== undefined || input.environmentPolicy !== undefined))) refusal('explicit environment and transport policy must be paired');
   if (input.operation !== undefined && input.operation !== lockRefresh) refusal('unsupported operation');
   if (input.sourceProfile !== undefined && input.sourceProfile !== noManagerPin) refusal('unsupported source profile');
   if (input.qualificationMode !== undefined && ![offlineMode, offlineLockRefresh].includes(input.qualificationMode)) refusal('unsupported qualification mode');
@@ -201,6 +224,9 @@ export async function receiveNativePrecallAdmission(input) {
     || input.operation !== lockRefresh && input.qualificationMode === offlineLockRefresh) refusal('offline qualification does not match operation');
   if (input.qualificationMode === undefined && input.cacheRoot !== undefined) refusal('cache admission requires explicit offline mode');
   const frozen = {cwd: input.cwd, pnpm: input.pnpm,
+    ...(input.environmentProfile ? {environmentProfile: input.environmentProfile,
+      environment: Object.freeze(boundedClone(input.environment, 262144)),
+      environmentPolicy: boundedClone(input.environmentPolicy, 65536)} : {}),
     ...(input.operation === undefined ? {} : {operation: input.operation}),
     ...(input.sourceProfile === undefined ? {} : {sourceProfile: input.sourceProfile}),
     ...(input.qualificationMode === undefined ? {} : {qualificationMode: input.qualificationMode, cacheRoot: input.cacheRoot}), installArguments: input.installArguments?.slice(), originalInstallArguments: input.originalInstallArguments?.slice()};
@@ -213,7 +239,9 @@ export async function receiveNativePrecallAdmission(input) {
 /** Call before each native operation or original producer entry. Caller retains sole-writer custody. */
 export async function assertNativePrecallAdmission(capability, command) {
   const state = capabilities.get(capability); if (!state) refusal('unrecognized process-local capability');
+  if (command !== undefined && !ownRecord(command)) refusal('own-data command required');
   if (state.lockRefreshClosed) refusal('lock refresh receiving consumed the capability');
+  if (state.input.environmentProfile === inheritedTransport && command === undefined) refusal('explicit launch environment requires an exact command; producer entry is not admitted');
   if (state.input.operation === lockRefresh && command === undefined) refusal('lock refresh permits only its exact command, not producer entry');
   if (state.offlineFailed) refusal('offline receiving failed; capability is closed');
   if (state.offlineReceived && command !== undefined && isDeepStrictEqual(command.arguments, state.input.installArguments)) refusal('offline installation capability is single-use');
@@ -222,8 +250,11 @@ export async function assertNativePrecallAdmission(capability, command) {
   const current = await snapshot(state.input);
   if (!isDeepStrictEqual(current,state.received)) refusal('admitted source, provider or context changed');
   if (command !== undefined) {
-    if (!plain(command) || Object.keys(command).some(key => !['cwd','program','arguments'].includes(key)) || command.cwd !== current.cwd
-      || typeof command.program !== 'string' || await executable(command.program) !== current.selected
+    if (command.environment !== undefined) boundedClone(command.environment, 262144);
+    if (state.input.environmentProfile === inheritedTransport && !isDeepStrictEqual(command.environment, state.input.environment)) refusal('command environment differs from admitted launch');
+    if (state.input.environmentProfile === undefined && command.environment !== undefined) refusal('explicit command environment requires inherited transport profile');
+    if (!plain(command) || Object.keys(command).some(key => !['cwd','program','arguments','environment'].includes(key)) || command.cwd !== current.cwd
+      || typeof command.program !== 'string' || await executable(command.program, state.input.environment ?? process.env) !== current.selected
       || !current.allowedCommands.some(args => isDeepStrictEqual(args, command.arguments))) refusal('command outside admitted set');
   }
   return capability.identity;

@@ -372,3 +372,21 @@ native diagnostics listed in ci-native-qualification.json. Their original suppli
 and archive-reader obligations remain open; source/installed fixture success is
 not live application receiving. See native-ci-receiving.spec.md.
 
+
+### Explicit inherited transport in pre-call admission
+
+The optional `environmentProfile: 'inherited-native-transport'` takes the exact
+original worker `environment` plus the existing metadata `environmentPolicy`.
+It reuses one shared transport grammar, preserves each inherited relay role and
+alias unchanged, treats NODE_USE_ENV_PROXY as a stable scalar, and binds the
+selected CA files and HOME/XDG native configuration absences. It never resets the
+parent environment or removes a proxy. Unsupported configuration, credentials
+or preload inputs refuse. Command assertion must include the identical admitted
+`environment`; the original caller passes that object unchanged to its executor.
+The default original worker profile is unchanged. This is source/configuration
+admission only, not execution supervision or real Flow qualification; see PPA-23
+through PPA-26 for custody and outstanding original-worker requirements.
+
+The existing shared `receiveNativeTransportEnvironment` is exported through
+`./native-metadata-preparation` so original composing owners need not import a
+private PNPM module or reproduce its role grammar.

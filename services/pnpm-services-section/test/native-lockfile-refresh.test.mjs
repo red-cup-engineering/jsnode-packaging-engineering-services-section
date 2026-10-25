@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -182,4 +183,77 @@ test('native offline refresh refuses missing registry metadata without accepting
   const result=terminal();result.terminal.code=1;
   await assert.rejects(receiveNativeLockfileRefresh(cap,result),/complete successful/);
   assert.deepEqual(await readFile(join(f.cwd,'pnpm-lock.yaml')),before);
+});
+
+// These transport examples are synthetic role inputs, never credentials or live URLs.
+const transportPolicy=env=>{
+  const stable={},relays={};
+  for(const [key,value] of Object.entries(env)) {
+    if(['PATH','HOME'].includes(key)||!['PATH','LANG','LC_ALL','TZ','SystemRoot','WINDIR','HOME','TMPDIR','TEMP','TMP',
+      'npm_config_userconfig','npm_config_globalconfig','npm_config_ignore_scripts','npm_config_update_notifier','npm_config_audit','npm_config_fund'].includes(key)) {
+      if(key!=='NODE_USE_ENV_PROXY'&&/proxy$/iu.test(key)&&!/no_?proxy$/iu.test(key)) {const u=new URL(value);relays[key]={protocol:u.protocol,hostnameSHA256:hash(u.hostname)};}
+      else stable[key]=hash(value);
+    }
+  }
+  return {stable,relays};
+};
+const hash=text=>createHash('sha256').update(text).digest('hex');
+profileTest('explicit inherited transport composes the exact launch without resetting parent environment',async t=>{
+  const f=await fixture(t),ca=join(f.root,'ca.pem');await writeFile(ca,'synthetic CA bytes');
+  const environment={...f.env,HTTP_PROXY:'http://relay.example:1010',http_proxy:'http://relay.example:2020',
+    HTTPS_PROXY:'http://relay.example:3030',https_proxy:'http://relay.example:4040',ALL_PROXY:'socks5://other.example:5050',
+    NO_PROXY:'localhost',no_proxy:'127.0.0.1',NODE_USE_ENV_PROXY:'1',NODE_EXTRA_CA_CERTS:ca,SSL_CERT_FILE:ca};
+  const input={...f.input,environmentProfile:'inherited-native-transport',environment,environmentPolicy:transportPolicy(environment)};
+  process.env.UNRELATED_PARENT_CONTEXT='not passed to the native child';
+  const cap=await receiveNativePrecallAdmission(input);
+  const command={cwd:f.cwd,program:'pnpm',arguments:f.args,environment};
+  await assertNativePrecallAdmission(cap,command);
+  assert.equal(process.env.UNRELATED_PARENT_CONTEXT,'not passed to the native child');
+  assert.equal(environment.http_proxy,'http://relay.example:2020');assert.equal(environment.ALL_PROXY,'socks5://other.example:5050');
+  assert.equal(JSON.stringify(cap).includes('relay.example'),false);
+  await assert.rejects(assertNativePrecallAdmission(cap,{...command,environment:{...environment,http_proxy:'http://relay.example:2021'}}),/environment differs/);
+  await assert.rejects(assertNativePrecallAdmission(cap,{...command,environment:undefined}),/environment differs/);
+  await writeFile(ca,'changed CA bytes');
+  await assert.rejects(assertNativePrecallAdmission(cap,command),/changed/);
+});
+profileTest('explicit transport refuses unsupported config, unsafe relays and missing exact stable input',async t=>{
+  const f=await fixture(t),base={...f.env,HTTPS_PROXY:'http://relay.example:1010'},policy=transportPolicy(base);
+  const input=environment=>({...f.input,environmentProfile:'inherited-native-transport',environment,environmentPolicy:policy});
+  for(const value of ['http://user:secret@relay.example:1010','http://relay.example:1010/path','http://relay.example:1010/?query=x',
+    'http://relay.example:1010/#fragment','https://relay.example:1010','http://changed.example:1010'])
+    await assert.rejects(receiveNativePrecallAdmission(input({...base,HTTPS_PROXY:value})));
+  for(const key of ['NODE_OPTIONS','NODE_PATH','PNPM_CONFIG_PNPMFILE','NPM_CONFIG_PREFIX','npm_config_registry','UNRELATED'])
+    await assert.rejects(receiveNativePrecallAdmission(input({...base,[key]:'x'})));
+  await assert.rejects(receiveNativePrecallAdmission(input({...base,HOME:f.root})),/stable/);
+  const cap=await receiveNativePrecallAdmission(input(base));
+  await assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.args,environment:base});
+});
+profileTest('explicit XDG configuration and CA source custody cannot redirect or appear after admission',async t=>{
+  const f=await fixture(t),config=join(f.root,'config'),ca=join(f.root,'ca.pem');await mkdir(config);await writeFile(ca,'synthetic CA');
+  const environment={...f.env,XDG_CONFIG_HOME:config,NODE_EXTRA_CA_CERTS:ca};
+  const input={...f.input,environmentProfile:'inherited-native-transport',environment,environmentPolicy:transportPolicy(environment)};
+  const cap=await receiveNativePrecallAdmission(input);
+  await mkdir(join(config,'pnpm'));await writeFile(join(config,'pnpm','config.yaml'),'minimumReleaseAge: 0\n');
+  await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.args,environment}),/unexpected configuration/);
+  await rm(join(config,'pnpm','config.yaml'));
+  await rm(ca);await symlink(join(f.home,'npmrc'),ca);
+  await assert.rejects(receiveNativePrecallAdmission(input));
+});
+profileTest('explicit launch snapshots are own-data and detached from caller mutation',async t=>{
+  const f=await fixture(t),environment={...f.env},environmentPolicy=transportPolicy(environment);
+  const input={...f.input,environmentProfile:'inherited-native-transport',environment,environmentPolicy};
+  const cap=await receiveNativePrecallAdmission(input),original={...environment};
+  environment.TZ='changed';environmentPolicy.stable.HOME='a'.repeat(64);
+  await assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.args,environment:original});
+  let called=0;const bad={...original};Object.defineProperty(bad,'HTTPS_PROXY',{get(){called++;return 'http://relay.example:1010'},enumerable:true});
+  await assert.rejects(receiveNativePrecallAdmission({...input,environment:bad}));assert.equal(called,0);
+});
+
+profileTest('explicit transport never admits an implicit ordinary producer environment',async t=>{
+  const f=await fixture(t),environment={...f.env},base=f.input.originalInstallArguments.slice();base[1]='--frozen-lockfile';
+  const args=deriveNativeLifecycleDisabledInstallArguments(base);
+  const cap=await receiveNativePrecallAdmission({...f.input,operation:undefined,originalInstallArguments:base,installArguments:args,
+    environmentProfile:'inherited-native-transport',environment,environmentPolicy:transportPolicy(environment)});
+  await assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:['--version'],environment});
+  await assert.rejects(assertNativePrecallAdmission(cap),/producer entry is not admitted/);
 });

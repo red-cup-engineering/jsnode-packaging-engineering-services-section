@@ -165,4 +165,4 @@ export async function receiveNativeMetadataFile(query, { maximumBytes = 64 * 102
   finally { await handle?.close(); }
 }
 
-export { createNativeMetadataPreparationService } from './native-metadata-session.mjs';
+export { createNativeMetadataPreparationService, receiveNativeTransportEnvironment } from './native-metadata-session.mjs';
