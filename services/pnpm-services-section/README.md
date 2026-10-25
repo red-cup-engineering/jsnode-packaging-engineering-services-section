@@ -61,6 +61,26 @@ refreshing a lock. See PPA-17 through PPA-22 in
 receiving obligations. The default pinned/frozen and offline contracts are
 unchanged.
 
+### Bounded native metadata batches
+
+The existing `./native-metadata-preparation` export additionally provides
+`projectNativeMetadataBatchQuery`, `createNativeMetadataBatchPreparationService`
+and `receiveNativeMetadataBatchFiles`. This explicit source profile accepts
+one to four distinct exact names, retains complete original selection context
+once, and receives one original producer plus one original offline reader with
+the exact complete name/wanted matrix and every unchanged native mirror.
+It shares the existing configuration, transport, provider, source and ticket
+machinery; the one-name API remains unchanged. See `native-metadata-batch.spec.md`.
+
+Four names bound native alias fan-out, not HTTP bytes or transactions:
+`networkConcurrency: 1` does not serialize this native metadata path. Partial
+failure is nontransactional and cannot authorize retries, deletion or a partial
+accepted batch. Per-name all-version manifest/SRI/timestamp observations remain
+structural diagnostics; only one representative per name is selected by the
+native command. No strict-policy, archive, lock, installation or whole consumer
+closure qualification follows. Native batch qualification and original composing
+owner resource/lifetime admission remain required before batch activation.
+
 ### Optional exact-artifact qualification route
 
 This separately selected bounded policy permits a fresh first-party artifact only when its

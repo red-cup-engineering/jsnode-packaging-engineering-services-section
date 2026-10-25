@@ -26,3 +26,29 @@ export function boundedClone(value, maximumBytes, maximumStringLength = 8192) {
   }
   visit(value, 0); return JSON.parse(JSON.stringify(value));
 }
+
+// Native JSON.parse supplies syntax semantics. This is only a bounded top-level
+// package-key duplicate check, including equivalent escaped key spellings.
+export function parseBatchMetadataOutput(text) {
+  if (typeof text !== 'string' || text.length >= 1048576) throw new TypeError('bounded native batch JSON required');
+  const parsed = JSON.parse(text);
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new TypeError('native batch JSON object required');
+  const keys = new Set(); let depth = 0, keyExpected = false;
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (char === '"') {
+      const start = index++;
+      while (index < text.length && text[index] !== '"') { if (text[index] === '\\') index++; index++; }
+      if (depth === 1 && keyExpected) {
+        const key = JSON.parse(text.slice(start, index + 1));
+        if (keys.has(key)) throw new TypeError('duplicate native batch package key');
+        keys.add(key); keyExpected = false;
+      }
+    } else if (char === '{' || char === '[') {
+      if (++depth > 64) throw new TypeError('bounded native batch JSON depth required');
+      if (depth === 1) keyExpected = true;
+    } else if (char === '}' || char === ']') depth--;
+    else if (char === ',' && depth === 1) keyExpected = true;
+  }
+  return parsed;
+}

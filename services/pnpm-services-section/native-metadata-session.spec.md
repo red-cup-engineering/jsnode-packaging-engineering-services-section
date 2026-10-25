@@ -58,6 +58,12 @@ Producer file observation requires the existing native mirror reader's no-follow
 - No batch execution, installation or strict verifier runs in the service.
 
 ## Caller composition and finite tranche
+
+The additive four-name batch service is specified separately in
+`native-metadata-batch.spec.md`. It uses this same session/custody implementation
+with a fixed source-selected batch profile, distinct kinds and complete matrix/
+mirror receiving. Existing one-name inputs, states and meanings remain unchanged;
+the single-name absence and receiving rules below do not implicitly widen argv.
 An existing publisher/CI caller may supply an explicitly reviewed finite list and drive each ticket serially: prepare→issue producer request→existing executor→receive producer→issue offline reader request→existing executor→receive reader. Stop on first failed/unknown state. Persist original receipts and safe progress without inventing a new process runtime.
 
 The proposed four-name list remains unexecuted. Its authority is separate from the fulfilled one-query approval. Each command retains the original45s child-group deadline. Eight commands would provide360s of subprocess allowances, not a whole-job guarantee. Parent interruption does not establish detached child settlement.
