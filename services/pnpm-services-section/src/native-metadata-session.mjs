@@ -1,10 +1,10 @@
-import { boundedClone } from './native-metadata-data.mjs';
+import { boundedClone, parseBatchMetadataOutput } from './native-metadata-data.mjs';
 import { mkdir, open, readFile, realpath, lstat, readdir } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { isDeepStrictEqual } from 'node:util';
-import { projectNativeMetadataQuery, receiveNativeMetadataFile } from './native-metadata-preparation.mjs';
+import { projectNativeMetadataQuery, receiveNativeMetadataFile, projectNativeMetadataBatchQuery, receiveNativeMetadataBatchFiles } from './native-metadata-preparation.mjs';
 import { provider, regular, hash } from './native-provider.mjs';
 import { receiveMetadataConfigurationProfile } from './native-hook-profile.mjs';
 
@@ -65,6 +65,24 @@ async function receipt(s, name, value) {
 
 /** Executor-free source service. Issued requests are not process authenticity or replay prevention. */
 export function createNativeMetadataPreparationService() {
+  return createMetadataPreparationService(false);
+}
+
+/** Explicit four-name source profile; no execution, scheduling or retry port. */
+export function createNativeMetadataBatchPreparationService() {
+  return createMetadataPreparationService(true);
+}
+
+function createMetadataPreparationService(batch) {
+  const project = batch ? projectNativeMetadataBatchQuery : projectNativeMetadataQuery;
+  const observe = batch ? receiveNativeMetadataBatchFiles : receiveNativeMetadataFile;
+  const paths = query => batch ? query.expectedMirrorPaths : [query.expectedMirrorPath];
+  const observed = mirror => batch ? mirror.allFilesObserved : mirror.fileObserved;
+  const unchanged = (left, right) => batch
+    ? left.allFilesObserved && right.allFilesObserved && left.files.length === right.files.length
+      && left.files.every((file,index) => file.name === right.files[index].name && file.sha256 === right.files[index].sha256)
+    : left.fileObserved && left.sha256 === right.sha256;
+  const kind = suffix => batch ? `pnpm.metadata.batch.${suffix}.v1` : `pnpm.metadata.${suffix}.v1`;
   const sessions = new WeakMap();
   const state = ticket => { const s=sessions.get(ticket); if(!s) throw new TypeError('foreign metadata ticket'); return s; };
   async function custody(s) {
@@ -77,16 +95,16 @@ export function createNativeMetadataPreparationService() {
     for (const file of s.environmentFiles) if(hash(await regular(file.path,1048576))!==file.sha256) throw new TypeError('environment file changed');
     const builtin=await regular(s.builtin.path,1048576); if(hash(builtin)!==s.builtin.sha256) throw new TypeError('builtin config changed');
   }
-  return Object.freeze({kind:'pnpm.native-metadata-preparation.service.v1',
+  return Object.freeze({kind:batch?'pnpm.native-metadata-batch-preparation.service.v1':'pnpm.native-metadata-preparation.service.v1',
     async prepare(input) {
       own(input,['program','entry','query','receiptDirectory','environment','environmentPolicy','limits']);
       own(input.limits,['timeoutMilliseconds','outputLimit']);
       if(input.limits.timeoutMilliseconds!==45000 || input.limits.outputLimit!==1048576) throw new TypeError('qualified metadata limits required');
-      own(input.query,['name','selections','policy','canonical','registry','directory','cacheDirectory']);
-      const query=projectNativeMetadataQuery(input.query), environment=receiveEnvironment(input.environment,input.environmentPolicy);
+      own(input.query,[batch?'names':'name','selections','policy','canonical','registry','directory','cacheDirectory']);
+      const query=project(input.query), environment=receiveEnvironment(input.environment,input.environmentPolicy);
       const source=await sourceIdentity();
       await directory(dirname(query.directory)); await directory(input.receiptDirectory); await directory(query.cacheDirectory);
-      await absent(query.directory); await absent(query.expectedMirrorPath);
+      await absent(query.directory); for(const path of paths(query)) await absent(path);
       // Exact provider source identity only, never a version command.
       const native=await provider(input.program,[input.entry],dirname(query.directory),undefined,false);
       const builtinPath=join(dirname(dirname(native.provider.entry)),'dist','pnpmrc'), builtinBytes=await regular(builtinPath,1048576);
@@ -98,8 +116,8 @@ export function createNativeMetadataPreparationService() {
       const profile=await receiveMetadataConfigurationProfile(query,environment.values);
       const s={phase:'prepared-producer',busy:false,query,environment,environmentPolicy:freeze(copy(input.environmentPolicy)),environmentFiles,
         source,provider:native,program:input.program,entry:input.entry,receipts:input.receiptDirectory,limits:freeze(copy(input.limits)),profile,builtin:{path:builtinPath,sha256:hash(builtinBytes)}};
-      const saved=await receipt(s,'prepared',{kind:'pnpm.metadata.prepared.v1',query,provider:native,source,profile,environment:environment.identity});
-      const ticket=Object.freeze({kind:'pnpm.metadata.ticket.v1'});sessions.set(ticket,s);
+      const saved=await receipt(s,'prepared',{kind:kind('prepared'),query,provider:native,source,profile,environment:environment.identity});
+      const ticket=Object.freeze({kind:kind('ticket')});sessions.set(ticket,s);
       return freeze({ticket,projection:query,prepared:saved,provider:native});
     },
     async revalidate(ticket,input) {
@@ -110,11 +128,11 @@ export function createNativeMetadataPreparationService() {
       try {
         const environment=receiveEnvironment(input.environment,s.environmentPolicy); s.environment=environment;
         await custody(s);
-        if(input.phase==='producer') await absent(s.query.expectedMirrorPath);
-        else {const mirror=await receiveNativeMetadataFile(s.query);if(!mirror.fileObserved||mirror.sha256!==s.mirror.sha256)throw new TypeError('received metadata changed');}
+        if(input.phase==='producer') {for(const path of paths(s.query)) await absent(path);}
+        else {const mirror=await observe(s.query);if(!unchanged(mirror,s.mirror))throw new TypeError('received metadata changed');}
         const request=freeze({type:'JavascriptNodeCommandExecutionRequest',version:1,command:s.program,
           arguments:[s.entry,...s.query.arguments,...(input.phase==='reader'?['--config.offline=true']:[])],directory:s.query.directory,environment:environment.values,input:null});
-        await receipt(s,input.phase+'-launch',{kind:'pnpm.metadata.launch-intent.v1',phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:hash(JSON.stringify(request)),environment:environment.identity});
+        await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:hash(JSON.stringify(request)),environment:environment.identity});
         s.request=request;s.phase=input.phase+'-in-flight';return freeze({request,policy:s.limits});
       } catch(error){s.phase='failed';throw error;} finally{s.busy=false;}
     },
@@ -123,7 +141,7 @@ export function createNativeMetadataPreparationService() {
       if(!['producer','reader'].includes(input.phase)||s.phase!==input.phase+'-in-flight'||s.busy)throw new TypeError('metadata receiving transition refused');
       s.busy=true;
       try {
-        if(input.uncertain===true){s.phase='unknown';return freeze({accepted:false,state:'unknown',receipt:await receipt(s,input.phase+'-unknown',{kind:'pnpm.metadata.unknown.v1',phase:input.phase})});}
+        if(input.uncertain===true){s.phase='unknown';return freeze({accepted:false,state:'unknown',receipt:await receipt(s,input.phase+'-unknown',{kind:kind('unknown'),phase:input.phase})});}
         const execution=boundedClone(input.executionReceipt,16*1024*1024,1048576);
         own(execution,['type','version','request','result']);
         if(execution.type!=='JavascriptNodeCommandExecutionReceipt'||execution.version!==1||!isDeepStrictEqual(execution.request,s.request)) throw new TypeError('native receipt request mismatch');
@@ -135,13 +153,15 @@ export function createNativeMetadataPreparationService() {
         const raw=await receipt(s,input.phase+'-execution',execution);
         let custodyStatus='unchanged';try{await custody(s);}catch{custodyStatus='changed-or-unread';}
         const complete=native.stdout.length<s.limits.outputLimit&&native.stderr.length<s.limits.outputLimit;
-        let parsed=null;try{if(complete)parsed=JSON.parse(native.stdout);}catch{}
-        const mirror=await receiveNativeMetadataFile(s.query);
+        let parsed=null;try{if(complete)parsed=batch?parseBatchMetadataOutput(native.stdout):JSON.parse(native.stdout);}catch{}
+        const mirror=await observe(s.query);
+        const outputMatches=parsed&&typeof parsed==='object'&&!Array.isArray(parsed)&&(batch
+          ? Object.keys(parsed).length===s.query.names.length&&s.query.members.every(member=>Object.hasOwn(parsed,member.name)&&parsed[member.name]?.wanted===member.representative)
+          : parsed[s.query.name]?.wanted===s.query.representative);
         const accepted=custodyStatus==='unchanged'&&complete&&native.signal===null&&native.error===''&&[0,1].includes(native.status)
-          &&parsed&&typeof parsed==='object'&&!Array.isArray(parsed)&&parsed[s.query.name]?.wanted===s.query.representative&&mirror.fileObserved
-          &&(input.phase==='producer'||mirror.sha256===s.mirror.sha256);
+          &&outputMatches&&observed(mirror)&&(input.phase==='producer'||unchanged(mirror,s.mirror));
         s.phase=accepted?(input.phase==='producer'?'producer-received':'complete'):'failed';if(accepted)s.mirror=mirror;
-        const evidence={kind:'pnpm.metadata.received.v1',phase:input.phase,state:s.phase,accepted:Boolean(accepted),native:{status:native.status,signal:native.signal,errorPresent:native.error!==''},outputComplete:complete,custody:custodyStatus,raw,mirror,strictPolicyVerified:false,installationReceived:false};
+        const evidence={kind:kind('received'),phase:input.phase,state:s.phase,accepted:Boolean(accepted),native:{status:native.status,signal:native.signal,errorPresent:native.error!==''},outputComplete:complete,custody:custodyStatus,raw,mirror,strictPolicyVerified:false,installationReceived:false};
         return freeze({...evidence,receipt:await receipt(s,input.phase+'-received',evidence)});
       }catch(error){s.phase='failed';throw error;}finally{s.busy=false;}
     }
