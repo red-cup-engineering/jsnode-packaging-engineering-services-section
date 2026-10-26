@@ -103,3 +103,39 @@ export async function receiveMetadataConfigurationProfile(query, environment) {
   return { kind: 'pnpm.closed-metadata-profile.v1', cwd, absent: paths,
     files: Object.entries(query.files).map(([name, text]) => ({ path: join(cwd, name), sha256: hash(text) })) };
 }
+
+// A separate owned-hook profile for strict cached assembly. Existing hook-free
+// profiles and their Node24.19.0 provider remain unchanged.
+export async function receiveOwnedHookProfile(cwd) {
+ if(process.platform!=='linux'||!isAbsolute(cwd)||resolve(cwd)!==cwd||await realpath(cwd)!==cwd)throw new TypeError('real Linux assembly staging required');
+ const environment={};
+ for(const name of Object.keys(process.env).sort()){
+  const key=environmentSetting(name);
+  if(key||name==='NODE_OPTIONS'||name==='PNPM_NATIVE_OBSERVATION_CONFIG')throw new TypeError('ambient native configuration is outside the assembly profile');
+  if(['HOME','XDG_CONFIG_HOME'].includes(name))environment[name]=hash(process.env[name]);
+ }
+ const xdg=process.env.XDG_CONFIG_HOME;
+ if(xdg&&!isAbsolute(xdg))throw new TypeError('relative native configuration home is unsupported');
+ const configDir=xdg?join(xdg,'pnpm'):join(homedir(),'.config','pnpm');
+ const files=[];
+ for(const path of[join(cwd,'pnpm-workspace.yaml'),join(configDir,'config.yaml')]){
+  const entry=await optional(path);if(path===join(cwd,'pnpm-workspace.yaml')&&!entry.exists)throw new TypeError('owned native workspace policy required');
+  if(entry.exists)inspectHookFreeYaml(entry.text);
+  const {text,...identity}=entry;files.push(identity);
+ }
+ // Native registry routing is retained and bound; a second config parser or
+ // unqualified settings override is outside this deliberately closed profile.
+ for(const path of[join(cwd,'.npmrc'),join(homedir(),'.npmrc'),join(configDir,'rc'),'/etc/npmrc',resolve(process.execPath,'../../etc/npmrc')]){
+  const entry=await optional(path);
+  if(entry.exists)for(const line of entry.text.split(/\r?\n/u)){
+   if(!line.trim()||/^\s*[#;]/u.test(line))continue;
+   if(!/^(?:@[a-z0-9._-]+:)?registry=https:\/\/[^ \t\r\n]+\/\s*$/u.test(line)&&!/^\/\/[^ \t\r\n:]+\/(?:[A-Za-z0-9._~-]+\/)*:(?:username|_password|_authToken|_auth)=[^\r\n]+$/u.test(line))throw new TypeError('unqualified native rc setting outside registry-routing and credential profile');
+  }
+  const {text,...identity}=entry;files.push(identity);
+ }
+ const local=await optional(join(cwd,'.pnpmfile.cjs'));
+ const redirected=await optional(join(cwd,'.pnpmfile.mjs'));
+ if(redirected.exists)throw new TypeError('assembly profile admits only the owned canonical CJS hook');
+ const {text,...hook}=local;files.push(hook,redirected);
+ return{kind:'pnpm.closed-owned-hook-profile.v1',cwd,environment,files};
+}
