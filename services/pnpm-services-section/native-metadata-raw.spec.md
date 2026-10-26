@@ -69,3 +69,30 @@ abbreviated consumption, absent time and old/recent/missing modified, with no
 consumer policy mutation or archive request. A raw pair is not offline resolver
 age-readiness: native may legitimately refuse missing time rather than use the
 separate full mirror. No new exception or cache rewrite remedies that refusal.
+
+
+## Accepted metadata-cohort migration: RAW-1/RAW-7 and MT-25
+
+Main revision b191efaa7be1d33ca8bc53462cfd76eec0d6305f, MT-24 through MT-26,
+explicitly adds requiredProvider.supportedNodeVersions=[24.18.0,24.19.0] to the
+one-name and batch serialized projections. This narrowly supersedes RAW-1's
+whole-object byte identity promise: generated files, original input grammar,
+canonical policy, arguments, mirror paths, projectionSHA256 and v1 query kinds
+remain unchanged. The requiredProvider.node default remains24.19.0, with the
+same PNPM11.28.5 distribution; installation/observation do not gain a24.18 route.
+
+The original npm metadata composer calls the current source-bound projector and
+service in both parent and fixed child, rather than parsing a closed historical
+requiredProvider record. The batch receiver still rederives and compares the
+ENTIRE current projection, so old cross-source serialized projections cannot be
+adopted by omitting the cohort. Source/private ticket custody remains unchanged.
+This additive descriptor migration neither admits replay nor changes command
+semantics. A new query-kind version is not required for these received consumers;
+unknown consumers must be qualified independently, not assumed compatible.
+
+RAW-7 receiving now asserts the complete exact requiredProvider object, including
+only the explicitly adopted cohort, then removes ONLY that asserted added field
+from a test-owned clone and checks the unchanged original batch and one-name
+serialized golden digests. Any additional provider field or any drift elsewhere
+still fails. This is a precise migration assertion, not runtime normalization,
+replacement of the original goldens, or relaxation of provider/policy receiving.

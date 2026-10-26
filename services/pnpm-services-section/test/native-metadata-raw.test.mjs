@@ -32,10 +32,21 @@ const output=p=>Object.fromEntries(p.members.map(m=>[m.name,{wanted:m.representa
 const result=(launch,p,overrides={})=>execution(launch.request,{stdout:JSON.stringify(output(p)),...overrides});
 async function launched(t,opts={}){const f=await rawFixture(t),p=await f.service.prepare(f.input),launch=await f.service.revalidate(p.ticket,{phase:'producer',environment:f.input.environment});await mirrors(p.projection,opts);return{f,p,launch};}
 
-test('RAW1 original seven-field batch and one-name serialized projections are byte-compatible',()=>{
- // Digests captured read-only from the original immutable batch supplier for this exact fixture.
- assert.equal(sha(JSON.stringify(projectNativeMetadataBatchQuery(base()))),'215ddfa33d76e083665179287de8753c31f332bb7a800a6426d4bd57a029ff7c');
- assert.equal(sha(JSON.stringify(projectNativeMetadataQuery({...base(),name:'alpha'}))),'8625c0deed0d10658e95896c56f0ce9298675174e3f0231bc5dd95226c9f384b');
+test('RAW1/MT25 exact metadata cohort is the only additive serialized projection change',()=>{
+ // Original immutable supplier goldens remain unchanged. MT25 explicitly adds
+ // this exact metadata-only inventory, not new query/config/policy semantics.
+ const projections=[
+  [projectNativeMetadataBatchQuery(base()),'215ddfa33d76e083665179287de8753c31f332bb7a800a6426d4bd57a029ff7c'],
+  [projectNativeMetadataQuery({...base(),name:'alpha'}),'8625c0deed0d10658e95896c56f0ce9298675174e3f0231bc5dd95226c9f384b'],
+ ];
+ for(const [projection,originalDigest]of projections){
+  assert.deepEqual(projection.requiredProvider,{node:'24.19.0',supportedNodeVersions:['24.18.0','24.19.0'],pnpm:'11.28.5',
+   distributionSHA256:'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810'});
+  const legacy=JSON.parse(JSON.stringify(projection));
+  delete legacy.requiredProvider.supportedNodeVersions;
+  assert.equal(sha(JSON.stringify(legacy)),originalDigest);
+  assert.deepEqual(projection.requiredProvider.supportedNodeVersions,['24.18.0','24.19.0']);
+ }
 });
 test('RAW2-3 positive canonical policy is unchanged; only query workspace age is zero',()=>{
  const q=query(),before=JSON.stringify(q),p=projectNativeMetadataBatchQuery(q),full=projectNativeMetadataBatchQuery(base());

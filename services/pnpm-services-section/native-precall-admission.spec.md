@@ -1,5 +1,66 @@
 # Native publisher pre-call admission
 
+## Registry-consumer frozen source composition
+
+PPA-27. Guix's existing registry comparison must receive a committed standalone
+consumer without inventing an administrative workspace or a lock-refresh
+predecessor. `sourceProfile: "registry-consumer"` is an explicit frozen-only
+extension of the original pre-call owner. The package may omit packageManager
+or retain precisely pnpm@11.28.5. Existing activation, provider, hook, command,
+environment, registry and source-custody restrictions remain unchanged. It does
+not admit lock refresh, arbitrary source policy, registry resolution or runtime
+acceptance. The original no-manager-pin and default profiles remain unchanged.
+
+PPA-28. Preserve local workspace presence and bytes. The registry profile admits
+an explicit packages:[] or the native implicit root when packages is absent,
+literal age controls/exemption list and unique package-name→exact-version
+overrides. No aliases, interpolations, selectors, local protocols, nested
+configuration or broader workspace patterns are admitted. This admits original
+MetroPlat77a179 policy blob86dd7e9f unchanged, including all eight overrides and
+its authored wildcard exemptions; it neither creates nor widens exemptions.
+Other source profiles retain their old explicit-root contract. An absent workspace stays
+absent: no generated packages:[] file, ignore-workspace option or rewritten
+policy is supplied. The qualified native distribution's root finder searches
+upwards for pnpm-workspace.yaml and seven invalid spellings before evaluating
+membership (distribution lines303427–303498). Reject those alternative local
+spellings and, when local workspace is absent, all eight spellings plus .npmrc
+at every ancestor through filesystem root. This conservative absence proof
+refuses ambient discovery instead of reproducing native pattern membership.
+Bind every absence in the original pre-call snapshot; appearance, disappearance
+or policy mutation invalidates the held capability before the next operation.
+Existing closed environment also excludes all workspace-dir selectors. The
+exact native global/selected-user configuration checks remain authoritative.
+
+PPA-29. The chosen composition uses original offline-frozen initial receiving,
+not prepared-online/offline history fabricated from a refresh. Its fresh native
+verifier and persisted-history requirements remain unchanged; missing cached
+content or an unsupported cached policy decision refuses without online fallback.
+The original npm supervisor owns execution, complete bounded artifact inputs and
+installed-member comparisons. Pre-call admission alone is not a completed
+installation or Guix machine verdict. Existing prepared-history predecessor
+semantics are not widened by this source profile.
+
+PPA-30. Receive absent/present workspace with actual original PNPM, unchanged
+manifest/lock/policy, absent and exact manager pins, inherited/misspelled workspace
+refusal, appeared/disappeared configuration, forbidden activation and existing
+frozen process/partial/refusal controls. Native consumer tests remain separate
+from these source-profile tests; no unrelated passing test establishes requested
+change participation, a product or a target result.
+
+PPA-31. A separately selected `online-frozen` initial mode supports bounded
+procurement when strict native-store assembly's already-complete store does not
+exist. It is never selected after offline refusal. Derive the unchanged original
+frozen vector plus ignore-scripts, config.update-notifier=false and reporter=ndjson;
+retain authored policy and command registry/cache selection. Only exact install
+is admitted until receiving, then original read-only version probing. The new
+receiveNativeOnlineInstall consumes the actual finite original result through
+the same strict fresh-verifier and persisted-history receiver. Its receipt kind
+is distinct from offline. Cached/partial/missing verification closes capability
+without publication, rollback, history deletion or retry. Original offline and
+prepared-history contracts remain separate and unchanged. Include the actually
+revalidated native provider identity in initial installed receipts so the original
+composer can bind installed artifact comparison without a caller assertion.
+
 ## Explicit single-package lock refresh refinement
 
 PPA-17. The standalone registry consumer needs a source-owned native policy and
@@ -209,3 +270,139 @@ PNPM error handling can spawn ps through pidtree. A supported original supervise
 binding remains necessary before real acquisition/refresh. Metadata-native
 readability, bounded receipt tails, exact lock semantics, full graph resources
 and frozen installed receiving remain distinct obligations.
+
+## Candidate receiving scope (2026-10-26)
+
+The source-profile suite received25 passes and4 explicit skips (two original
+optional native cases and two new separately run native cases). The separate
+original PNPM11.28.5/Node24.19 assay received absent workspace and local-root
+ancestor-config isolation2/2. The composing original npm factory subsequently
+received a nonempty standalone unchanged-lock online fixture, fresh native
+verification plus persisted history, archive/selected installed members and real
+module import; a separately allocated offline-empty-store fixture refused with
+no registry request. No workspace or lock was synthesized by the operation.
+MetroPlat77a179's exact workspace fixture is static policy admission only, not
+its full native dependency closure or running product. Provider issuance, real
+consumer integration and Guix target measurement remain unreceived.
+
+The required public source/archive/installed CI suite keeps its original optional
+consumer case only. Supervisor-dependent standalone assays live in the explicit
+`test/native-registry-consumer-native.test.mjs` entry, named with exact required
+providers in ci-native-qualification.json.outsideThisReceiving. Invoking that
+entry without its original supervisor/supplier refuses, rather than skipping.
+Its shared fixture preserves the original source suite's setup unchanged. The
+separate source invocation receives25 passes/2 original optional skips; native
+CI enables the original native case, leaving only the private-consumer skip.
+No skip whitelist or required receivingTests enrollment is weakened.
+
+## Explicit source-qualified registry projection v2
+
+PPA-32. `registryProjectionPolicy: registry-projection-consumer-v2` refines only
+registry-consumer initial offline/online-frozen admission. Omission leaves strict
+original behavior unchanged. Prepared/refresh profiles refuse rather than claim
+qualified reuse. Original private capability and fresh policy receiving remain
+mandatory; no new process executor, cache writer, native observation, or runtime
+branch inference is introduced.
+
+PPA-33. Native PNPM defaults side-effects-cache to true (qualified distribution
+line177557); resolveSideEffectsCache lines179010–179022 makes boolean false disable
+reads and writes. Therefore v2 requires the actual authored local workspace literal
+`sideEffectsCache: false`. It does not inject configuration, rewrite source, or
+mistake ignore-scripts for cache-read suppression. Only this explicit refinement
+admits that exact workspace field/value. Existing closed configuration/environment
+and hook absence proofs remain. Manifest pnpm configuration and lock root fields
+outside lockfileVersion/settings/overrides/importers/packages/snapshots refuse;
+patch/alternate manifest transforms and remote side-effects settings are not
+admitted. All source/configuration identities are retained and revalidated.
+
+PPA-34. Bind actual original dist/worker.js SHA256
+5878ae8493ead2e083a4fbf33844d2d463ecebb1a1cd3fc86c04be16721bf156
+in the original snapshot, separately from launcher/entry/distribution. The
+source-qualified closed route set pnpm11-registry-cafs-and-link-v1 covers buffer-map,
+buffer-stream (including large entry), verified-store-reuse and linked-tree reuse
+under the composing bounded registry archive domain. It never asserts observedRoute;
+that field is null. Native file-stream transport-spill remains excluded by the
+composing compressed64MiB limit. Selected installed member bytes/modes/bin receiving
+remain required even for cache reuse; native cache verification is not represented
+as a fresh hash of every CAFS byte.
+
+PPA-35. Retain original cache allocation/base directory identities and hash their
+ordered original cacheCustody.directory records as storeAllocationSHA256. Effective
+store is exactly configuredBase/v11. It may be absent before native execution;
+only the original one-shot successful frozen receiver may admit its transition to
+an owned real unredirected directory. Existing effective store device/inode/owner/
+mode must survive unchanged. Store contents/history are neither emptied nor deleted.
+Before-call appearance/replacement and post-receiving replacement refuse. Physical
+custody is bounded by the existing sole-writer allocation, not a hostile same-UID
+sandbox. Before/after hashes identify these directory custody records, not an
+assertion that every store file is unchanged or rehashed.
+
+PPA-36. `receiveNativeRegistryProjectionBinding(capability)` only accepts the
+original private admission after successful original frozen receiving, re-reads
+source/provider/store custody, and returns deeply immutable process-local facts.
+`assertNativeRegistryProjectionBinding(binding)` rejects fabricated or serialized
+copies using a private WeakMap and revalidates actual custody. The composing factory
+must retain this authority privately; its artifact adapter selects only schema
+fields and adds actual archive/request/receipt identities. JSON facts alone are
+not an execution capability. A new fixed worker reconstructs admission from actual
+inputs, never from serialized proof. V2 success is source-qualified route evidence,
+not observed branch evidence, installed package equality, release, or real MetroPlat
+receiving. A cached policy result still refuses under the original fresh-only
+initial receiver; lawful routine reuse requires independently qualified receiving,
+not removal of native history or fallback after refusal.
+
+## Same-consumer routine verification and read-only source custody
+
+PPA-37. Initial fresh receiving now retains its actual successful snapshot as a
+private `initialReceived` checkpoint. Existing prepared admission accepts that
+original checkpoint alongside refreshed/prepared predecessors; no serialized
+receipt is admitted. It consumes the predecessor once, re-reads exact source,
+provider, allocation and history, and reuses preparedHistory's same-path/stat
+causality. Lock bytes alone do not excuse inode/mtime drift. For projection v2,
+only the existing prepared-offline command/reporting contract is admitted;
+prepared-online cannot prove a cached native policy event and refuses.
+
+PPA-38. The original prepared receiver requires complete successful execution,
+unchanged history/stat and the original cached event tied to held verifiedAt.
+It preserves cached-native/freshPolicyRecomputationReceived:false semantics.
+Projection v2 additionally requires the already-present owned effective v11
+store to retain exact physical custody and derives a new private projection
+binding only after successful prepared receiving. The next routine verification
+uses the genuine prepared successor, never a consumed predecessor. Actual
+installed-member/bin comparisons and import remain factory responsibilities.
+Static prepared admission in the fixed child admits only command/configuration;
+without causal private history receiving it cannot issue a received projection
+binding. Fresh-only receiving is unchanged and still closes on cached output.
+Cross-path cached-history admission, history deletion, forced recomputation,
+post-refusal fallback and cross-process success-deserialization are not provided.
+
+PPA-39. `receiveNativeRegistryProjectionSourceCustody(input)` receives the original
+lifecycle-disabled source input with sourceProfile registry-consumer and the
+explicit v2 policy, but forbids qualificationMode/cacheRoot/operation. It reuses
+snapshot, actual worker/provider and closed configuration validation, including
+authored sideEffectsCache:false and unsupported lock-transform refusal. Its
+private capability is source observation only, has no store/installation claim,
+and is always refused by assertNativePrecallAdmission. The paired
+`assertNativeRegistryProjectionSourceCustody(capability)` only re-reads custody.
+It cannot become an installation predecessor or native projection binding. This
+supports optional original sourceDirectory without broadening strict command
+admission or writing an administrative workspace. Default behavior stays intact.
+
+PPA-40. Qualify forged/cloned/foreign predecessor, one-use success and failure,
+exact source/config/history/store and same-byte lock-stat invalidation, mismatched
+cached timestamp, partial output, failed terminal, unchanged fresh-only refusal,
+source-only execution refusal and genuine successive routine transitions. Static
+synthetic state tests never establish native runtime policy or extraction routes.
+Native qualification must execute the original same-path offline command after
+fresh receiving, preserve actual source/tree/cache/history and compare selected
+installed members, bins and consumer import through the original factory. Retain
+all failed or uncertain attempts; no old closed attempt is rehabilitated.
+
+PPA-41. Preserve canonical main's native-store-custody source/spec/tests and
+package enrollments alongside PR8's registry-consumer source/fixture enrollments.
+New projection and routine tests must be included in package test,
+receivingTests and files so the original source/archive/installed CI gate runs
+them with its exact supplier. Direct local tests are not publication receiving.
+The unrelated permission-migration operation remains separately authorized; no
+routine factory or projection path invokes it. These changes introduce no new
+executor, inference service, policy exemption table or alternative CI controller.

@@ -170,3 +170,29 @@ test('DELTA10 selected preflight data has exact own-data shape and does not invo
  const fixture=add();let calls=0;const change={...fixture.change};Object.defineProperty(change,'next',{enumerable:true,get(){calls++;return fixture.change.next}});
  assert.throws(()=>inspect({lock:fixture.beforeLock,manifest:fixture.afterManifest,change}),/own-data/);assert.equal(calls,0);
 });
+
+function unchanged(){const x=registryInput();x.profile='unchanged-registry-consumer';x.manifest.devDependencies={peer:'1.0.0'};x.manifest.peerDependencies={peer:'1.0.0'};x.manifest.peerDependenciesMeta={peer:{optional:true}};return x;}
+test('DELTA11 unchanged peer-development role is explicit, exact, immutable and not freshness',()=>{
+ const x=unchanged(),before=clone(x),r=inspect(x);assert.equal(r.accepted,true);assert.equal(r.profile,x.profile);assert.deepEqual(x,before);assert.equal(r.installationReceived,false);
+ const old=clone(x);delete old.profile;assert.equal(inspect(old).accepted,false);
+ delete x.manifest.peerDependenciesMeta;assert.equal(inspect(x).accepted,true,'required peer-development role also valid');
+});
+for(const [label,mutate]of [
+ ['conflicting-version',x=>x.manifest.peerDependencies.peer='2.0.0'],
+ ['runtime-peer-duplicate',x=>{delete x.manifest.devDependencies;x.manifest.dependencies.peer='1.0.0'}],
+ ['optional-peer-duplicate',x=>{delete x.manifest.devDependencies;x.manifest.optionalDependencies={peer:'1.0.0'}}],
+ ['three-roles',x=>x.manifest.dependencies.peer='1.0.0'],
+ ['undeclared-peer',x=>x.manifest.peerDependenciesMeta.other={optional:true}],
+ ['false-optional',x=>x.manifest.peerDependenciesMeta.peer.optional=false],
+ ['metadata-extra',x=>x.manifest.peerDependenciesMeta.peer.injected=true],
+ ['metadata-array',x=>x.manifest.peerDependenciesMeta=[]],
+ ['peer-range',x=>x.manifest.peerDependencies.peer='^1.0.0'],
+ ['executable-config',x=>x.manifest.pnpm={hooks:{readPackage:'evil'}}],
+ ['runtime-activation',x=>x.manifest.devEngines={runtime:{name:'node'}}],
+ ['unknown-lock-field',x=>x.lock.injectWorkspacePackages=true],
+ ['dangling-edge',x=>x.lock.snapshots['kept@1.0.0'].dependencies={missing:'1.0.0'}]
+])test('DELTA11 refuses '+label,()=>{const x=unchanged();mutate(x);assert.equal(inspect(x).accepted,false);});
+test('DELTA11 optional metadata requires own finite closed data before evaluation',()=>{
+ const x=unchanged();let called=0;Object.defineProperty(x.manifest.peerDependenciesMeta.peer,'optional',{enumerable:true,get(){called++;return true}});assert.throws(()=>inspect(x),/own-data/);assert.equal(called,0);
+ assert.throws(()=>inspect({...unchanged(),change:add().change}),/exact/);assert.throws(()=>inspect({...unchanged(),profile:'anything'}),/explicit/);
+});

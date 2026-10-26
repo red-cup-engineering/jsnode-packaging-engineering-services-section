@@ -115,3 +115,19 @@ ranges must be ordinary semver registry declarations, never aliases or local/git
 protocols. This does not authenticate the supplied manifests/SRI or prove that
 other cached registry manifests cannot differ from inherited snapshots. Original
 metadata/archive receiving and native offline refusal retain their own boundary.
+
+DELTA-11. Explicit `profile: 'unchanged-registry-consumer'` is a third closed
+input shape, exactly {lock,manifest,profile}; it cannot be combined with change.
+The existing unqualified and change profiles remain byte-semantically strict.
+Only this unchanged profile permits root peerDependenciesMeta, a record whose
+keys are declared peer names and whose values are exactly {optional:true}.
+Only peerDependencies and devDependencies may repeat one name, and only with
+the same exact version. A peer declaration describes compatibility, while its
+same-version development declaration supplies this library's test/build host;
+it does not require a separate peer importer entry. Other role duplication,
+conflicting versions, unknown metadata/configuration and executable activation
+continue to refuse. All complete registry closure, opaque peer-context and
+finite-data checks remain unchanged. No lock freshness, optional-peer presence,
+artifact authority or native policy result is inferred. Actual native frozen
+execution owns those facts. Initial-frozen npm composition selects this profile
+explicitly; refresh/add/replace do not. No package-name exceptions are allowed.
