@@ -57,7 +57,10 @@
     "test/native-store-assembly-native.test.mjs",
     "test/fixtures/metroplat-workspace-77a179.yaml",
     "test/native-precall-fixture.mjs",
-    "test/native-registry-consumer-native.test.mjs"
+    "test/native-registry-consumer-native.test.mjs",
+    "test/native-store-custody.test.mjs",
+    "test/native-registry-projection-precall.test.mjs",
+    "test/native-registry-routine-precall.test.mjs"
   ],
   "receivingTests": [
     "test/first-party-qualification.test.mjs",
@@ -72,10 +75,13 @@
     "test/native-metadata-raw.test.mjs",
     "test/native-lock-delta.test.mjs",
     "test/native-prepared-installation.test.mjs",
-    "test/native-store-assembly.test.mjs"
+    "test/native-store-assembly.test.mjs",
+    "test/native-store-custody.test.mjs",
+    "test/native-registry-projection-precall.test.mjs",
+    "test/native-registry-routine-precall.test.mjs"
   ],
   "scripts": {
-    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs test/native-metadata-session.test.mjs test/native-precall-admission.test.mjs test/native-offline-verification.test.mjs test/native-lockfile-refresh.test.mjs test/native-metadata-batch.test.mjs test/native-metadata-raw.test.mjs test/native-lock-delta.test.mjs test/native-prepared-installation.test.mjs test/native-store-assembly.test.mjs",
+    "test": "node --test test/first-party-qualification.test.mjs test/native-observation.test.mjs test/native-metadata-preparation.test.mjs test/native-installation.test.mjs test/native-metadata-session.test.mjs test/native-precall-admission.test.mjs test/native-offline-verification.test.mjs test/native-lockfile-refresh.test.mjs test/native-metadata-batch.test.mjs test/native-metadata-raw.test.mjs test/native-lock-delta.test.mjs test/native-prepared-installation.test.mjs test/native-store-assembly.test.mjs test/native-store-custody.test.mjs test/native-registry-projection-precall.test.mjs test/native-registry-routine-precall.test.mjs",
     "test:ci": "node scripts/receive-native-ci.mjs"
   },
   "publishConfig": {

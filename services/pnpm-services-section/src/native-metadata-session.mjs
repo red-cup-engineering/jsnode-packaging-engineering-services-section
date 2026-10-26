@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { isDeepStrictEqual } from 'node:util';
 import { projectNativeMetadataQuery, receiveNativeMetadataFile, projectNativeMetadataBatchQuery, receiveNativeMetadataBatchFiles } from './native-metadata-preparation.mjs';
-import { provider, regular, hash } from './native-provider.mjs';
+import { metadataProvider as provider, regular, hash } from './native-provider.mjs';
 import { receiveMetadataConfigurationProfile } from './native-hook-profile.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -169,3 +169,4 @@ function createMetadataPreparationService(batch) {
     }
   });
 }
+

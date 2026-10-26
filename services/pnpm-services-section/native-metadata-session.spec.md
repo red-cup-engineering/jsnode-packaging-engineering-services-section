@@ -109,3 +109,24 @@ normal-close descendant-custody gap or authorize a native run.
 Malformed relay URLs now produce a fixed refusal without the URL parser's raw
 input property. This preserves shape refusal without leaking an unadmitted value
 through an exception. Credential-bearing URL refusal remains unchanged.
+
+
+## Node 24.18 metadata qualification and composition
+MT-24. The metadata producer/reader supports exact Node 24.18.0 in addition to
+24.19.0 with the same original PNPM 11.28.5 distribution. This lets installed
+CRG prepare missing policy metadata before its separately qualified 24.18
+frozen store assembly. No alternate runtime installation is required.
+MT-25. A metadata-specific provider binding owns that allowance. Existing
+installation and observation provider contracts retain their exact 24.19
+requirement; store assembly retains its existing exact 24.18 requirement.
+The original projection's node field remains its default, with an additive
+supportedNodeVersions inventory. The native provider still binds the running
+program, original CLI, manifest, distribution bytes and source custody.
+MT-26. Receive the original native producer/reader suite on 24.18, including
+missing mirror, missing publication time, HTTP failure, bounded timeout and
+unknown outcome. Receive ticket and batch controls with no skips. Qualification
+is metadata only: no native lock policy acceptance, store fill or installed
+Koios acceptance follows. Original callers own finite complete inventories,
+resource admission, native execution and retained receipts. Do not retry an
+uncertain producer or use a subset of mirrors as complete closure evidence.
+

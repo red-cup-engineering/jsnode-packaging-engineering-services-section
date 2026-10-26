@@ -195,7 +195,10 @@ export function compareNativeRootDependencyLockDelta(input){
 /** Conservative pre-effect input classification, not a native lock parser or
  * resolver. In particular, no registry-only result grants archive/store effects. */
 export function inspectNativeRegistryLockProfile(input){
- const value=finiteClone(input);exactKeys(value,record(value)&&own(value,'change')?['lock','manifest','change']:['lock','manifest']);
+ const value=finiteClone(input);
+ const unchanged=record(value)&&own(value,'profile');
+ exactKeys(value,unchanged?['lock','manifest','profile']:record(value)&&own(value,'change')?['lock','manifest','change']:['lock','manifest']);
+ if(unchanged&&value.profile!=='unchanged-registry-consumer')throw new TypeError('explicit unchanged registry consumer profile required');
  const result={kind:'pnpm.native-registry-lock-profile-diagnostic.v1',accepted:false,semanticComparisonOnly:true,
   nativeExecutionReceived:false,policyVerified:false,artifactVerificationReceived:false,installationReceived:false};
  const exactVersion=v=>typeof v==='string'&&v.length<=128&&versionPattern.test(v)&&semver.valid(v)!==null;
@@ -219,12 +222,18 @@ export function inspectNativeRegistryLockProfile(input){
   if(own(lock,'overrides')){requireScope(record(lock.overrides),'unsupported-lock-overrides');for(const [selector,version]of Object.entries(lock.overrides)){
    if(!validName(selector))packageKey(selector);requireScope(exactVersion(version),'unsupported-lock-overrides');}}
   requireScope(record(manifest)&&validName(manifest.name),'consumer-manifest-required');
-  for(const key of ['pnpm','overrides','resolutions','workspaces','dependenciesMeta','peerDependenciesMeta'])requireScope(!own(manifest,key),'unsupported-manifest-configuration:'+key);
+  for(const key of ['pnpm','overrides','resolutions','workspaces','dependenciesMeta',...(!unchanged?['peerDependenciesMeta']:[])])requireScope(!own(manifest,key),'unsupported-manifest-configuration:'+key);
+  if(unchanged&&own(manifest,'peerDependenciesMeta')){
+   requireScope(record(manifest.peerDependenciesMeta),'unsupported-consumer-peer-metadata');
+   for(const [name,meta]of Object.entries(manifest.peerDependenciesMeta))requireScope(validName(name)&&own(manifest.peerDependencies??{},name)&&record(meta)&&Object.keys(meta).length===1&&meta.optional===true,'unsupported-consumer-peer-metadata');
+  }
   if(own(manifest,'packageManager'))requireScope(manifest.packageManager==='pnpm@11.28.5','unsupported-manifest-package-manager');
   for(const key of ['engines','devEngines'])if(own(manifest,key))requireScope(record(manifest[key])&&!own(manifest[key],'runtime')&&!own(manifest[key],'packageManager')&&Object.values(manifest[key]).every(v=>typeof v==='string'),'unsupported-manifest-runtime-configuration');
-  const declared=new Set();for(const field of dependencyFields){if(!own(manifest,field))continue;
+  const declared=new Set(),roles=new Map();for(const field of dependencyFields){if(!own(manifest,field))continue;
    requireScope(record(manifest[field]),'exact-manifest-registry-map-required');for(const [name,version]of Object.entries(manifest[field])){
-    requireScope(validName(name)&&exactVersion(version)&&!declared.has(name),'exact-unique-manifest-registry-dependency-required');declared.add(name);}}
+    const prior=roles.get(name);
+    const peerDevelopment=unchanged&&field==='peerDependencies'&&prior?.field==='devDependencies'&&prior.version===version;
+    requireScope(validName(name)&&exactVersion(version)&&(!declared.has(name)||peerDevelopment),'exact-unique-manifest-registry-dependency-required');declared.add(name);roles.set(name,{field,version});}}
   const packages=lock.packages??Object.create(null),snapshots=lock.snapshots??Object.create(null),represented=new Set();
   for(const [key,pkg]of Object.entries(packages)){
    packageKey(key);fields(pkg,['resolution','engines','cpu','os','libc','deprecated','hasBin','peerDependencies','peerDependenciesMeta'],'unsupported-registry-package-fields');
@@ -278,6 +287,7 @@ export function inspectNativeRegistryLockProfile(input){
    }
    result.selection={kind:change.kind,name,fromVersion:prior?.version??null,toVersion:next.version};
   }
+  if(unchanged)result.profile='unchanged-registry-consumer';
   result.accepted=true;result.reason='complete-registry-only-input-profile';result.counts={packages:Object.keys(packages).length,snapshots:Object.keys(snapshots).length,references,manifestDeclarations:declared.size};
  }catch(error){if(!(error instanceof Refusal))throw error;result.reason=error.message;}
  return freeze(result);

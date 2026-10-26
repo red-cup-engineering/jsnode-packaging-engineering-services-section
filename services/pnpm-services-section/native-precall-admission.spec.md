@@ -294,3 +294,115 @@ Its shared fixture preserves the original source suite's setup unchanged. The
 separate source invocation receives25 passes/2 original optional skips; native
 CI enables the original native case, leaving only the private-consumer skip.
 No skip whitelist or required receivingTests enrollment is weakened.
+
+## Explicit source-qualified registry projection v2
+
+PPA-32. `registryProjectionPolicy: registry-projection-consumer-v2` refines only
+registry-consumer initial offline/online-frozen admission. Omission leaves strict
+original behavior unchanged. Prepared/refresh profiles refuse rather than claim
+qualified reuse. Original private capability and fresh policy receiving remain
+mandatory; no new process executor, cache writer, native observation, or runtime
+branch inference is introduced.
+
+PPA-33. Native PNPM defaults side-effects-cache to true (qualified distribution
+line177557); resolveSideEffectsCache lines179010–179022 makes boolean false disable
+reads and writes. Therefore v2 requires the actual authored local workspace literal
+`sideEffectsCache: false`. It does not inject configuration, rewrite source, or
+mistake ignore-scripts for cache-read suppression. Only this explicit refinement
+admits that exact workspace field/value. Existing closed configuration/environment
+and hook absence proofs remain. Manifest pnpm configuration and lock root fields
+outside lockfileVersion/settings/overrides/importers/packages/snapshots refuse;
+patch/alternate manifest transforms and remote side-effects settings are not
+admitted. All source/configuration identities are retained and revalidated.
+
+PPA-34. Bind actual original dist/worker.js SHA256
+5878ae8493ead2e083a4fbf33844d2d463ecebb1a1cd3fc86c04be16721bf156
+in the original snapshot, separately from launcher/entry/distribution. The
+source-qualified closed route set pnpm11-registry-cafs-and-link-v1 covers buffer-map,
+buffer-stream (including large entry), verified-store-reuse and linked-tree reuse
+under the composing bounded registry archive domain. It never asserts observedRoute;
+that field is null. Native file-stream transport-spill remains excluded by the
+composing compressed64MiB limit. Selected installed member bytes/modes/bin receiving
+remain required even for cache reuse; native cache verification is not represented
+as a fresh hash of every CAFS byte.
+
+PPA-35. Retain original cache allocation/base directory identities and hash their
+ordered original cacheCustody.directory records as storeAllocationSHA256. Effective
+store is exactly configuredBase/v11. It may be absent before native execution;
+only the original one-shot successful frozen receiver may admit its transition to
+an owned real unredirected directory. Existing effective store device/inode/owner/
+mode must survive unchanged. Store contents/history are neither emptied nor deleted.
+Before-call appearance/replacement and post-receiving replacement refuse. Physical
+custody is bounded by the existing sole-writer allocation, not a hostile same-UID
+sandbox. Before/after hashes identify these directory custody records, not an
+assertion that every store file is unchanged or rehashed.
+
+PPA-36. `receiveNativeRegistryProjectionBinding(capability)` only accepts the
+original private admission after successful original frozen receiving, re-reads
+source/provider/store custody, and returns deeply immutable process-local facts.
+`assertNativeRegistryProjectionBinding(binding)` rejects fabricated or serialized
+copies using a private WeakMap and revalidates actual custody. The composing factory
+must retain this authority privately; its artifact adapter selects only schema
+fields and adds actual archive/request/receipt identities. JSON facts alone are
+not an execution capability. A new fixed worker reconstructs admission from actual
+inputs, never from serialized proof. V2 success is source-qualified route evidence,
+not observed branch evidence, installed package equality, release, or real MetroPlat
+receiving. A cached policy result still refuses under the original fresh-only
+initial receiver; lawful routine reuse requires independently qualified receiving,
+not removal of native history or fallback after refusal.
+
+## Same-consumer routine verification and read-only source custody
+
+PPA-37. Initial fresh receiving now retains its actual successful snapshot as a
+private `initialReceived` checkpoint. Existing prepared admission accepts that
+original checkpoint alongside refreshed/prepared predecessors; no serialized
+receipt is admitted. It consumes the predecessor once, re-reads exact source,
+provider, allocation and history, and reuses preparedHistory's same-path/stat
+causality. Lock bytes alone do not excuse inode/mtime drift. For projection v2,
+only the existing prepared-offline command/reporting contract is admitted;
+prepared-online cannot prove a cached native policy event and refuses.
+
+PPA-38. The original prepared receiver requires complete successful execution,
+unchanged history/stat and the original cached event tied to held verifiedAt.
+It preserves cached-native/freshPolicyRecomputationReceived:false semantics.
+Projection v2 additionally requires the already-present owned effective v11
+store to retain exact physical custody and derives a new private projection
+binding only after successful prepared receiving. The next routine verification
+uses the genuine prepared successor, never a consumed predecessor. Actual
+installed-member/bin comparisons and import remain factory responsibilities.
+Static prepared admission in the fixed child admits only command/configuration;
+without causal private history receiving it cannot issue a received projection
+binding. Fresh-only receiving is unchanged and still closes on cached output.
+Cross-path cached-history admission, history deletion, forced recomputation,
+post-refusal fallback and cross-process success-deserialization are not provided.
+
+PPA-39. `receiveNativeRegistryProjectionSourceCustody(input)` receives the original
+lifecycle-disabled source input with sourceProfile registry-consumer and the
+explicit v2 policy, but forbids qualificationMode/cacheRoot/operation. It reuses
+snapshot, actual worker/provider and closed configuration validation, including
+authored sideEffectsCache:false and unsupported lock-transform refusal. Its
+private capability is source observation only, has no store/installation claim,
+and is always refused by assertNativePrecallAdmission. The paired
+`assertNativeRegistryProjectionSourceCustody(capability)` only re-reads custody.
+It cannot become an installation predecessor or native projection binding. This
+supports optional original sourceDirectory without broadening strict command
+admission or writing an administrative workspace. Default behavior stays intact.
+
+PPA-40. Qualify forged/cloned/foreign predecessor, one-use success and failure,
+exact source/config/history/store and same-byte lock-stat invalidation, mismatched
+cached timestamp, partial output, failed terminal, unchanged fresh-only refusal,
+source-only execution refusal and genuine successive routine transitions. Static
+synthetic state tests never establish native runtime policy or extraction routes.
+Native qualification must execute the original same-path offline command after
+fresh receiving, preserve actual source/tree/cache/history and compare selected
+installed members, bins and consumer import through the original factory. Retain
+all failed or uncertain attempts; no old closed attempt is rehabilitated.
+
+PPA-41. Preserve canonical main's native-store-custody source/spec/tests and
+package enrollments alongside PR8's registry-consumer source/fixture enrollments.
+New projection and routine tests must be included in package test,
+receivingTests and files so the original source/archive/installed CI gate runs
+them with its exact supplier. Direct local tests are not publication receiving.
+The unrelated permission-migration operation remains separately authorized; no
+routine factory or projection path invokes it. These changes introduce no new
+executor, inference service, policy exemption table or alternative CI controller.

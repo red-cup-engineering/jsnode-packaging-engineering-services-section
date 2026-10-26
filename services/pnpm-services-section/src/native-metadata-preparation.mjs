@@ -95,7 +95,7 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
     selectedVersions: selected.map(record => record.version), originalSelections: retained, canonical: identity, policy: clone(policy),
     directory, cacheDirectory, expectedMirrorPath, files, arguments: args,
     projectionSHA256: sha(projectionBytes),
-    requiredProvider: { node: '24.19.0', pnpm: '11.28.5', distributionSHA256: 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810' } });
+    requiredProvider: { node: '24.19.0', supportedNodeVersions: ['24.18.0', '24.19.0'], pnpm: '11.28.5', distributionSHA256: 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810' } });
 }
 
 /** At most four exact native aliases; concurrency is bounded by this name count,
@@ -267,3 +267,4 @@ export async function receiveNativeMetadataBatchFiles(query, options = {}) {
 }
 
 export { createNativeMetadataPreparationService, createNativeMetadataBatchPreparationService, receiveNativeTransportEnvironment } from './native-metadata-session.mjs';
+

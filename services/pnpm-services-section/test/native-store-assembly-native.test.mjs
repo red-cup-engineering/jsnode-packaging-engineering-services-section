@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,readFile,copyFile,lstat,realpath,unlink} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,copyFile,lstat,realpath,unlink,chmod} from 'node:fs/promises';
 import {tmpdir} from 'node:os';import {join,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';import {createHash} from 'node:crypto';
 import {execFile} from 'node:child_process';import {promisify} from 'node:util';
@@ -16,7 +16,7 @@ test('original PNPM11.28.5 executes frozen offline imports under native exclusiv
  assert.equal(distribution,'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810');
  const root=await mkdtemp(join(tmpdir(),'pnpm-native-store-assembly-'));
  const seed=join(root,'seed'),stage=join(root,'consumer'),storeBase=join(root,'native-store'),cache=join(root,'metadata');
- await mkdir(seed);await mkdir(stage);
+ await mkdir(seed,{mode:0o700});await mkdir(stage,{mode:0o700});
  let phase='seed',report={kind:'pnpm.native-store-assembly.source-qualification',root,sourceOnly:true,production:false,provider:{node:process.version,pnpm:supplier.version,distribution}};
  const record=async()=>writeFile(join(root,'receiving.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
  const run=async(args,cwd,label)=>{
@@ -36,6 +36,12 @@ test('original PNPM11.28.5 executes frozen offline imports under native exclusiv
   const seedResult=await run(['install','--no-frozen-lockfile','--ignore-scripts','--store-dir',storeBase,'--cache-dir',cache,'--reporter=append-only'],seed,'seed');
   const nativeStore=(await run(['--store-dir',storeBase,'store','path'],seed,'store-path')).stdout.trim();
   assert.equal(nativeStore,join(storeBase,'v11'));
+  const service=createNativeStoreAssemblyService();
+  const initialIndex=hash(await readFile(join(nativeStore,'index.db')));
+  const initialCustody=await service.receiveStoreOwnerPermissions({entry,cwd:seed,storeBase});
+  assert.equal(initialCustody.state,'received');
+  assert.equal(hash(await readFile(join(nativeStore,'index.db'))),initialIndex);
+  report={...report,initialCustody};
   await copyFile(join(seed,'pnpm-lock.yaml'),join(stage,'pnpm-lock.yaml'));
   const lockBefore=await readFile(join(stage,'pnpm-lock.yaml'));
   const indexBefore=hash(await readFile(join(nativeStore,'index.db')));
@@ -60,9 +66,16 @@ test('original PNPM11.28.5 executes frozen offline imports under native exclusiv
    wantedLockSHA256:hash(lockBefore),indexSHA256:indexBefore,imports:rows.at(-1),
    localHookPreserved:true,lifecycleExecuted:false,seedOutputBytes:Buffer.byteLength(seedResult.stdout)};
   phase='prepared-original-service';await record();
-  const serviceStage=join(root,'service-consumer');await mkdir(serviceStage);
+  const serviceStage=join(root,'service-consumer');await mkdir(serviceStage,{mode:0o700});
   for(const name of['package.json','pnpm-lock.yaml','pnpm-workspace.yaml','.npmrc','.pnpmfile.cjs'])await copyFile(join(stage,name),join(serviceStage,name));
-  const service=createNativeStoreAssemblyService();
+  // Reuse the original owner that admitted the seeded store.
+  await chmod(storeBase,0o775);await chmod(nativeStore,0o775);
+  await assert.rejects(service.prepare({entry,cwd:serviceStage,storeBase,receiptDirectory:root,policyArguments:[]}),/owned unredirected assembly directory/);
+  const ownerPermissions=await service.receiveStoreOwnerPermissions({entry,cwd:serviceStage,storeBase});
+  assert.equal(ownerPermissions.state,'received');
+  for(const path of[storeBase,nativeStore])assert.equal((await lstat(path)).mode&0o777,0o700);
+  assert.equal(hash(await readFile(join(nativeStore,'index.db'))),indexBefore);
+  report={...report,ownerPermissions};
   const prepared=await service.prepare({entry,cwd:serviceStage,storeBase,receiptDirectory:root,policyArguments:['--config.minimumReleaseAgeStrict=true','--config.minimumReleaseAge=0']});
   await assert.rejects(service.revalidate({...prepared.session}),/foreign/);
   await service.revalidate(prepared.session);
@@ -72,7 +85,7 @@ test('original PNPM11.28.5 executes frozen offline imports under native exclusiv
   assert.equal(hash(await readFile(join(serviceStage,'pnpm-lock.yaml'))),hash(lockBefore));
   assert.equal(hash(await readFile(join(nativeStore,'index.db'))),indexBefore);
   await assert.rejects(service.withStoreRead(prepared.session,()=>null),/single use/);
-  const missingStage=join(root,'missing-cache-consumer');await mkdir(missingStage);
+  const missingStage=join(root,'missing-cache-consumer');await mkdir(missingStage,{mode:0o700});
   for(const name of['package.json','pnpm-lock.yaml','pnpm-workspace.yaml','.npmrc','.pnpmfile.cjs'])await copyFile(join(stage,name),join(missingStage,name));
   const payloadDigest=createHash('sha512').update(await readFile(installed)).digest('hex');
   const missingPayload=join(nativeStore,'files',payloadDigest.slice(0,2),payloadDigest.slice(2));
@@ -84,7 +97,7 @@ test('original PNPM11.28.5 executes frozen offline imports under native exclusiv
   const refused=await service.receive(missing.session,refusedOutcome);
   assert.equal(refused.accepted,false);assert.equal(hash(await readFile(join(nativeStore,'index.db'))),indexBefore);
   await assert.rejects(lstat(missingPayload),{code:'ENOENT'});
-  const changedStage=join(root,'changed-hook-consumer');await mkdir(changedStage);
+  const changedStage=join(root,'changed-hook-consumer');await mkdir(changedStage,{mode:0o700});
   for(const name of['package.json','pnpm-lock.yaml','pnpm-workspace.yaml','.npmrc','.pnpmfile.cjs'])await copyFile(join(stage,name),join(changedStage,name));
   const changed=await service.prepare({entry,cwd:changedStage,storeBase,receiptDirectory:root,policyArguments:[]});
   await writeFile(join(changedStage,'.pnpmfile.cjs'),'throw new Error("must not execute");\n');
