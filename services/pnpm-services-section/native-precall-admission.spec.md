@@ -1,5 +1,66 @@
 # Native publisher pre-call admission
 
+## Registry-consumer frozen source composition
+
+PPA-27. Guix's existing registry comparison must receive a committed standalone
+consumer without inventing an administrative workspace or a lock-refresh
+predecessor. `sourceProfile: "registry-consumer"` is an explicit frozen-only
+extension of the original pre-call owner. The package may omit packageManager
+or retain precisely pnpm@11.28.5. Existing activation, provider, hook, command,
+environment, registry and source-custody restrictions remain unchanged. It does
+not admit lock refresh, arbitrary source policy, registry resolution or runtime
+acceptance. The original no-manager-pin and default profiles remain unchanged.
+
+PPA-28. Preserve local workspace presence and bytes. The registry profile admits
+an explicit packages:[] or the native implicit root when packages is absent,
+literal age controls/exemption list and unique package-name→exact-version
+overrides. No aliases, interpolations, selectors, local protocols, nested
+configuration or broader workspace patterns are admitted. This admits original
+MetroPlat77a179 policy blob86dd7e9f unchanged, including all eight overrides and
+its authored wildcard exemptions; it neither creates nor widens exemptions.
+Other source profiles retain their old explicit-root contract. An absent workspace stays
+absent: no generated packages:[] file, ignore-workspace option or rewritten
+policy is supplied. The qualified native distribution's root finder searches
+upwards for pnpm-workspace.yaml and seven invalid spellings before evaluating
+membership (distribution lines303427–303498). Reject those alternative local
+spellings and, when local workspace is absent, all eight spellings plus .npmrc
+at every ancestor through filesystem root. This conservative absence proof
+refuses ambient discovery instead of reproducing native pattern membership.
+Bind every absence in the original pre-call snapshot; appearance, disappearance
+or policy mutation invalidates the held capability before the next operation.
+Existing closed environment also excludes all workspace-dir selectors. The
+exact native global/selected-user configuration checks remain authoritative.
+
+PPA-29. The chosen composition uses original offline-frozen initial receiving,
+not prepared-online/offline history fabricated from a refresh. Its fresh native
+verifier and persisted-history requirements remain unchanged; missing cached
+content or an unsupported cached policy decision refuses without online fallback.
+The original npm supervisor owns execution, complete bounded artifact inputs and
+installed-member comparisons. Pre-call admission alone is not a completed
+installation or Guix machine verdict. Existing prepared-history predecessor
+semantics are not widened by this source profile.
+
+PPA-30. Receive absent/present workspace with actual original PNPM, unchanged
+manifest/lock/policy, absent and exact manager pins, inherited/misspelled workspace
+refusal, appeared/disappeared configuration, forbidden activation and existing
+frozen process/partial/refusal controls. Native consumer tests remain separate
+from these source-profile tests; no unrelated passing test establishes requested
+change participation, a product or a target result.
+
+PPA-31. A separately selected `online-frozen` initial mode supports bounded
+procurement when strict native-store assembly's already-complete store does not
+exist. It is never selected after offline refusal. Derive the unchanged original
+frozen vector plus ignore-scripts, config.update-notifier=false and reporter=ndjson;
+retain authored policy and command registry/cache selection. Only exact install
+is admitted until receiving, then original read-only version probing. The new
+receiveNativeOnlineInstall consumes the actual finite original result through
+the same strict fresh-verifier and persisted-history receiver. Its receipt kind
+is distinct from offline. Cached/partial/missing verification closes capability
+without publication, rollback, history deletion or retry. Original offline and
+prepared-history contracts remain separate and unchanged. Include the actually
+revalidated native provider identity in initial installed receipts so the original
+composer can bind installed artifact comparison without a caller assertion.
+
 ## Explicit single-package lock refresh refinement
 
 PPA-17. The standalone registry consumer needs a source-owned native policy and
@@ -209,3 +270,17 @@ PNPM error handling can spawn ps through pidtree. A supported original supervise
 binding remains necessary before real acquisition/refresh. Metadata-native
 readability, bounded receipt tails, exact lock semantics, full graph resources
 and frozen installed receiving remain distinct obligations.
+
+## Candidate receiving scope (2026-10-26)
+
+The source-profile suite received25 passes and4 explicit skips (two original
+optional native cases and two new separately run native cases). The separate
+original PNPM11.28.5/Node24.19 assay received absent workspace and local-root
+ancestor-config isolation2/2. The composing original npm factory subsequently
+received a nonempty standalone unchanged-lock online fixture, fresh native
+verification plus persisted history, archive/selected installed members and real
+module import; a separately allocated offline-empty-store fixture refused with
+no registry request. No workspace or lock was synthesized by the operation.
+MetroPlat77a179's exact workspace fixture is static policy admission only, not
+its full native dependency closure or running product. Provider issuance, real
+consumer integration and Guix target measurement remain unreceived.

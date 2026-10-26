@@ -12,12 +12,14 @@ import { receiveNativeOfflineVerification, receiveNativeCachedVerification } fro
 
 const capabilities = new WeakMap();
 const offlineMode = 'offline-frozen';
+const onlineMode = 'online-frozen';
 const preparedOfflineMode = 'prepared-offline-frozen';
 const preparedOnlineMode = 'prepared-online-frozen';
 const lockRefresh = 'lockfile-refresh';
 const offlineLockRefresh = 'offline-lockfile-refresh';
 const inheritedTransport = 'inherited-native-transport';
 const noManagerPin = 'root-package-no-manager-pin';
+const registryConsumer = 'registry-consumer';
 const own = (value, key) => Object.hasOwn(value, key);
 const refusal = reason => { throw new TypeError(`native pre-call profile: ${reason}`); };
 const shimHash = '67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad';
@@ -54,6 +56,13 @@ export function deriveNativeOfflineLockfileRefreshArguments(originalArguments) {
     && originalArguments[11] === '--offline' && originalArguments[12] === '--reporter=ndjson';
   return Object.freeze([...deriveNativeLockfileRefreshArguments(derived ? originalArguments.slice(0, 11) : originalArguments),
     '--offline', '--reporter=ndjson']);
+}
+/** Separately selected initial online frozen receiving; never offline fallback. */
+export function deriveNativeOnlineFrozenInstallArguments(originalArguments) {
+  const derived = Array.isArray(originalArguments) && originalArguments.length === 12
+    && originalArguments[10] === '--config.update-notifier=false' && originalArguments[11] === '--reporter=ndjson';
+  return Object.freeze([...deriveNativeLifecycleDisabledInstallArguments(derived ? originalArguments.slice(0, 10) : originalArguments),
+    '--config.update-notifier=false', '--reporter=ndjson']);
 }
 /** Explicit offline qualification, never automatic fallback or policy rewriting. */
 export function deriveNativeOfflineFrozenInstallArguments(originalArguments) {
@@ -107,6 +116,10 @@ function commands(args, mode, operation) {
     if (!isDeepStrictEqual(args, deriveNativePreparedOnlineInstallArguments(args))) refusal('explicit prepared online grammar required');
     return [args.slice(), ['--version']];
   }
+  if (mode === onlineMode) {
+    if (!isDeepStrictEqual(args, deriveNativeOnlineFrozenInstallArguments(args))) refusal('explicit online frozen reporter grammar required');
+    return [args.slice(), ['--version']];
+  }
   if (mode === offlineMode) {
     if (!Array.isArray(args) || args.length !== 12 || args[10] !== '--offline' || args[11] !== '--reporter=ndjson') refusal('explicit offline reporter grammar required');
     commands(args.slice(0, 10));
@@ -158,9 +171,10 @@ function environment(input) {
   if (values.XDG_CONFIG_HOME !== undefined && (!isAbsolute(values.XDG_CONFIG_HOME) || resolve(values.XDG_CONFIG_HOME) !== values.XDG_CONFIG_HOME)) refusal('non-normalized configuration home');
   return {values, sha256: hash(JSON.stringify(Object.keys(values).sort().map(key => [key, values[key]])))};
 }
-function workspace(text) {
+function workspace(text, registry = false) {
   inspectHookFreeYaml(text);
   if (text.includes('${')) refusal('configuration interpolation unsupported');
+  if (registry) return registryWorkspace(text);
   const seen = new Set();
   for (const line of text.split(/\r?\n/u)) {
     if (!line.trim() || /^\s*#/u.test(line) || /^ /u.test(line)) continue;
@@ -171,6 +185,30 @@ function workspace(text) {
   }
   if (!seen.has('packages')) refusal('explicit root-only workspace required');
 }
+function registryWorkspace(text) {
+  const seen=new Set(),overrides=new Set();let parent;
+  const name=/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u;
+  const version=/^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?(?:\+[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$/u;
+  for(const line of text.split(/\r?\n/u)){
+    if(!line.trim()||/^\s*#/u.test(line))continue;
+    if(!line.startsWith(' ')){
+      const root=/^([A-Za-z][A-Za-z0-9]*): *(.*?) *(?:#.*)?$/u.exec(line);
+      if(!root||seen.has(root[1])||!['packages','minimumReleaseAge','minimumReleaseAgeStrict','minimumReleaseAgeExclude','overrides'].includes(root[1]))refusal('unsupported registry workspace setting');
+      seen.add(parent=root[1]);const value=root[2];
+      if(parent==='packages'&&value!=='[]'||parent==='minimumReleaseAge'&&!/^(?:0|[1-9][0-9]*)$/u.test(value)
+        ||parent==='minimumReleaseAgeStrict'&&!['true','false'].includes(value)
+        ||['minimumReleaseAgeExclude','overrides'].includes(parent)&&value!=='')refusal('unsupported registry workspace value');
+    }else if(parent==='overrides'){
+      const entry=/^  (?:'([^']+)'|"([^"]+)"|([^:\s]+)): +(?:'([^']+)'|"([^"]+)"|([^\s]+)) *(?:#.*)?$/u.exec(line);
+      const key=entry&&(entry[1]??entry[2]??entry[3]),value=entry&&(entry[4]??entry[5]??entry[6]);
+      if(!entry||!name.test(key)||!version.test(value)||overrides.has(key))refusal('registry overrides require unique exact package versions');
+      overrides.add(key);
+    }else if(parent==='minimumReleaseAgeExclude'){
+      const entry=/^  - (?:'([^']+)'|"([^"]+)"|([^\s]+)) *(?:#.*)?$/u.exec(line);
+      if(!entry||!/^[@a-z0-9*][@a-zA-Z0-9._/*+-]*$/u.test(entry[1]??entry[2]??entry[3]))refusal('unsupported literal registry age exemption');
+    }else refusal('unsupported nested registry workspace value');
+  }
+}
 function npmrc(text) {
   for (const line of text.split(/\r?\n/u)) {
     if (!line.trim() || /^\s*[#;]/u.test(line)) continue;
@@ -178,6 +216,21 @@ function npmrc(text) {
     if (!match) refusal('unsupported project registry configuration');
     registry(match[1]);
   }
+}
+// The qualified native root finder searches these names upwards before
+// deciding membership. An absent local workspace is not absence of policy.
+const workspaceNames = ['pnpm-workspace.yaml','pnpm-workspaces.yaml','pnpm-workspaces.yml',
+  'pnpm-workspace.yml','.pnpm-workspace.yaml','.pnpm-workspace.yml','.pnpm-workspaces.yaml','.pnpm-workspaces.yml'];
+async function registryWorkspaceCustody(cwd, local) {
+  const files = [];
+  for (const name of workspaceNames.slice(1)) files.push(await absent(join(cwd,name)));
+  if (!local.exists) {
+    for (let parent = dirname(cwd); ; parent = dirname(parent)) {
+      for (const name of [...workspaceNames,'.npmrc']) files.push(await absent(join(parent,name)));
+      if (dirname(parent) === parent) break;
+    }
+  }
+  return files;
 }
 async function snapshot(input) {
   const launch = environment(input), env = launch.values;
@@ -188,12 +241,14 @@ async function snapshot(input) {
   const derived = refreshing ? (offline ? deriveNativeOfflineLockfileRefreshArguments : deriveNativeLockfileRefreshArguments)(input.originalInstallArguments)
     : input.qualificationMode === preparedOfflineMode ? deriveNativePreparedOfflineInstallArguments(input.originalInstallArguments)
     : input.qualificationMode === preparedOnlineMode ? deriveNativePreparedOnlineInstallArguments(input.originalInstallArguments)
+    : input.qualificationMode === onlineMode ? deriveNativeOnlineFrozenInstallArguments(input.originalInstallArguments)
     : offline ? deriveNativeOfflineFrozenInstallArguments(input.originalInstallArguments)
     : deriveNativeLifecycleDisabledInstallArguments(input.originalInstallArguments);
   if (!isDeepStrictEqual(derived, input.installArguments)) refusal('original and derived command differ');
   const transformation = {kind: refreshing ? (offline ? 'pnpm.publisher-offline-lockfile-refresh.v1' : 'pnpm.publisher-lockfile-refresh.v1')
     : input.qualificationMode === preparedOfflineMode ? 'pnpm.prepared-offline-frozen.v1'
     : input.qualificationMode === preparedOnlineMode ? 'pnpm.prepared-online-frozen.v1'
+    : input.qualificationMode === onlineMode ? 'pnpm.publisher-online-frozen.v1'
     : offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
   transformation.identity = hash(JSON.stringify(transformation));
   const selected = await executable(input.pnpm, env);
@@ -213,12 +268,16 @@ async function snapshot(input) {
   const nodePath = await realpath(process.execPath), nodeBytes = await regular(nodePath, 268435456);
   files.push({path: nodePath, exists: true, sha256: hash(nodeBytes), bytes: nodeBytes.length});
   const manifest = await identity(join(input.cwd, 'package.json'), true), pkg = JSON.parse(manifest.text);
-  if (!plain(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager') : pkg.packageManager !== 'pnpm@11.28.5'))
+  if (!plain(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager')
+    : input.sourceProfile === registryConsumer ? own(pkg,'packageManager') && pkg.packageManager !== 'pnpm@11.28.5'
+    : pkg.packageManager !== 'pnpm@11.28.5'))
     refusal(input.sourceProfile === noManagerPin ? 'no manager declaration permitted in explicit no-pin profile' : 'exact legacy manager pin required');
   for (const field of ['engines','devEngines']) if (own(pkg, field)) {
     if (!plain(pkg[field]) || own(pkg[field], 'runtime') || own(pkg[field], 'packageManager')) refusal('manager/runtime activation declaration unsupported');
   }
-  const ws = await identity(join(input.cwd, 'pnpm-workspace.yaml'), true); workspace(ws.text);
+  const ws = await identity(join(input.cwd, 'pnpm-workspace.yaml'), input.sourceProfile !== registryConsumer);
+  if (ws.exists) workspace(ws.text,input.sourceProfile === registryConsumer);
+  if (input.sourceProfile === registryConsumer) files.push(...await registryWorkspaceCustody(input.cwd,ws));
   const rc = await identity(join(input.cwd, '.npmrc')); if (rc.exists) npmrc(rc.text);
   files.push(manifest, ws, rc, await identity(join(input.cwd, 'pnpm-lock.yaml'), true));
   for (const key of ['npm_config_userconfig','npm_config_globalconfig']) {
@@ -238,9 +297,10 @@ async function snapshot(input) {
   return {kind: refreshing ? 'pnpm.publisher-lockfile-refresh-precall-profile.v1'
     : input.qualificationMode === preparedOfflineMode ? 'pnpm.prepared-offline-precall-profile.v1'
     : input.qualificationMode === preparedOnlineMode ? 'pnpm.prepared-online-precall-profile.v1'
+    : input.qualificationMode === onlineMode ? 'pnpm.publisher-online-precall-profile.v1'
     : offline ? 'pnpm.publisher-offline-precall-profile.v1' : 'pnpm.publisher-precall-profile.v1',
     sourceProfile: input.sourceProfile ?? 'root-package-legacy-manager-pin',
-    ...(offline || input.qualificationMode === preparedOnlineMode || input.preparedCache ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
+    ...(offline || [preparedOnlineMode,onlineMode].includes(input.qualificationMode) || input.preparedCache ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
     files: files.map(({text,...file}) => file)};
 }
 /** Static admission of the actual original publisher child. No process is run. */
@@ -250,9 +310,10 @@ export async function receiveNativePrecallAdmission(input) {
   if ((input.environmentProfile === inheritedTransport) !== (input.environment !== undefined && input.environmentPolicy !== undefined)
     || (input.environmentProfile === undefined && (input.environment !== undefined || input.environmentPolicy !== undefined))) refusal('explicit environment and transport policy must be paired');
   if (input.operation !== undefined && input.operation !== lockRefresh) refusal('unsupported operation');
-  if (input.sourceProfile !== undefined && input.sourceProfile !== noManagerPin) refusal('unsupported source profile');
-  if (input.qualificationMode !== undefined && ![offlineMode, offlineLockRefresh, preparedOfflineMode, preparedOnlineMode].includes(input.qualificationMode)) refusal('unsupported qualification mode');
-  if (input.operation === lockRefresh && input.qualificationMode === preparedOnlineMode) refusal('prepared qualification does not match operation');
+  if (input.sourceProfile !== undefined && ![noManagerPin,registryConsumer].includes(input.sourceProfile)) refusal('unsupported source profile');
+  if (input.sourceProfile === registryConsumer && input.operation !== undefined) refusal('registry consumer profile admits frozen operations only');
+  if (input.qualificationMode !== undefined && ![offlineMode, onlineMode, offlineLockRefresh, preparedOfflineMode, preparedOnlineMode].includes(input.qualificationMode)) refusal('unsupported qualification mode');
+  if (input.operation === lockRefresh && [preparedOnlineMode,onlineMode].includes(input.qualificationMode)) refusal('prepared qualification does not match operation');
   if (input.operation === lockRefresh && [offlineMode, preparedOfflineMode].includes(input.qualificationMode)
     || input.operation !== lockRefresh && input.qualificationMode === offlineLockRefresh) refusal('offline qualification does not match operation');
   if (input.qualificationMode === undefined && input.cacheRoot !== undefined) refusal('cache admission requires explicit offline mode');
@@ -281,7 +342,7 @@ export async function assertNativePrecallAdmission(capability, command) {
   if (state.input.operation === lockRefresh && command === undefined) refusal('lock refresh permits only its exact command, not producer entry');
   if (state.offlineFailed) refusal('offline receiving failed; capability is closed');
   if (state.offlineReceived && command !== undefined && isDeepStrictEqual(command.arguments, state.input.installArguments)) refusal('offline installation capability is single-use');
-  if (state.input.qualificationMode === offlineMode && !state.offlineReceived
+  if ([offlineMode,onlineMode].includes(state.input.qualificationMode) && !state.offlineReceived
     && (command === undefined || !isDeepStrictEqual(command.arguments, state.input.installArguments))) refusal('offline installation must be received before producer entry');
   const current = await snapshot(state.input);
   if (!isDeepStrictEqual(current,state.received)) refusal('admitted source, provider or context changed');
@@ -348,8 +409,14 @@ export async function receiveNativeLockfileRefresh(capability, result) {
 /** Receive only the original install's fresh-native result. Local installation may
  * exist after refusal; it is not qualified for product generation/publication. */
 export async function receiveNativeOfflineInstall(capability, result) {
+  return receiveInitialFrozenInstall(capability,result,offlineMode);
+}
+export async function receiveNativeOnlineInstall(capability, result) {
+  return receiveInitialFrozenInstall(capability,result,onlineMode);
+}
+async function receiveInitialFrozenInstall(capability,result,mode) {
   const state = capabilities.get(capability);
-  if (!state || state.input.qualificationMode !== offlineMode || state.offlineReceived || state.offlineFailed) refusal('unrecognized or already received offline installation');
+  if (!state || state.input.qualificationMode !== mode || state.offlineReceived || state.offlineFailed) refusal('unrecognized or already received offline installation');
   // Any receiving attempt consumes the installation transition; a refused
   // operation cannot reuse its capability to retry or enter the producer.
   state.offlineFailed = true;
@@ -376,13 +443,14 @@ export async function receiveNativeOfflineInstall(capability, result) {
   state.received = current;
   state.offlineReceived = true;
   state.offlineFailed = false;
-  return Object.freeze({kind: 'pnpm.publisher-offline-installation.v1', admissionIdentity: capability.identity,
+  return Object.freeze({kind: mode === offlineMode ? 'pnpm.publisher-offline-installation.v1' : 'pnpm.publisher-online-installation.v1', admissionIdentity: capability.identity,
+    nativeProvider: Object.freeze(boundedClone(current.supplier, 65536)),
     policyVerification: 'fresh-native', verification,
     persistedVerification: Object.freeze({verifiedAt: emitted.record.verifiedAt, lockfilePath: result.lockfilePath, recordSHA256: hash(emitted.line)}),
     priorVerdict: Object.freeze(priorVerdict), verdict: Object.freeze(verdict)});
   } catch (error) {
     const publicIdentity = value => value ? (({text, ...identity}) => identity)(value) : null;
-    error.nativeOfflineEvidence = Object.freeze({kind: 'pnpm.publisher-offline-refusal.v1',
+    error[mode === offlineMode ? 'nativeOfflineEvidence' : 'nativeOnlineEvidence'] = Object.freeze({kind: mode === offlineMode ? 'pnpm.publisher-offline-refusal.v1' : 'pnpm.publisher-online-refusal.v1',
       admissionIdentity: capability.identity, policyVerification: verification?.reason ?? 'context-or-persistence-unreceived',
       verification: verification ?? null, priorVerdict: publicIdentity(state.received.cache.verdict),
       postVerdict: publicIdentity(current?.cache.verdict), localInstallationMayExist: true, capabilityClosed: true});
