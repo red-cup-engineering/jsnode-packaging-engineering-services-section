@@ -14,7 +14,7 @@ export async function regular(path, limit) {
   return readFile(path);
 }
 async function qualifiedProvider(program, args, cwd, expected, probeVersion, nodeVersion) {
-  if (process.version !== nodeVersion || program !== process.execPath || !isAbsolute(args[0] ?? '')) throw new TypeError('capability requires its qualified Node version and explicit original PNPM entry');
+  if (!(Array.isArray(nodeVersion) ? nodeVersion.includes(process.version) : process.version === nodeVersion) || program !== process.execPath || !isAbsolute(args[0] ?? '')) throw new TypeError('capability requires its qualified Node version and explicit original PNPM entry');
   if (process.env.NODE_OPTIONS !== undefined || process.env[variable] !== undefined) throw new TypeError('observation refuses conflicting ambient preload configuration');
   const entry = await realpath(args[0]), bytes = await regular(entry, 1048576);
   const root = dirname(dirname(entry)), manifestPath = join(root, 'package.json');
@@ -36,3 +36,7 @@ async function qualifiedProvider(program, args, cwd, expected, probeVersion, nod
 
 export const provider = (program, args, cwd, expected, probeVersion = true) => qualifiedProvider(program,args,cwd,expected,probeVersion,'v24.19.0');
 export const storeAssemblyProvider = (program,args,cwd,expected,probeVersion = true) => qualifiedProvider(program,args,cwd,expected,probeVersion,'v24.18.0');
+
+// Metadata has a separate native qualification from installation/observation.
+export const metadataProvider = (program,args,cwd,expected,probeVersion = false) => qualifiedProvider(program,args,cwd,expected,probeVersion,['v24.18.0','v24.19.0']);
+
