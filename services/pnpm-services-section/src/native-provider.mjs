@@ -13,8 +13,8 @@ export async function regular(path, limit) {
   if (!stat.isFile() || stat.size > limit || await realpath(path) !== path) throw new TypeError('observation supplier must be a bounded unredirected file');
   return readFile(path);
 }
-export async function provider(program, args, cwd, expected, probeVersion = true) {
-  if (process.version !== 'v24.19.0' || program !== process.execPath || !isAbsolute(args[0] ?? '')) throw new TypeError('observation requires qualified Node24.19.0 and explicit PNPM entry');
+async function qualifiedProvider(program, args, cwd, expected, probeVersion, nodeVersion) {
+  if (process.version !== nodeVersion || program !== process.execPath || !isAbsolute(args[0] ?? '')) throw new TypeError('capability requires its qualified Node version and explicit original PNPM entry');
   if (process.env.NODE_OPTIONS !== undefined || process.env[variable] !== undefined) throw new TypeError('observation refuses conflicting ambient preload configuration');
   const entry = await realpath(args[0]), bytes = await regular(entry, 1048576);
   const root = dirname(dirname(entry)), manifestPath = join(root, 'package.json');
@@ -33,3 +33,6 @@ export async function provider(program, args, cwd, expected, probeVersion = true
   }
   return selected;
 }
+
+export const provider = (program, args, cwd, expected, probeVersion = true) => qualifiedProvider(program,args,cwd,expected,probeVersion,'v24.19.0');
+export const storeAssemblyProvider = (program,args,cwd,expected,probeVersion = true) => qualifiedProvider(program,args,cwd,expected,probeVersion,'v24.18.0');
