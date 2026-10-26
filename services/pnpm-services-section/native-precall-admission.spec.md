@@ -284,3 +284,13 @@ no registry request. No workspace or lock was synthesized by the operation.
 MetroPlat77a179's exact workspace fixture is static policy admission only, not
 its full native dependency closure or running product. Provider issuance, real
 consumer integration and Guix target measurement remain unreceived.
+
+The required public source/archive/installed CI suite keeps its original optional
+consumer case only. Supervisor-dependent standalone assays live in the explicit
+`test/native-registry-consumer-native.test.mjs` entry, named with exact required
+providers in ci-native-qualification.json.outsideThisReceiving. Invoking that
+entry without its original supervisor/supplier refuses, rather than skipping.
+Its shared fixture preserves the original source suite's setup unchanged. The
+separate source invocation receives25 passes/2 original optional skips; native
+CI enables the original native case, leaving only the private-consumer skip.
+No skip whitelist or required receivingTests enrollment is weakened.

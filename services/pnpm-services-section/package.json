@@ -55,7 +55,9 @@
     "native-store-assembly.spec.md",
     "test/native-store-assembly.test.mjs",
     "test/native-store-assembly-native.test.mjs",
-    "test/fixtures/metroplat-workspace-77a179.yaml"
+    "test/fixtures/metroplat-workspace-77a179.yaml",
+    "test/native-precall-fixture.mjs",
+    "test/native-registry-consumer-native.test.mjs"
   ],
   "receivingTests": [
     "test/first-party-qualification.test.mjs",

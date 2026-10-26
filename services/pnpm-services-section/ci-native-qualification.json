@@ -28,6 +28,10 @@
     {
       "file": "test/native-installation-native.test.mjs",
       "requires": "Original archive-reuse reader closure f21e8c24d9bbc690022d2ad9fb9725fd2a5df7ff129cbf2403ce99a048a0e792 and publisher receiver"
+    },
+    {
+      "file": "test/native-registry-consumer-native.test.mjs",
+      "requires": "Original npm source-worker-process supervisor (Git blob ea0f3934b231852e5c952b05b26c0f4aa565c81d) and source-worker-evidence (4924926c48a243a994bb65a624d2f4beee8b4aad), exact PNPM11.28.5/Node24.19.0; separately supervised native enrollment"
     }
   ],
   "packer": {
