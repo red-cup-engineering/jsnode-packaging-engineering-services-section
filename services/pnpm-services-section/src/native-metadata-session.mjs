@@ -100,7 +100,8 @@ function createMetadataPreparationService(batch) {
       own(input,['program','entry','query','receiptDirectory','environment','environmentPolicy','limits']);
       own(input.limits,['timeoutMilliseconds','outputLimit']);
       if(input.limits.timeoutMilliseconds!==45000 || input.limits.outputLimit!==1048576) throw new TypeError('qualified metadata limits required');
-      own(input.query,[batch?'names':'name','selections','policy','canonical','registry','directory','cacheDirectory']);
+      const queryKeys=[batch?'names':'name','selections','policy','canonical','registry','directory','cacheDirectory'];
+      own(input.query,batch?[...queryKeys,'purpose','category']:queryKeys,queryKeys);
       const query=project(input.query), environment=receiveEnvironment(input.environment,input.environmentPolicy);
       const source=await sourceIdentity();
       await directory(dirname(query.directory)); await directory(input.receiptDirectory); await directory(query.cacheDirectory);
@@ -156,7 +157,8 @@ function createMetadataPreparationService(batch) {
         let parsed=null;try{if(complete)parsed=batch?parseBatchMetadataOutput(native.stdout):JSON.parse(native.stdout);}catch{}
         const mirror=await observe(s.query);
         const outputMatches=parsed&&typeof parsed==='object'&&!Array.isArray(parsed)&&(batch
-          ? Object.keys(parsed).length===s.query.names.length&&s.query.members.every(member=>Object.hasOwn(parsed,member.name)&&parsed[member.name]?.wanted===member.representative)
+          ? Object.keys(parsed).length===s.query.names.length&&s.query.members.every(member=>Object.hasOwn(parsed,member.name)&&parsed[member.name]?.wanted===member.representative
+            &&(s.query.category!=='abbreviated'||parsed[member.name]?.latest===member.representative))
           : parsed[s.query.name]?.wanted===s.query.representative);
         const accepted=custodyStatus==='unchanged'&&complete&&native.signal===null&&native.error===''&&[0,1].includes(native.status)
           &&outputMatches&&observed(mirror)&&(input.phase==='producer'||unchanged(mirror,s.mirror));

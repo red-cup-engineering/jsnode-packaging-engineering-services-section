@@ -50,6 +50,10 @@ function registryURL(registry) {
     || !/^[a-z0-9.-]+$/u.test(url.hostname)) throw new TypeError('credential-free root registry required');
   return url;
 }
+function nativeMirrorPath(cacheDirectory, url, name, category) {
+  const registryKey = `${url.protocol.slice(0, -1)}%3A+${url.hostname}${url.port ? '+' + url.port : ''}`;
+  return join(cacheDirectory, 'v12', category, registryKey, name + '.jsonl');
+}
 
 /** Pure query projection ONLY. The original owner supplies parsed policy and complete
  * selected records with canonical byte digests. No IO, resolution, or installer graph. */
@@ -82,8 +86,7 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
     'pnpm-workspace.yaml': json({ packages: [], ...clone(policy), fetchRetries: 0, fetchTimeout: 15000, networkConcurrency: 1 }),
     '.npmrc': `registry=${registry}\nupdate-notifier=false\n`,
   };
-  const registryKey = `${url.protocol.slice(0, -1)}%3A+${url.hostname}${url.port ? '+' + url.port : ''}`;
-  const expectedMirrorPath = join(cacheDirectory, 'v12', 'metadata-full', registryKey, name + '.jsonl');
+  const expectedMirrorPath = nativeMirrorPath(cacheDirectory, url, name, 'metadata-full');
   const args = ['outdated', '--compatible', '--format=json', '--use-stderr=true', '--recursive=false', '--global=false', '--include-github-actions=false',
     `--dir=${directory}`, `--config.cache-dir=${cacheDirectory}`, name];
   const projectionBytes = json({ files, identity, retained, directory, cacheDirectory });
@@ -100,25 +103,36 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
 export function projectNativeMetadataBatchQuery(input) {
   const value = boundedClone(input, 4 * 1024 * 1024);
   const keys = ['names', 'selections', 'policy', 'canonical', 'registry', 'directory', 'cacheDirectory'];
-  if (!value || Array.isArray(value) || Object.keys(value).length !== keys.length
-    || keys.some(key => !Object.hasOwn(value, key)) || Object.keys(value).some(key => !keys.includes(key))
+  const raw = value != null && (Object.hasOwn(value, 'purpose') || Object.hasOwn(value, 'category'));
+  const allowed = raw ? [...keys, 'purpose', 'category'] : keys;
+  if (!value || Array.isArray(value) || Object.keys(value).length !== allowed.length
+    || allowed.some(key => !Object.hasOwn(value, key)) || Object.keys(value).some(key => !allowed.includes(key))
     || !Array.isArray(value.names) || value.names.length < 1 || value.names.length > 4
     || new Set(value.names).size !== value.names.length) throw new TypeError('one to four distinct exact metadata names required');
+  if (raw && (value.purpose !== 'raw-registry-metadata-acquisition' || value.category !== 'abbreviated'))
+    throw new TypeError('exact paired raw abbreviated metadata purpose required');
   const queries = value.names.map(name => projectNativeMetadataQuery({ ...value, name }));
   const first = queries[0], dependencies = Object.fromEntries(queries.map(query => [query.name, query.representative]));
+  if (raw && first.policy.trustPolicy === 'no-downgrade') throw new TypeError('raw abbreviated profile does not support no-downgrade trust');
+  const refinement = raw ? {purpose: value.purpose, category: value.category, queryPolicy: {...first.policy, minimumReleaseAge: 0}} : {};
   const files = { ...first.files,
     'package.json': json({ private: true, dependencies }),
     'pnpm-lock.yaml': json({ lockfileVersion: '9.0', importers: { '.': { dependencies: Object.fromEntries(
       queries.map(query => [query.name, { specifier: query.representative, version: query.representative }])) } } }),
   };
+  if (raw) files['pnpm-workspace.yaml'] = json({packages: [], ...refinement.queryPolicy, fetchRetries: 0, fetchTimeout: 15000, networkConcurrency: 1});
   const names = [...value.names], members = queries.map(({name, representative, selectedVersions, expectedMirrorPath}) =>
-    ({name, representative, selectedVersions, expectedMirrorPath}));
+    ({name, representative, selectedVersions, expectedMirrorPath: raw
+      ? nativeMirrorPath(first.cacheDirectory, registryURL(first.registry), name, 'metadata')
+      : expectedMirrorPath}));
   const projectionBytes = json({ files, identity: first.canonical, retained: first.originalSelections,
-    names, directory: first.directory, cacheDirectory: first.cacheDirectory });
+    names, directory: first.directory, cacheDirectory: first.cacheDirectory,
+    ...(raw ? {...refinement, policy: first.policy} : {}) });
   if (Buffer.byteLength(projectionBytes) > 8 * 1024 * 1024) throw new TypeError('projection serialization exceeds bound');
   return freeze({ kind: 'pnpm.native-metadata-batch-query.v1', installableGraph: false, names, members,
     expectedMirrorPaths: members.map(member => member.expectedMirrorPath), registry: first.registry,
     originalSelections: first.originalSelections, canonical: first.canonical, policy: first.policy,
+    ...refinement,
     directory: first.directory, cacheDirectory: first.cacheDirectory, files,
     arguments: [...first.arguments.slice(0, -1), ...names], projectionSHA256: sha(projectionBytes),
     requiredProvider: first.requiredProvider });
@@ -132,7 +146,7 @@ function readRawMetadataIndex(bytes, name) {
   const headersLength = Number(match[1]), indexLength = Number(match[2]), indexStart = newline + 1 + headersLength, base = indexStart + indexLength;
   if (!Number.isSafeInteger(base) || headersLength > 65536 || indexLength > 64 * 1024 * 1024 || base > bytes.length) return { reason: 'invalid-bounds' };
   const decode = data => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(data));
-  decode(bytes.subarray(newline + 1, indexStart));
+  const headers = decode(bytes.subarray(newline + 1, indexStart));
   const index = decode(bytes.subarray(indexStart, base));
   if (index.name !== name || !Array.isArray(index.versions)) return { reason: 'name-or-index-mismatch' };
   const spans = new Map();
@@ -143,12 +157,15 @@ function readRawMetadataIndex(bytes, name) {
       || offset < 0 || length < 1 || length > 16 * 1024 * 1024 || base + offset + length > bytes.length) return { reason: 'invalid-span' };
     spans.set(version, { offset, length });
   }
-  return {index, spans, base, decode};
+  return {headers, index, spans, base, decode};
 }
 
 /** Diagnostic structural inventory of an ORIGINAL native indexed mirror. This is
  * not PNPM's parser, a cache writer, provenance evidence, or policy acceptance. */
 export function inspectRawNativeMetadata(bytes, { name, selectedVersions }) {
+  return inspectRawNativeMetadataProfile(bytes, {name, selectedVersions}, false);
+}
+function inspectRawNativeMetadataProfile(bytes, { name, selectedVersions }, abbreviated) {
   const incomplete = reason => ({ kind: 'raw-coverage-only', complete: false, reason, versions: [] });
   try { selectedVersions = boundedClone(selectedVersions, 4 * 1024 * 1024); } catch { return incomplete('bounded-input-required'); }
   if (!Buffer.isBuffer(bytes) || bytes.length > 64 * 1024 * 1024 || !Array.isArray(selectedVersions)
@@ -158,7 +175,7 @@ export function inspectRawNativeMetadata(bytes, { name, selectedVersions }) {
   try {
     const decoded = readRawMetadataIndex(bytes, name);
     if (decoded.reason) return incomplete(decoded.reason);
-    const {index, spans, base, decode} = decoded;
+    const {headers, index, spans, base, decode} = decoded;
     const versions = selectedVersions.map(version => {
       const span = spans.get(version), timestamp = index.time?.[version];
       let fragment = null; if (span) { try { fragment = decode(bytes.subarray(base + span.offset, base + span.offset + span.length)); } catch {} }
@@ -168,7 +185,12 @@ export function inspectRawNativeMetadata(bytes, { name, selectedVersions }) {
       return { version, manifestPresent, validTimestamp, timestamp: validTimestamp ? timestamp : null,
         fragmentSHA256: span ? sha(bytes.subarray(base + span.offset, base + span.offset + span.length)) : null };
     });
-    return { kind: 'raw-coverage-only', complete: versions.every(item => item.manifestPresent && item.validTimestamp), versions };
+    const timestampCoverageComplete = versions.every(item => item.validTimestamp);
+    const modified = headers?.modified;
+    const validModified = typeof modified === 'string' && modified.length <= 64 && Number.isFinite(Date.parse(modified));
+    return { kind: 'raw-coverage-only', complete: versions.every(item => item.manifestPresent && (abbreviated || item.validTimestamp)), versions,
+      ...(abbreviated ? {timestampCoverageComplete, modified: {present: headers != null && Object.hasOwn(headers, 'modified'),
+        validTimestamp: validModified, timestamp: validModified ? modified : null}} : {}) };
   } catch { return incomplete('malformed-native-mirror'); }
 }
 
@@ -230,12 +252,13 @@ export async function receiveNativeMetadataBatchFiles(query, options = {}) {
   if (held?.kind !== 'pnpm.native-metadata-batch-query.v1' || !Number.isSafeInteger(maximumBytes) || maximumBytes < 1 || maximumBytes > 64 * 1024 * 1024)
     throw new TypeError('bounded native batch query receipt required');
   const expected = projectNativeMetadataBatchQuery({ names: held.names, selections: held.originalSelections,
-    policy: held.policy, canonical: held.canonical, registry: held.registry, directory: held.directory, cacheDirectory: held.cacheDirectory });
+    policy: held.policy, canonical: held.canonical, registry: held.registry, directory: held.directory, cacheDirectory: held.cacheDirectory,
+    ...(Object.hasOwn(held, 'purpose') || Object.hasOwn(held, 'category') ? {purpose: held.purpose, category: held.category} : {}) });
   if (!isDeepStrictEqual(expected, held)) throw new TypeError('batch query custody changed');
   const files = [];
   for (const member of expected.members) {
     const observed = await observeNativeMetadataFile({...member, projectionSHA256:expected.projectionSHA256}, maximumBytes, bytes => ({
-      rawCoverage: inspectRawNativeMetadata(bytes, member), selectedIntegrityCoverage: selectedIntegrityCoverage(bytes, member, expected.originalSelections),
+      rawCoverage: inspectRawNativeMetadataProfile(bytes, member, expected.category === 'abbreviated'), selectedIntegrityCoverage: selectedIntegrityCoverage(bytes, member, expected.originalSelections),
     }));
     files.push({name:member.name, ...observed});
   }

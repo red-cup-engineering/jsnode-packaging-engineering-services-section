@@ -282,3 +282,18 @@ export function receiveNativeOfflineVerification(input) {
       representation: Buffer.isBuffer(stdout) ? 'original-bytes' : 'utf8-representation' }),
     events: Object.freeze(events.map(event => Object.freeze(event))) });
 }
+
+/** Diagnostic grammar only. Causal native history is owned by the precall
+ * capability receiver; a caller-provided timestamp is not that authority. */
+export function receiveNativeCachedVerification(input, verifiedAt) {
+  const observed = receiveNativeOfflineVerification(input);
+  const event = observed.events[0];
+  const accepted = observed.reason === 'native-prior-verdict-reused'
+    && observed.events.length === 1 && event.status === 'cached'
+    && typeof verifiedAt === 'string' && Number.isFinite(Date.parse(verifiedAt))
+    && event.verifiedAt === verifiedAt && Date.parse(verifiedAt) <= event.time;
+  return Object.freeze({...observed, kind: 'pnpm.native-cached-verification.observation.v1',
+    accepted, reason: accepted ? 'native-cached-verification-observed' : observed.reason === 'native-prior-verdict-reused'
+      ? 'native-cached-verification-sequence-or-time-invalid' : observed.reason,
+    freshPolicyRecomputationReceived: false});
+}
