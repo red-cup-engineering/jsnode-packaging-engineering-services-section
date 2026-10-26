@@ -55,3 +55,31 @@ Original contracts: https://pnpm.io/settings#frozenstore
 https://pnpm.io/pnpmfile#hooksimportpackage
 https://www.sqlite.org/pragma.html#pragma_locking_mode
 https://www.sqlite.org/c3ref/open.html
+
+NSA-8. Legacy per-user stores with group-writable directory modes are refused
+by prepared frozen assembly. The PNPM owner provides a separate, explicit
+receiveStoreOwnerPermissions operation through the same qualified native
+manager. It receives both existing owned unredirected directories and their
+bounded existing index before mutation, then restricts those two directory
+inodes to0700 through held native descriptors. It does not traverse content,
+change payload modes, copy data, initialize SQLite or claim a frozen lease.
+World writable, foreign, missing and redirected custody refuses before changes.
+Partial native changes retain a partial receipt on the failure. Exact native
+index identity/size/mtime must remain unchanged; original SQLite exclusive
+custody and complete graph receiving still follow as separate operations.
+
+
+### Native receiving preconditions
+
+Receive the real PNPM fixture with a serial test invocation in the original
+heavy-command admission, bounded to 1 GiB memory, zero swap and 180 seconds.
+The unit uses UMask 0022 so PNPM preserves native package payload modes.
+Every test assembly directory explicitly requests mode 0700; the fixture must
+never infer private-directory custody from an ambient umask. Before the
+low-level frozen read, the original public `receiveStoreOwnerPermissions`
+method receives the seeded native store and the test verifies unchanged index
+bytes. The separate legacy 0775 case still proves refusal before explicit
+owner receiving, payload hardlink/mode conservation, and later frozen offline
+assembly. The test must not normalize package payload modes or relax the
+strict importer's normalization refusal to pass. Qualification retains all
+failed fixtures; no production cache is changed by source receiving.

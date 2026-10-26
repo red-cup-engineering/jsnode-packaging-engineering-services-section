@@ -6,8 +6,9 @@ import {execFile} from 'node:child_process';
 import {hash,regular,storeAssemblyProvider} from './native-provider.mjs';
 import {receiveOwnedHookProfile} from './native-hook-profile.mjs';
 import {withFrozenPnpmStore} from './native-store-lease.mjs';
+import {receiveExistingNativeStoreOwnerPermissions} from './native-store-custody.mjs';
 const run=promisify(execFile);
-const names=['native-store-assembly.mjs','native-store-lease.mjs','native-strict-store-importer.mjs','native-provider.mjs','native-hook-profile.mjs'];
+const names=['native-store-assembly.mjs','native-store-lease.mjs','native-strict-store-importer.mjs','native-provider.mjs','native-hook-profile.mjs','native-store-custody.mjs'];
 const closed=(value,keys)=>{
  if(!value||Object.getPrototypeOf(value)!==Object.prototype||Reflect.ownKeys(value).some(key=>typeof key!=='string'||!keys.includes(key)||!('value'in Object.getOwnPropertyDescriptor(value,key))))throw new TypeError('closed native store assembly record required');
 };
@@ -34,6 +35,16 @@ export function createNativeStoreAssemblyService(){
  }
  return Object.freeze({
   kind:'pnpm.native-store-assembly.service.v1',
+  async receiveStoreOwnerPermissions(input){
+   closed(input,['entry','cwd','storeBase']);
+   await directory(input.cwd);
+   if(typeof input.storeBase!=='string'||!isAbsolute(input.storeBase)||resolve(input.storeBase)!==input.storeBase)throw new TypeError('canonical existing store base required');
+   for(const path of[input.storeBase,join(input.storeBase,'v11'),join(input.storeBase,'v11','index.db')])await lstat(path);
+   const provider=await storeAssemblyProvider(process.execPath,[input.entry],input.cwd);
+   const storeDirectory=(await run(process.execPath,[input.entry,'--store-dir',input.storeBase,'store','path'],{cwd:input.cwd,timeout:10000,maxBuffer:65536})).stdout.trim();
+   if(storeDirectory!==join(input.storeBase,'v11'))throw new TypeError('original PNPM native store selection differs');
+   return {...await receiveExistingNativeStoreOwnerPermissions({storeBase:input.storeBase,storeDirectory}),provider,supplier:await source(),coverage:'explicit per-user directory permission migration only; frozen custody and graph receiving remain separate'};
+  },
   async prepare(input){
    closed(input,['entry','cwd','storeBase','receiptDirectory','policyArguments']);
    for(const key of['cwd','storeBase','receiptDirectory'])await directory(input[key]);
