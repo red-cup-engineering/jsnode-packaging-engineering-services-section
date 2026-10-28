@@ -40,11 +40,11 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
     if(kind==='url')held[versions[0]].dist.tarball=base+'different-artifact.tgz';
     if(kind==='revision')held[versions[0]].dist.revision=1;
     if(kind==='trust')held['0.9.0']={...manifest('0.9.0'),_npmUser:{trustedPublisher:{id:'github',oidcConfigId:'original-strong-fixture'}},dist:{...manifest('0.9.0').dist,attestations:{provenance:{predicateType:'https://slsa.dev/provenance/v1'}}}};
-    const time=Object.fromEntries(Object.keys(held).map(v=>[v,kind==='young'&&v===versions[0]?fresh:old]));
+    const time=Object.fromEntries(Object.keys(held).map(v=>[v,kind==='young'&&v===versions[0]?fresh:kind==='trust'&&v==='0.9.0'?'2000-01-01T00:00:00.000Z':old]));
     const meta={name,'dist-tags':{latest:versions.at(-1)},versions:held,modified:fresh,...(full?{time}:{} )};
     res.writeHead(200,{'content-type':'application/json'});
     if(oversize&&full){
-      const prefix=JSON.stringify(meta);res.write(prefix.slice(0,-1)+',"time":{');
+      const {time:originalTime,...withoutTime}=meta;const prefix=JSON.stringify(withoutTime);res.write(prefix.slice(0,-1)+',"time":{');
       for(const[v,at]of Object.entries(time))res.write(JSON.stringify(v)+':'+JSON.stringify(at)+',');
       res.write('"');const piece='x'.repeat(4096);
       for(let i=0;i<2176;i++)if(!res.write(piece))await once(res,'drain');
