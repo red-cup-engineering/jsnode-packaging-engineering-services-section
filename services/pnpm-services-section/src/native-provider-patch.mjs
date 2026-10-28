@@ -2,8 +2,8 @@
 import {createHash} from 'node:crypto';
 export const UPSTREAM_DISTRIBUTION_SHA256 = 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810';
 export const UPSTREAM_INVENTORY_SHA256 = '86d641a60ea0b5e9e317e3bf76888f80ec663ca57c8572b1d29ff093d46fb0b7';
-export const PATCHED_DISTRIBUTION_SHA256 = 'UNRECEIVED';
-export const PATCHED_INVENTORY_SHA256 = 'UNRECEIVED';
+export const PATCHED_DISTRIBUTION_SHA256 = 'fe6a7f99a5598fb3886b225de4471d704b35097147a1b6e81f34c270d9d686b8';
+export const PATCHED_INVENTORY_SHA256 = 'de775b2bb6f53e861ffea7e6b2257f2d12792d9441fa22b1d2e40b768e08c6ef';
 export const METADATA_CACHE_BYTES = 8 * 1024 * 1024;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 

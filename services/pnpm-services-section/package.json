@@ -21,7 +21,8 @@
     "./native-installation": "./src/native-installation.mjs",
     "./native-precall-admission": "./src/native-precall-admission.mjs",
     "./native-lock-delta": "./src/native-lock-delta.mjs",
-    "./native-store-assembly": "./src/native-store-assembly.mjs"
+    "./native-store-assembly": "./src/native-store-assembly.mjs",
+    "./native-provider-construction": "./src/native-provider-construction.mjs"
   },
   "files": [
     "src",
