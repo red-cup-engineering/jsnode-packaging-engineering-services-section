@@ -53,14 +53,15 @@ export async function receiveConstructedNativeProvider(directory) {
   const received=await payload(directory,{constructed:true});
   const receipt=JSON.parse(await originalFile(join(directory,RECEIPT),1048576));
   if(receipt.kind!=='pnpm.native-provider-construction/v1'
-    ||receipt.input.manifestSHA256!==MANIFEST||receipt.input.entry!=='bin/pnpm.mjs'||receipt.input.entrySHA256!==ENTRY
     ||receipt.input.inventorySHA256!==UPSTREAM_INVENTORY_SHA256
     ||receipt.input.distributionSHA256!==UPSTREAM_DISTRIBUTION_SHA256
     ||receipt.product.inventorySHA256!==PATCHED_INVENTORY_SHA256
     ||receipt.product.distributionSHA256!==PATCHED_DISTRIBUTION_SHA256
     ||receipt.product.members!==559||receipt.installationClaimed!==false||receipt.publicationClaimed!==false)
     throw new TypeError('original provider construction receipt is not bound to the actual payload');
-  return {inventorySHA256:received.inventorySHA256,members:received.members.length,bytes:received.bytes,
+  return {directory,entry:join(directory,'bin/pnpm.mjs'),distributionSHA256:PATCHED_DISTRIBUTION_SHA256,
+    installationClaimed:false,publicationClaimed:false,
+    inventorySHA256:received.inventorySHA256,members:received.members.length,bytes:received.bytes,
     receiptSHA256:digest(await originalFile(join(directory,RECEIPT),1048576))};
 }
 export async function constructNativeProvider(input) {
@@ -90,7 +91,6 @@ export async function constructNativeProvider(input) {
     }
     await payload(sourceDirectory);
     const receipt={kind:'pnpm.native-provider-construction/v1',input:{directory:sourceDirectory,
-      manifestSHA256:MANIFEST,entry:'bin/pnpm.mjs',entrySHA256:ENTRY,
       inventorySHA256:UPSTREAM_INVENTORY_SHA256,distributionSHA256:UPSTREAM_DISTRIBUTION_SHA256,
       members:source.members.length,bytes:source.bytes},recipe:{moduleSHA256:digest(await readFile(fileURLToPath(import.meta.url))),
       patchModuleSHA256:digest(await readFile(new URL('./native-provider-patch.mjs',import.meta.url))),

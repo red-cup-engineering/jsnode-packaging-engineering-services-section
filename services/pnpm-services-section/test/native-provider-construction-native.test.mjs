@@ -15,8 +15,10 @@ if(process.version!=='v24.18.0'||!state||!upstream)throw Error('actual Node24.18
 const sri='sha512-'+Buffer.alloc(64,7).toString('base64'),old='2001-01-01T00:00:00.000Z',fresh=new Date().toISOString();
 const received=[],requests=[];let product,sequence=0;
 const mkdir=p=>fs.mkdirSync(p,{recursive:true,mode:0o700});
-test('construct and receive only the complete selected native Code product',async()=>{
-  product=await constructNativeProvider({sourceDirectory:upstream,outputDirectory:join(state,'product')});
+test('receive only the complete source-constructed native Code product',async()=>{
+  product=process.env.PNPM_NATIVE_CONSTRUCTED_PRODUCT
+    ?await receiveConstructedNativeProvider(process.env.PNPM_NATIVE_CONSTRUCTED_PRODUCT)
+    :await constructNativeProvider({sourceDirectory:upstream,outputDirectory:join(state,'product')});
   assert.equal(product.members,559);assert.equal(product.installationClaimed,false);assert.equal(product.publicationClaimed,false);
   const selected=await storeAssemblyProvider(process.execPath,[product.entry],state,undefined,false);
   assert.equal(selected.provider.distSHA256,PATCHED_DISTRIBUTION_SHA256);
@@ -35,6 +37,8 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
     const finish=()=>{active--};res.once('close',finish);
     await new Promise(done=>setTimeout(done,15));
     if(kind==='transport'&&full&&name===names[0]&&calls.get(key)===1){res.writeHead(500,{'content-type':'application/json'});res.end('{"error":"original fixture transport failure"}');return;}
+    if(req.url.startsWith('/-/npm/v1/attestations/')){res.writeHead(404,{'content-type':'application/json'});res.end('{"error":"fixture has no attestation"}');return;}
+    if(!names.includes(name)){res.writeHead(404);res.end();return;}
     const manifest=version=>({name,version,dist:{integrity:sri,tarball:base+name+'/-/'+name+'-'+version+'.tgz'}});
     const held=Object.fromEntries(versions.map(v=>[v,manifest(v)]));
     if(kind==='url')held[versions[0]].dist.tarball=base+'different-artifact.tgz';
@@ -71,6 +75,7 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
   const caches=events.filter(e=>e.name==='pnpm:metadata-cache-retention'),admission=events.filter(e=>e.name==='pnpm:lockfile-verification-admission');
   const result={label,root,command:[process.execPath,...args],code:outcome.code,signal:outcome.signal??null,maximumHTTPActive:maximumActive,requests:[...calls],cacheEvents:caches.length,admission,maximumRetainedBytes:Math.max(0,...caches.map(e=>e.retainedBytes)),oversized:Math.max(0,...caches.map(e=>e.oversizedEntries)),rejected:Math.max(0,...caches.map(e=>e.rejectedEntries))};
   received.push(result);fs.writeFileSync(join(state,'native-receiving.json'),JSON.stringify({product,received},null,2)+'\n');
+  assert.ok(result.requests.every(([key])=>!key.includes('.tgz')),'metadata-only native fixture must not acquire archives');
   assert.equal(fs.existsSync(join(root,'node_modules')),false,'lock construction must not claim or create an installed graph');
   assert.ok(caches.every(e=>e.retainedBytes<=8388608),'all process-wide settled metadata caches stay byte bounded');
   assert.equal(outcome.signal??null,null,'signals cannot receive a policy outcome');
