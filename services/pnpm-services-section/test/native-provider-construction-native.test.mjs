@@ -71,8 +71,10 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
   received.push(result);fs.writeFileSync(join(state,'native-receiving.json'),JSON.stringify({product,received},null,2)+'\n');
   assert.equal(fs.existsSync(join(root,'node_modules')),false,'lock construction must not claim or create an installed graph');
   assert.ok(caches.every(e=>e.retainedBytes<=8388608),'all process-wide settled metadata caches stay byte bounded');
+  assert.equal(outcome.signal??null,null,'signals cannot receive a policy outcome');
+  assert.equal(typeof outcome.code,'number','failed start/timeout cannot receive a policy outcome');
   if(kind==='positive'){assert.equal(outcome.code,0,outcome.stderr+'\n'+outcome.stdout.slice(-1500));assert.ok(admission.some(e=>e.checked===count*versions.length));assert.ok(admission.every(e=>e.maximumActive<=concurrency));}
-  else assert.notEqual(outcome.code,0,'native supply-chain refusal must remain a refusal');
+  else assert.equal(outcome.code,1,'native supply-chain refusal must complete with its ordinary exit');
   global.gc?.();return{...result,events,output:outcome.stdout+'\n'+outcome.stderr};
 }
 test('actual native policy checks every existing pin with admitted inflight one',async()=>{
