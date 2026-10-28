@@ -139,3 +139,22 @@ construct the original GHS lock once with the unchanged policies and exact
 authored source. Receive only its intended Code17 graph delta and a real frozen
 lock-input check; neither claims an installed graph. GHS0.5 publication and
 native publisher adoption remain later actual consumer receiving.
+
+NVP-7. The original generated public-CI consumer separately qualifies this same
+metadata-only supplier on its already selected Node24.19.0 metadata profile.
+Its existing public-only repository guard, exact source/CD/Node/PNPM selection,
+frozen owner graph and hosted allocation remain the resource and source owners;
+no private GHS source, credential, replacement workflow or paid private runner
+is introduced. The original metadataProvider already declares24.18/24.19;
+actual receiving remains separate for each version. CI runs the same ten native
+cases serially against its once-constructed complete product, with explicit
+128MiB test-process and96MiB PNPM heaps and bounded180-second process/output
+receiving. Its hosted allocation is not evidence of the CRG256MiB OS cap.
+Keep every concurrency, cache, oversized/rejected-result and policy-negative
+assertion. Correct media negotiation distinguishes npm abbreviated Accept from
+its application/json fallback; an abbreviated request must not receive the
+oversized full-metadata control. Retain actual failed process output in the
+original CI job log alongside native stage, terminal and custody identities.
+Source, archive/installed CI, CRG resource receiving and live adoption remain
+separate; this profile neither weakens policy nor qualifies private-source lock
+construction on a public runner.
