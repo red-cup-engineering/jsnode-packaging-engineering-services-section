@@ -59,9 +59,11 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
   fs.writeFileSync(join(root,'pnpm-lock.yaml'),JSON.stringify({lockfileVersion:'9.0',settings:{autoInstallPeers:true,excludeLinksFromLockfile:false},importers:{'.':{dependencies:importer}},packages,snapshots}));
   fs.writeFileSync(join(root,'pnpm-workspace.yaml'),JSON.stringify({...(kind==='trust'?{trustPolicy:'no-downgrade'}:{})}));
   fs.writeFileSync(join(root,'.npmrc'),'registry='+base+'\n');fs.writeFileSync(join(root,'user.npmrc'),'');fs.writeFileSync(join(root,'global.npmrc'),'');
+  const xdgConfig=join(root,'xdg-config');mkdir(join(xdgConfig,'pnpm'));
+  fs.writeFileSync(join(xdgConfig,'pnpm','config.yaml'),JSON.stringify({}));fs.writeFileSync(join(root,'auth.npmrc'),'');
   const args=['--max-old-space-size=96','--max-semi-space-size=4',product.entry,'install','--lockfile-only','--ignore-scripts','--no-frozen-lockfile','--pm-on-fail=error','--network-concurrency='+concurrency,'--child-concurrency=1','--fetch-retries=0','--fetch-timeout=10000','--no-update-notifier','--reporter=ndjson','--store-dir='+join(root,'store'),'--config.cache-dir='+join(root,'cache'),'--config.userconfig='+join(root,'user.npmrc'),'--config.globalconfig='+join(root,'global.npmrc')];
   let outcome;
-  try{outcome=await run(process.execPath,args,{cwd:root,env:{...process.env,CI:'true',TMPDIR:root},maxBuffer:16*1024*1024,timeout:90000});outcome={...outcome,code:0};}
+  try{outcome=await run(process.execPath,args,{cwd:root,env:{...process.env,CI:'true',TMPDIR:root,XDG_CONFIG_HOME:xdgConfig,PNPM_CONFIG_NPMRC_AUTH_FILE:join(root,'auth.npmrc')},maxBuffer:16*1024*1024,timeout:90000});outcome={...outcome,code:0};}
   catch(error){outcome={stdout:error.stdout??'',stderr:error.stderr??'',code:error.code,signal:error.signal};}
   finally{server.closeAllConnections();await new Promise(done=>server.close(done));}
   fs.writeFileSync(join(root,'native.stdout'),outcome.stdout);fs.writeFileSync(join(root,'native.stderr'),outcome.stderr);
