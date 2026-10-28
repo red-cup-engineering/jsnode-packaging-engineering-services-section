@@ -1,0 +1,90 @@
+{
+  "id": "finish-native-pnpm-verification-receiving",
+  "name": "Finish native PNPM verification and original public CI receiving",
+  "kind": "requirement",
+  "raised-by": "561 Group Leader",
+  "asks": [
+    "STOP ROUTING AROUND DAMAGE YOU (or other agents, it does not matter who) CAUSED AND ABANDONED: it just causes more damage.\nFIX THE DAMAGE",
+    "STOP PRESERVING BACKCOMPAT AND SHIMS\n\nTHIS IS EARLY ALPHA CODE\n\nFIND WORK THAT IS UNFINISHED AND FINISH IT, NOT BY RECONCILING BOTH DIRECTIONS BUT BY FINISHING THE WORK"
+  ],
+  "met-when": [
+    {
+      "cell": "finish-native-pnpm-verification-receiving:original-constructor",
+      "target": "held",
+      "says": "The original PNPM source owner receives the complete 559-member PNPM11.28.5 input at distribution SHA256 e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810 and inventory SHA256 86d641a60ea0b5e9e317e3bf76888f80ec663ca57c8572b1d29ff093d46fb0b7, constructs its one distinct bounded-verification Code product once, and selects only output distribution SHA256 fe6a7f99a5598fb3886b225de4471d704b35097147a1b6e81f34c270d9d686b8 and inventory SHA256 de775b2bb6f53e861ffea7e6b2257f2d12792d9441fa22b1d2e40b768e08c6ef for the repaired consumer; the input distribution is constructor input only."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:canonical-entry",
+      "target": "held",
+      "says": "Every provider caller selects the actual PNPM package bin/pnpm.mjs entry and binds its complete original constructor and patch modules in source custody; no cjs entry fallback, undeclared temporary override or replacement registry identity is introduced."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:original-policy",
+      "target": "held",
+      "says": "The selected native networkConcurrency governs original strict-lockfile verification. Every lock entry remains checked; release-age, integrity, tarball URL, revision and trust downgrade refusal retain their original native meaning."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:bounded-caches",
+      "target": "held",
+      "says": "The source-owned native product bounds the shared settled metadata cache and the combined verifier caches separately to 8388608 retained encoded bytes, retains the existing shared TTL of120000 milliseconds, deduplicates admitted pending requests, and does not retain rejected or oversized settled values; full oversized responses remain subject to actual native verification."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:constructed-ci",
+      "target": "held",
+      "says": "Original public CI preserves NCI-2: the complete official installed PNPM supplier is used solely as constructor input; the once-constructed and received product is bound before source fixtures, mandatory native verification and archive-consumer PNPM selection. Original input/output identities and the construction receipt remain distinct."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:ten-native-cases",
+      "target": "held",
+      "says": "The existing source-owned Node24.19.0 public CI profile runs all ten native product cases: complete-product receiving, every-pin verification with concurrency one, repeated-package pending deduplication, oversized response verification without retention, rejected metadata clearance with original transport refusal, and original young-release, integrity, URL, revision and trust negative controls. The existing private-consumer optional case remains distinct; none of the ten mandatory native cases is skipped."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:fixture-media-type",
+      "target": "held",
+      "says": "The controlled loopback metadata fixture recognizes npm's application/vnd.npm.install-v1+json Accept selector before its application/json fallback, so abbreviated and full metadata remain distinct and the oversized payload is returned only for the intended full-metadata route."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:bounded-diagnostics",
+      "target": "held",
+      "says": "Original public CI retains bounded exact native stage, terminal, stdout/stderr and partial native cache observations on failure. Signals, timeouts, failed starts, omitted cases and ordinary assertion failures remain unreceived; failure evidence never becomes a successful policy verdict."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:complete-source-family",
+      "target": "held",
+      "says": "The original source/archive/installed receiving family enrolls both native-provider construction and patch modules in every affected source-custody and archive closure, preserves existing assertions and receivingTests, checks packed bytes and the original frozen consumer graph, and does not substitute syntax checks or an unrelated main-branch green run for actual native qualification."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:same-product",
+      "target": "held",
+      "says": "A fixture or receiving-only correction reuses the already received complete product when all original source, recipe and output identities match; it does not repeat the full construction merely because a task, retry or session changed."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:private-consumer",
+      "target": "held",
+      "says": "Private GHS source, account credentials, real customer configuration and private registry grants never enter public PNPM CI. Public owner qualification and private original-consumer lock, artifact and runtime receiving remain separate obligations."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:ghs-receiving",
+      "target": "held",
+      "says": "After product and original public CI receiving, the original private GHS publisher regenerates its exact manifest/lock composition with that qualified native product, publishes one coherent previously unoccupied source-declared release, and receives its actual operating publisher selection. It does not mint duplicate versions, hand-edit lock output, replay uncertain earlier publication effects, or restart the superseded frozen publisher."
+    },
+    {
+      "cell": "finish-native-pnpm-verification-receiving:generated-chain",
+      "target": "held",
+      "says": "The requirement generates its Specification, Architecture, high-level design, low-level design and source through the house generation chain with exact original source-cut identities and fabrication receipt. The agent authors requirements and independent receiving decisions, not generated code or fabricated stage-admission claims."
+    }
+  ],
+  "owners": [
+    "red-cup-engineering/jsnode-packaging-engineering-services-section:services/pnpm-services-section",
+    "red-cup-engineering/github-engineering-services-section"
+  ],
+  "x-provenance": {
+    "recorded-by": "Codex agent /root/pnpm_delivery, bounded engineering assurance and release allocation",
+    "recorded-on": "2026-10-28",
+    "original-work": "https://github.com/red-cup-engineering/jsnode-packaging-engineering-services-section/pull/9",
+    "source-commit": "99c6a4fd713f57d24b9cb2896941b8bdcab6154b",
+    "source-contract": "services/pnpm-services-section/native-ci-receiving.spec.md NCI-1 through NCI-4",
+    "inference": "All met-when conditions are engineering acceptance inferences from the quoted Leader asks and original source obligations. They are not Leader-authored text, admission, qualification, proof or observed effects.",
+    "failed-preparation": "Original retained public-ci-proposal-99c6a4fd-v2 part-06-v2 receiver and supplier contract discard the constructor binding while retaining product references. Preserve this proposal as unreceived evidence; regenerate from the complete original NCI-2 source cut."
+  }
+}

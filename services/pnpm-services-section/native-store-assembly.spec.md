@@ -83,3 +83,78 @@ owner receiving, payload hardlink/mode conservation, and later frozen offline
 assembly. The test must not normalize package payload modes or relax the
 strict importer's normalization refusal to pass. Qualification retains all
 failed fixtures; no production cache is changed by source receiving.
+
+
+### Bounded native verification supplier construction
+
+NVP-1. Original Work599/registry17 owns the observed source-provider damage:
+a one-dependency GHS lock construction visited864 existing lock entries with
+verification concurrency64 despite admitted networkConcurrency1, and retained
+metadata by entry count rather than bytes. This correction preserves every
+resolution, integrity, tarball/revision, release-age and trust-policy check.
+It neither selects trustLockfile nor changes exclusions, timestamps or outcomes.
+
+NVP-2. The existing PNPM owner constructs a distinct native Code tool product,
+never an npm registry replacement or a patched live store. Its only input is
+the original PNPM11.28.5 package payload: distributionSHA256
+e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810,
+complete559-member/22643309-byte input inventorySHA256
+86d641a60ea0b5e9e317e3bf76888f80ec663ca57c8572b1d29ff093d46fb0b7,
+and original manifest/entry identities. Reject changed, redirected, linked,
+missing or enlarged input before product creation. Use an explicit existing
+owned output parent, exclusive new output and full member/execute-intent
+receiving. No source directory or installed supplier is edited. Partial
+construction remains retained and cannot become a selected provider.
+
+NVP-3. Apply one fixed, source-owned recipe. Forward the selected native
+networkConcurrency to lock verification instead of the unrelated default64.
+Bound shared package-metadata retention to8MiB with its existing120-second TTL;
+bound all verifier-context maps together to8MiB for that invocation. Account
+strings, arrays, objects, maps and sets, including key bytes. Pending work remains
+deduplicated and accounted separately; settlement updates retention cost,
+rejection removes its exact pending entry, and eviction cannot retain a hidden
+strong reference. Oversized settled values are not cached but are still fully
+checked. Never substitute cache eviction or absent metadata for acceptance.
+These encoded-data bounds are not a claim about native process RSS.
+
+NVP-4. The complete output receives a deterministic recipe/source binding,
+new distribution digest and payload inventory. The native provider qualifier
+selects that exact new digest for the repaired consumer; it does not accept an
+old/new digest fallback. The old digest is permitted only as construction input.
+The unchanged upstream package name/version identifies provenance, not equality
+with the official npm archive or authority to publish that identity. No registry
+publication, installation or operating grant follows from a product receipt.
+
+NVP-5. Receiving executes the actual newly constructed PNPM under the original
+Node24.18 store-assembly profile, with an admitted serial256MiB/zero-swap
+metadata-only fixture. Its controlled native registry must observe maximum
+inflight1, all selected entries checked, bounded settled retention including
+oversized metadata and rejected promises, and unchanged required refusals for
+young versions, missing integrity and incorrect artifact/revision binding.
+Retain actual commands, input/output digests, terminal logs and failures.
+The unrelated complete store-installation fixture retains its own1GiB contract.
+
+NVP-6. Only after native supplier receiving and current physical admission,
+construct the original GHS lock once with the unchanged policies and exact
+authored source. Receive only its intended Code17 graph delta and a real frozen
+lock-input check; neither claims an installed graph. GHS0.5 publication and
+native publisher adoption remain later actual consumer receiving.
+
+NVP-7. The original generated public-CI consumer separately qualifies this same
+metadata-only supplier on its already selected Node24.19.0 metadata profile.
+Its existing public-only repository guard, exact source/CD/Node/PNPM selection,
+frozen owner graph and hosted allocation remain the resource and source owners;
+no private GHS source, credential, replacement workflow or paid private runner
+is introduced. The original metadataProvider already declares24.18/24.19;
+actual receiving remains separate for each version. CI runs the same ten native
+cases serially against its once-constructed complete product, with explicit
+128MiB test-process and96MiB PNPM heaps and bounded180-second process/output
+receiving. Its hosted allocation is not evidence of the CRG256MiB OS cap.
+Keep every concurrency, cache, oversized/rejected-result and policy-negative
+assertion. Correct media negotiation distinguishes npm abbreviated Accept from
+its application/json fallback; an abbreviated request must not receive the
+oversized full-metadata control. Retain actual failed process output in the
+original CI job log alongside native stage, terminal and custody identities.
+Source, archive/installed CI, CRG resource receiving and live adoption remain
+separate; this profile neither weakens policy nor qualifies private-source lock
+construction on a public runner.
