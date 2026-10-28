@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {receiveCITransport,receiveRequiredTests,receiveProcess,receiveSuite,receiveArchive} from './native-ci-receiving-contract.mjs';
+import {constructNativeProvider} from '../src/native-provider-construction.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const digest=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
@@ -15,8 +16,7 @@ assert.equal(contract.version,1);assert.equal(manifest.devDependencies.pnpm,cont
 assert.equal(manifest.dependencies.pnpm,undefined,'test supplier must not become a runtime dependency');
 const supplier=realpathSync(join(root,'node_modules','pnpm'));
 assert.equal(read(join(supplier,'package.json')).version,contract.supplier.version);
-assert.equal(digest(join(supplier,'dist','pnpm.mjs')),contract.supplier.distributionSHA256);
-const entry=join(supplier,'bin','pnpm.mjs');
+assert.equal(digest(join(supplier,'dist','pnpm.mjs')),contract.supplier.inputDistributionSHA256);
 const packer=realpathSync(join(root,'node_modules','npm'));
 assert.equal(read(join(packer,'package.json')).version,contract.packer.version);
 assert.equal(manifest.dependencies.npm,undefined,'packer must remain a test dependency');
@@ -27,12 +27,16 @@ const protectedFiles=['package.json','pnpm-lock.yaml','ci-native-qualification.j
 const before=Object.fromEntries(protectedFiles.map(p=>[p,digest(join(root,p))]));
 const base=process.env.RUNNER_TEMP?resolve(process.env.RUNNER_TEMP):join(root,'data','logs');
 mkdirSync(base,{recursive:true});const stage=mkdtempSync(join(base,'pnpm-native-receiving-'));
+const product=await constructNativeProvider({sourceDirectory:supplier,outputDirectory:join(stage,'native-provider')});
+assert.equal(product.distributionSHA256,contract.supplier.distributionSHA256);
+assert.equal(product.inventorySHA256,contract.supplier.inventorySHA256);
+const entry=product.entry;
 const home=join(stage,'home');mkdirSync(home);
 const userconfig=join(stage,'user.npmrc'),globalconfig=join(stage,'global.npmrc');
 writeFileSync(userconfig,'');writeFileSync(globalconfig,'');
 const env={PATH:process.env.PATH,HOME:home,TMPDIR:stage,TEMP:stage,TMP:stage,
  npm_config_userconfig:userconfig,npm_config_globalconfig:globalconfig,npm_config_update_notifier:'false',CI:'true',
- QUALIFIED_PNPM_ENTRY:entry,PNPM_PRECALL_TEST_SUPPLIER:supplier,PNPM_PRECALL_NATIVE_TESTS:'1'};
+ QUALIFIED_PNPM_ENTRY:entry,PNPM_PRECALL_TEST_SUPPLIER:product.directory,PNPM_PRECALL_NATIVE_TESTS:'1'};
 const transport=await receiveCITransport(process.env,home);Object.assign(env,transport.values);
 function command(program,args,cwd,name){
  const result=spawnSync(program,args,{cwd,env,encoding:'utf8',timeout:180000,maxBuffer:16*1024*1024,shell:false});
@@ -43,7 +47,7 @@ function suite(cwd,name){
  const tap=command(process.execPath,['--test','--test-reporter=tap',...files],cwd,name);
  return receiveSuite(tap,contract.optionalSkippedCases);
 }
-const receipt={version:1,sourceCommit:process.env.GITHUB_SHA??null,supplier:contract.supplier,sourceFiles:before,
+const receipt={version:1,sourceCommit:process.env.GITHUB_SHA??null,supplier:contract.supplier,constructedSupplier:product,sourceFiles:before,
  outsideThisReceiving:contract.outsideThisReceiving,transport:transport.identity};
 try{
  command(process.execPath,['--test','test/native-ci-receiving-contract.test.mjs'],root,'receiving-contract-tests');

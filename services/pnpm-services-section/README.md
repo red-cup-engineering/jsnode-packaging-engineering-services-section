@@ -11,8 +11,9 @@ The existing GitHub landing publisher discovers this exact nested package using
 `repository.url` and `repository.directory` in its manifest (`landedPackages`,
 GitHub owner revision `94501f29a37ef273f3012c8236199d500433e852`). There is no new
 repository, source resolver, compatibility package or publisher. The original
-`nextVersion` selects the issued version from declared version, registry
-occupancy and landing history. A source declaration is not an issued release;
+`nextVersion` consumes only the source-declared intended version. Occupancy never
+allocates another version: unchanged received content is current without a PUT,
+and changed content at an occupied version remains unpublished. A source declaration is not an issued release;
 consumers pin only the actual original publisher's verified issuance.
 
 The component's required receiving suite is declared in `receivingTests` and
@@ -205,9 +206,10 @@ an overlapping strict-policy metadata wait. The qualified provider's original
 Undici diagnostic channels add bounded request facts without replacing its
 original dispatcher. There is no newly introduced transport or controller.
 
-The initial source contract supports Node 24.19.0 with the original PNPM 11.28.5
-distribution SHA256
-`e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810`.
+The selected source contract supports Node24.19.0 with the constructed PNPM11.28.5
+Code supplier defined by NVP-1 through NVP-6. Its distribution SHA256 is
+`fe6a7f99a5598fb3886b225de4471d704b35097147a1b6e81f34c270d9d686b8`;
+the complete upstream input remains construction provenance only.
 A changed provider needs source qualification; a version string alone does not
 admit it. The service receives an explicit Node program and unmodified PNPM entry
 arguments, checks the original package/bin/distribution and executes a separate

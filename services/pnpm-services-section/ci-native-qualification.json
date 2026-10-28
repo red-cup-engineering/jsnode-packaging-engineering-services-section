@@ -3,7 +3,10 @@
   "supplier": {
     "name": "pnpm",
     "version": "11.28.5",
-    "distributionSHA256": "e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810"
+    "distributionSHA256": "fe6a7f99a5598fb3886b225de4471d704b35097147a1b6e81f34c270d9d686b8",
+    "inputDistributionSHA256": "e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810",
+    "inputInventorySHA256": "86d641a60ea0b5e9e317e3bf76888f80ec663ca57c8572b1d29ff093d46fb0b7",
+    "inventorySHA256": "de775b2bb6f53e861ffea7e6b2257f2d12792d9441fa22b1d2e40b768e08c6ef"
   },
   "optionalSkippedCases": [
     "exact real consumer configuration is admitted unchanged"
@@ -32,6 +35,10 @@
     {
       "file": "test/native-registry-consumer-native.test.mjs",
       "requires": "Original npm source-worker-process supervisor (Git blob ea0f3934b231852e5c952b05b26c0f4aa565c81d) and source-worker-evidence (4924926c48a243a994bb65a624d2f4beee8b4aad), exact PNPM11.28.5/Node24.19.0; separately supervised native enrollment"
+    },
+    {
+      "file": "test/native-provider-construction-native.test.mjs",
+      "requires": "Original Node24.18.0 serial256MiB native metadata fixture with explicit owned state and complete selected upstream input"
     }
   ],
   "packer": {
