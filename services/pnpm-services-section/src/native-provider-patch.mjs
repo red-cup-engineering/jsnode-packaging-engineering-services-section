@@ -143,12 +143,12 @@ export function patchNativeDistribution(input) {
     '    lockfilePath: wantedLockfilePath,\n    isReplaced: matchUpdateTargetsReplacedEverywhere(projects, ctx, opts3.depth)',
     '    lockfilePath: wantedLockfilePath,\n    concurrency: opts3.networkConcurrency,\n    isReplaced: matchUpdateTargetsReplacedEverywhere(projects, ctx, opts3.depth)');
   const context = originalFunction(source, 'createPublishedAtLookupContext');
-  let bounded = replaceOnce(context, '  return {', '  const nativeCaches = createNativeMetadataCacheGroup(8 * 1024 * 1024, 0, "verifier");\n  return {');
+  let bounded = replaceOnce(context, '  return {', '  nativeVerifierMetadataCaches ??= createNativeMetadataCacheGroup(8 * 1024 * 1024, 0, "verifier");\n  const nativeCaches = nativeVerifierMetadataCaches;\n  return {');
   for (const name of ['abbreviatedMetaCache','publishedAtCache','localMetaCache','fullMetaCache','fullMetaForTrustCache'])
     bounded = replaceOnce(bounded, name + ': /* @__PURE__ */ new Map()', name + ': nativeCaches.createMap()');
   source = replaceOnce(source, context, bounded);
   const shared = originalFunction(source, 'createDefaultPackageMetaCache');
-  source = replaceOnce(source, shared, createNativeMetadataCacheGroup.toString() + '\nfunction createDefaultPackageMetaCache() {\n  return createNativeMetadataCacheGroup(8 * 1024 * 1024, 120 * 1e3, "shared").createMap();\n}');
+  source = replaceOnce(source, shared, createNativeMetadataCacheGroup.toString() + '\nvar nativeSharedMetadataCaches, nativeVerifierMetadataCaches;\nfunction createDefaultPackageMetaCache() {\n  nativeSharedMetadataCaches ??= createNativeMetadataCacheGroup(8 * 1024 * 1024, 120 * 1e3, "shared");\n  return nativeSharedMetadataCaches.createMap();\n}');
   const iteration = originalFunction(source, 'iterateLockfileViolations');
   let admitted = replaceOnce(iteration, '  const limit = pLimit(concurrency ?? DEFAULT_CONCURRENCY);',
     '  const selectedConcurrency = concurrency ?? DEFAULT_CONCURRENCY;\n  const limit = pLimit(selectedConcurrency);\n  let active = 0, maximumActive = 0, checked = 0;');
