@@ -21,7 +21,7 @@ test('construct and receive only the complete selected native Code product',asyn
   const selected=await storeAssemblyProvider(process.execPath,[product.entry],state,undefined,false);
   assert.equal(selected.provider.distSHA256,PATCHED_DISTRIBUTION_SHA256);
   assert.equal(createHash('sha256').update(fs.readFileSync(join(upstream,'dist/pnpm.mjs'))).digest('hex'),UPSTREAM_DISTRIBUTION_SHA256);
-  await assert.rejects(storeAssemblyProvider(process.execPath,[join(upstream,'bin/pnpm.cjs')],state,undefined,false),/unqualified PNPM/);
+  await assert.rejects(storeAssemblyProvider(process.execPath,[join(upstream,'bin/pnpm.mjs')],state,undefined,false),/unqualified PNPM/);
   assert.equal((await receiveConstructedNativeProvider(product.directory)).inventorySHA256,product.inventorySHA256);
   global.gc?.();
 });
@@ -61,7 +61,7 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
   fs.writeFileSync(join(root,'.npmrc'),'registry='+base+'\n');fs.writeFileSync(join(root,'user.npmrc'),'');fs.writeFileSync(join(root,'global.npmrc'),'');
   const xdgConfig=join(root,'xdg-config');mkdir(join(xdgConfig,'pnpm'));
   fs.writeFileSync(join(xdgConfig,'pnpm','config.yaml'),JSON.stringify({}));fs.writeFileSync(join(root,'auth.npmrc'),'');
-  const args=['--max-old-space-size=96','--max-semi-space-size=4',product.entry,'install','--lockfile-only','--ignore-scripts','--no-frozen-lockfile','--pm-on-fail=error','--network-concurrency='+concurrency,'--child-concurrency=1','--fetch-retries=0','--fetch-timeout=10000','--no-update-notifier','--reporter=ndjson','--store-dir='+join(root,'store'),'--config.cache-dir='+join(root,'cache'),'--config.userconfig='+join(root,'user.npmrc'),'--config.globalconfig='+join(root,'global.npmrc')];
+  const args=['--max-old-space-size=96','--max-semi-space-size=4',product.entry,'install','--lockfile-only','--ignore-scripts','--no-frozen-lockfile','--pm-on-fail=error','--network-concurrency='+concurrency,'--child-concurrency=1','--fetch-retries=0','--fetch-timeout=10000','--reporter=ndjson','--store-dir='+join(root,'store'),'--config.cache-dir='+join(root,'cache'),'--config.userconfig='+join(root,'user.npmrc'),'--config.globalconfig='+join(root,'global.npmrc')];
   let outcome;
   try{outcome=await run(process.execPath,args,{cwd:root,env:{...process.env,CI:'true',TMPDIR:root,XDG_CONFIG_HOME:xdgConfig,PNPM_CONFIG_NPMRC_AUTH_FILE:join(root,'auth.npmrc')},maxBuffer:16*1024*1024,timeout:90000});outcome={...outcome,code:0};}
   catch(error){outcome={stdout:error.stdout??'',stderr:error.stderr??'',code:error.code,signal:error.signal};}

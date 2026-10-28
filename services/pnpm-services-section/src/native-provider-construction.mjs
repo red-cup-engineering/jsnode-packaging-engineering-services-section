@@ -9,7 +9,7 @@ import {UPSTREAM_DISTRIBUTION_SHA256,UPSTREAM_INVENTORY_SHA256,
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const RECEIPT='.native-provider-construction.json';
 const MANIFEST='2dd7bab34254562873ed6a748748f7259b727b143c2f8cca9966069cfdcae800';
-const ENTRY='67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad';
+const ENTRY='ff3224d46b47fbb24a7e9fe15fededef7e00892d07d4e376b6762d4899906bfd';
 const between=(parent,child)=>{const r=relative(parent,child);return r===''||r!=='..'&&!r.startsWith('../')&&!isAbsolute(r);};
 async function originalFile(path,limit) {
   const stat=await lstat(path);
@@ -22,7 +22,7 @@ async function payload(directory,{constructed=false}={}) {
   if(typeof directory!=='string'||!isAbsolute(directory)||await realpath(directory)!==directory
     ||!(await lstat(directory)).isDirectory())throw new TypeError('explicit original provider directory required');
   const manifest=await originalFile(join(directory,'package.json'),1048576);
-  const entry=await originalFile(join(directory,'bin/pnpm.cjs'),1048576);
+  const entry=await originalFile(join(directory,'bin/pnpm.mjs'),1048576);
   const distribution=await originalFile(join(directory,'dist/pnpm.mjs'),67108864);
   if(digest(manifest)!==MANIFEST||digest(entry)!==ENTRY
     ||digest(distribution)!==(constructed?PATCHED_DISTRIBUTION_SHA256:UPSTREAM_DISTRIBUTION_SHA256))
@@ -53,6 +53,7 @@ export async function receiveConstructedNativeProvider(directory) {
   const received=await payload(directory,{constructed:true});
   const receipt=JSON.parse(await originalFile(join(directory,RECEIPT),1048576));
   if(receipt.kind!=='pnpm.native-provider-construction/v1'
+    ||receipt.input.manifestSHA256!==MANIFEST||receipt.input.entry!=='bin/pnpm.mjs'||receipt.input.entrySHA256!==ENTRY
     ||receipt.input.inventorySHA256!==UPSTREAM_INVENTORY_SHA256
     ||receipt.input.distributionSHA256!==UPSTREAM_DISTRIBUTION_SHA256
     ||receipt.product.inventorySHA256!==PATCHED_INVENTORY_SHA256
@@ -89,6 +90,7 @@ export async function constructNativeProvider(input) {
     }
     await payload(sourceDirectory);
     const receipt={kind:'pnpm.native-provider-construction/v1',input:{directory:sourceDirectory,
+      manifestSHA256:MANIFEST,entry:'bin/pnpm.mjs',entrySHA256:ENTRY,
       inventorySHA256:UPSTREAM_INVENTORY_SHA256,distributionSHA256:UPSTREAM_DISTRIBUTION_SHA256,
       members:source.members.length,bytes:source.bytes},recipe:{moduleSHA256:digest(await readFile(fileURLToPath(import.meta.url))),
       patchModuleSHA256:digest(await readFile(new URL('./native-provider-patch.mjs',import.meta.url))),
@@ -102,7 +104,7 @@ export async function constructNativeProvider(input) {
     for(const member of [...source.members].reverse().filter(x=>x.kind==='directory'))
       await chmod(join(outputDirectory,member.path),0o555);
     await chmod(outputDirectory,0o555);
-    return {kind:'pnpm.native-provider-product/v1',directory:outputDirectory,entry:join(outputDirectory,'bin/pnpm.cjs'),
+    return {kind:'pnpm.native-provider-product/v1',directory:outputDirectory,entry:join(outputDirectory,'bin/pnpm.mjs'),
       ...received,distributionSHA256:PATCHED_DISTRIBUTION_SHA256,installationClaimed:false,publicationClaimed:false};
   }catch(error){error.retainedPartialProduct={directory:outputDirectory,received:false};throw error;}
 }
