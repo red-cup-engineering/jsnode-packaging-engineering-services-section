@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       c0e8804b-09db-46cc-b0cd-b4dc46eab7da
-:public:   true
-:END:
-#+title: articulating
-#+date [2025-08-12 Tue 06:57]
-#+index: articulating
-
-*/Articulating/* 

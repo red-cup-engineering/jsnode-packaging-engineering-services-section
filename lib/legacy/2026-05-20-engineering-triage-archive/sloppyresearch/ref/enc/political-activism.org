@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       8748fadd-0b0a-40f7-80e7-12212f5a43be
-:END:
-#+title: political activism
-#+date: [2025-08-25 Mon 10:09]
-
-*/Political activism/* is [[id:e3db3a27-f692-410b-8515-ce9d007bb071][activism]] [[id:ca18416c-41a2-49c0-a5af-a8831202943e][affecting]] [[id:36eff2af-3aeb-475a-904d-7753c98dd739][politics]].

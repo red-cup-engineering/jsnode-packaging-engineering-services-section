@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       8310212d-81cf-47f1-ac66-77dcbbc5d2c9
-:public:   true
-:form:     century
-:END:
-#+title: 20th Century
-#+date [2025-08-12 Tue 07:02]
-#+index: Chronology!Common Era!20th Century

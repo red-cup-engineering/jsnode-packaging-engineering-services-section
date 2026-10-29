@@ -1,9 +1,0 @@
-{
-  "id": "nucleate_profile",
-  "act": "NucleateProfile",
-  "module": "realizers.py.core",
-  "callable": "realize_nucleate_profile",
-  "input_kind": "ObservationRecognition",
-  "output_kind": "NucleatedProfile",
-  "description": "Closure of observation into the profile nucleus."
-}

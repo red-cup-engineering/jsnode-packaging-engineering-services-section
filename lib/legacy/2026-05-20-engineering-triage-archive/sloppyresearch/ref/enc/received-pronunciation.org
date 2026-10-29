@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       ad77385b-d3c5-4d93-bc15-9cb6579d032f
-:END:
-#+title: Received Pronunciation
-#+date [2025-08-12 Tue 06:49]
-#+index: English!language!accent!Received Pronunciation
-#+index: Received Pronunciation

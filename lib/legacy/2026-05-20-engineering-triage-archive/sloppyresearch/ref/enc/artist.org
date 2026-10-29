@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       fc06db27-d77d-4ca1-b801-54e6edc7c157
-:END:
-#+title: artist
-#+date [2025-08-07 Thu 21:44]
-

@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       27150baa-9409-4e99-8afc-94fa693447e4
-:public:   true
-:form:     [[id:a68f194d-54d8-46ac-bb80-bbd29ea90059][operating system]]
-:END:
-#+title: ChromeOS
-#+date [2025-08-11 Mon 18:42]
-

@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       fcfa7675-edcc-4d03-9e2c-c351b844661b
-:END:
-#+title: reference point
-#+date: [2025-10-21 Tue 11:14]
-
-#+begin_src elisp :tangle ./src/gnoponemacs/capture-templates/r.el
-  ("r" "reference")
-#+end_src

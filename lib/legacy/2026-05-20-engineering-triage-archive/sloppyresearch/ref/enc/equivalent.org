@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       34a5d066-d5e7-4ee4-bb5a-fb7a79a9441b
-:END:
-#+title: equivalent
-#+date: [2025-08-26 Tue 11:31]
-#+index: equivalent
-
-*/Equivalent/* is the [[id:b4ae66ad-8700-4af3-b995-17cfd8b74eb9][condition]] of a [[id:e5248432-6d1e-436e-9bdc-50fe0fcd3fe6][thing]] having conditions or [[id:1f810c64-c53a-4e7e-8d9a-1a93dfbb1b7a][structure]] that is [[id:518bb07b-ae7e-4a3c-8c3c-e895f3679dfc][not]] [[id:fb02ced9-96f4-4143-91e9-5030b27bb02a][different]] from another [[id:e5248432-6d1e-436e-9bdc-50fe0fcd3fe6][thing]]. 

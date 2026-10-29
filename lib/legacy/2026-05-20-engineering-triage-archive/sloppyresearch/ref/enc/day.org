@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       07dbb6c2-0471-48ca-b681-fb46602a7f26
-:END:
-#+title: day
-#+date [2025-08-07 Thu 11:17]
-

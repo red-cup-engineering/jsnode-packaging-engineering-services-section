@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       4f560fe1-c0c6-4fac-bb5f-2f77899229ed
-:END:
-#+title: Nono
-#+date: [2025-07-22 Tue 00:49]
-#+index: Nono
-Nono is a [[id:de595b66-d89d-41d6-87fc-724482ec16ec][music artist]].
-* Tracks
-

@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       ca18416c-41a2-49c0-a5af-a8831202943e
-:public:   true
-:form:     [[id:32e00173-c695-4bb6-b0d2-9dc17fec128b][act]]
-:END:
-#+title: affecting
-#+date [2025-08-12 Tue 07:07]
-#+index: affecting

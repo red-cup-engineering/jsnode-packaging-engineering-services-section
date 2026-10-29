@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       25df5c55-b325-4c22-8d74-a13cf30df9d4
-:END:
-#+title: journal column
-#+date: [2025-09-06 Sat 23:24]
-
-A */journal column/* is a regularly published piece in a [[id:b7a90125-982f-4ac7-9b37-b4fbe811e4c2][newspaper]], [[id:4bacbd41-c768-41f7-a25c-a80ad17068ab][magazine]], or such. Usually [[id:60351dff-6114-4246-9b4b-9f92e51f06b8][opinion]] and written in an [[id:cf2fd233-6708-47c2-8639-27ab32864a0c][affective writing style]].

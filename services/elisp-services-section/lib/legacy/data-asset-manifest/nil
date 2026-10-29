@@ -1,6 +1,0 @@
-'("shaggy-dog-tale"
-  ("versions"
-   ("current"
-    ("sourcehut"
-     ("location" . "https://example.org/shaggy-dog-tale/")
-     ("formats" . ("html"))))))

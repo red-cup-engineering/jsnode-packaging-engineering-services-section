@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       0a41d890-53ff-4d17-bf68-aa241bbcc7a5
-:public:   true
-:END:
-#+title: phoneme
-#+date [2025-08-12 Tue 06:56]
-

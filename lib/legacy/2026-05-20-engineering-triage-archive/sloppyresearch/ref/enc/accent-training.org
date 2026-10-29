@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       0311d759-e9bb-4971-8e67-139d23759400
-:form:     [[id:a1a802c7-32b8-4d24-8f9b-c3192d30bbf4][training]]
-:END:
-#+title: accent training
-#+date [2025-08-12 Tue 07:05]
-#+index: accent!accent training
-#+index: training!accent training

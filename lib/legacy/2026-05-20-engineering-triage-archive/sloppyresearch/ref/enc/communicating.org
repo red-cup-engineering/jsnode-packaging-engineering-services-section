@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       6640fcb5-cb3c-420e-a9c3-d45e17bb6d6b
-:END:
-#+title: communicating
-#+date [2025-08-07 Thu 21:41]
-

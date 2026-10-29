@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       632ed5f7-8f05-4d0a-a92d-f119a0a3c25f
-:public:   true
-:END:
-#+title: laptop
-#+date [2025-08-11 Mon 18:41]
-

@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       750be80e-a732-4d2c-a955-ad38e050e1e4
-:END:
-#+title: access
-#+date [2025-08-11 Mon 18:51]
-

@@ -1,9 +1,0 @@
-{
-  "id": "stabilize_observation",
-  "act": "StabilizeObservation",
-  "module": "realizers.py.core",
-  "callable": "realize_stabilize_observation",
-  "input_kind": "NormalizedObservation",
-  "output_kind": "StabilizedObservation",
-  "description": "Stabilize normalized observation against trace constraints."
-}

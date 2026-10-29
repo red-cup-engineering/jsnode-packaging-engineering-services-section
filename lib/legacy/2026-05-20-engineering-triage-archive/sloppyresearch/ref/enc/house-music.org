@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       24c899f2-6654-4c1f-be50-d58f58eba53a
-:form:     [[id:2d77e9d7-6819-4cc8-9189-a81b5cff3d92][music genre]]
-:public:   true
-:END:
-#+title: house music
-#+date [2025-07-31 Thu 23:07]
-

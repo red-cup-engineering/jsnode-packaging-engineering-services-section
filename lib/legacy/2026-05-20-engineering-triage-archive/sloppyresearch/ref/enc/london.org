@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       88636ad0-44fb-4e72-af27-91152523e933
-:public:   true
-:form:     [[id:ba952b7a-467a-43e3-bcbe-b622d8b20459][city]]
-:END:
-#+title: London
-#+date [2025-08-12 Tue 05:57]
-#+index: London

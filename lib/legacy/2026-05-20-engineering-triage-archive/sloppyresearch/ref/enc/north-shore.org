@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       ad49a732-352f-4ef5-b60a-94f256a23c48
-:END:
-#+title: North Shore
-#+date: [2025-09-13 Sat 11:20]
-
-/Upward bound/

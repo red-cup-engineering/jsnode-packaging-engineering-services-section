@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       52d0ce2c-62cf-4f08-8444-3cdfba15a8e8
-:END:
-#+title: Correspondent Inference Theory
-#+date: [2025-08-29 Fri 17:16]
-
-*/Correspondent Inference Theory/*, [[id:f7cc4bac-8a9d-43a2-a76f-4e014ae70405][authored]] by [[id:38500867-5885-4574-a950-348f24306287][Edward E. Jones]] and [[id:7afbfde9-86d3-41da-9ef1-9e8a36d66c3a][Keith Davis]] in [[id:125f4df7-186e-4129-b3fd-3cd10af183c6][1965ce]]...
-
-

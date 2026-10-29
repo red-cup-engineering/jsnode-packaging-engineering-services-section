@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       093f3c3f-b44c-4704-8d8e-cdb498355a7e
-:public:   true
-:form:     [[id:0a41d890-53ff-4d17-bf68-aa241bbcc7a5][phoneme]]
-:END:
-#+title: r phoneme
-#+date [2025-08-12 Tue 05:43]
-#+index: r!r phoneme

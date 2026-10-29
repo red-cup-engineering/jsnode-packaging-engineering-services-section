@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       a09b4c5a-3010-4148-b851-671d50308fd7
-:END:
-#+title: collapse
-#+date: [2025-08-29 Fri 19:26]
-*/Collapse/* is the [[id:b4ae66ad-8700-4af3-b995-17cfd8b74eb9][condition]] of [[id:a56d8398-184a-4d2c-b364-62ac2f5d229e][collapsing]]
-

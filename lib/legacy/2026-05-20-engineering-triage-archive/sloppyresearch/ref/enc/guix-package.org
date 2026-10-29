@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       e55b6272-9761-4983-83bf-01adef238e39
-:END:
-#+title: Guix package
-#+date: [2025-09-27 Sat 08:59]
-n

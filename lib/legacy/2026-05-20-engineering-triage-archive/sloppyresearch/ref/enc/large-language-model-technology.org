@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       6fc8913c-1dec-47ce-8248-908f2f19fb88
-:END:
-#+title: large language model technology
-#+date: [2025-10-06 Mon 18:15]
-n

@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       3caf58bb-986e-4e8c-a251-a5843c5f7da4
-:public:   true
-:END:
-#+title: Norman Conquest
-#+date [2025-08-12 Tue 05:54]
-#+index: Norman Conquest

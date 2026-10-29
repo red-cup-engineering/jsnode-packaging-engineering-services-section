@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       265b6725-5b20-408c-8aff-593c9d76304f
-:public:   true
-:form:     [[id:1f810c64-c53a-4e7e-8d9a-1a93dfbb1b7a][structure]]
-:END:
-#+title: member
-#+date: [2025-08-15 Fri 12:20]
-Member is a [[id:1f810c64-c53a-4e7e-8d9a-1a93dfbb1b7a][structure]] of a [[id:e5248432-6d1e-436e-9bdc-50fe0fcd3fe6][thing]] that is [[id:d2dd4008-f6be-48cc-a53e-cd64854f2afc][included]] in a [[id:6c2a9678-c7ae-4e69-8086-9ba85df12d75][set]]
-

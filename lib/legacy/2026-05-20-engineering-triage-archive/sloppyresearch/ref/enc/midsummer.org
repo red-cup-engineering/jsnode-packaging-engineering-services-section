@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       a13e23bb-8a68-4ed2-91a4-c0fab19ba825
-:public:   true
-:END:
-#+title: Midsummer
-#+date: [2025-09-05 Fri 20:34]
-#+index: Teraum!time!calendar!Red Union calendar!holidays!Midsummer
-
-*/Midsummer/* is a [[id:143c5973-9526-4f05-b1c7-b8620a522fdf][holiday]] on the [[id:8e882eb5-22d5-4dc6-b6b5-0e067efa566b][Red Union calendar]] used for [[id:59c55c3c-d67f-4510-baa9-33144f0e122e][tracking]] [[id:f8a18f63-8d8a-43dc-ace7-7258e800fd05][time]] on [[id:7f527251-b5fc-4546-9fc7-8b6af33451e0][Teraum]]. It comes after the [[id:de5b0001-2975-43d5-bfad-a408e1b43e39][month]] of [[id:27356099-51d9-4a46-94c9-37c02b86edc6][Summertide]] and is followed by the month of [[id:1eed0da9-17a9-4ab0-b54d-78cd6b715131][Highsun]], except every four years, when the holiday of [[id:5b5add76-221e-4583-875d-4fa7884d28a1][Shieldmeet]] occurs, after Midsummer, and is then followed by Highsun.

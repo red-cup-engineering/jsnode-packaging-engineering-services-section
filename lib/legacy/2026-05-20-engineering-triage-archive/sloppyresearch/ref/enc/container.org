@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       0c5f4f4b-d52e-45e3-b814-4f78d7cd3b62
-:public:   true
-:END:
-#+title: container
-#+date [2025-08-12 Tue 17:17]
-#+index: container

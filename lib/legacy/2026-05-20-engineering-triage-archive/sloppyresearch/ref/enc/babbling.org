@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       f2829f05-2e51-461e-bcaa-c62c396b7cd7
-:END:
-#+title: babbling
-#+date: 2025-07-19
-#+author: emsenn
-#+form: [[id:54213c5a-a48a-4976-acff-cc89ebf673c0][writing]]
-
-*/Babbling/* is [[id:916eca24-9e56-433f-b05a-e22161f5a099][talking]] or [[id:54213c5a-a48a-4976-acff-cc89ebf673c0][writing]] that makes a [[id:d542e8d2-3512-47a0-adbb-4a393e161ecb][babble]].

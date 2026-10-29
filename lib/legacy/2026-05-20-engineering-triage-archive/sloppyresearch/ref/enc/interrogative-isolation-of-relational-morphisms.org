@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       e834dcc7-792d-4577-bff0-279b7041b57a
-:END:
-#+title: interrogative isolation of relational morphisms
-#+date: [2025-10-15 Wed 22:f
-
-
-For a thing, how does exist, where does it exist, what's required for its existence, what does its existence cause or make possible?

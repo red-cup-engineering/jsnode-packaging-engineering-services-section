@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       33243fc8-1122-4e5c-978b-5fa77825dc6d
-:END:
-#+title: categorization
-#+date [2025-07-31 Thu 23:13]
-

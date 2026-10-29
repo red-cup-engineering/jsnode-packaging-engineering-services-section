@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       a963cb87-8dab-436a-880f-6984c6cb0610
-:END:
-#+title: MUD
-#+date [2025-08-07 Thu 22:39]
-

@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       480dd22f-d4dc-4540-94e9-91243de24787
-:END:
-#+title: naïve scientist
-#+date: [2025-08-29 Fri 17:03]
-A */naïve scientist/* is a [[id:345c3503-ef04-471c-8045-1284f86d6815][term]] for a [[id:6882cc6d-049d-4c68-866a-67bc57fce725][human]]. [[id:6f2fa75a-9118-470d-8d4c-fc6bcef30c55][Coined]] by [[id:1eb71e38-6720-4fab-9ff6-d501cdb1105b][Fritz Heider]] in [[id:40af395b-830a-4e22-8f7a-6cdc83408ca2][Naïve Psychology]] ([[id:10f62117-6239-4578-ab57-fe3bfeea56ee][1958ce]]), it [[id:dc21a3aa-a339-4106-8a19-cbaba0a0ded4][describes]] how humans [[id:d865f1e4-9fcb-481c-a071-3ec821ea8dda][desire]] [[id:3a0f6593-ac75-4a3f-9407-afb1bb2fa27d][knowledge]], especially of [[id:c309d625-6a7f-4b09-b93c-99ccedbf6ca4][causal relationships]], especially of the [[id:522bc8d5-bc22-405a-80cf-485768e56cae][human behavior]] they [[id:046e0943-cea7-451f-9c3e-38d5ffb034b5][experience]] and thus [[id:2365580c-fde4-4285-b64e-ff82b14316e5][seek]] [[id:7f50cace-4696-455f-8cfd-b485c4b22872][causal analysis]] for that behavior, leading them to do [[id:aa700898-32d6-4e4d-9ea3-f711a246aeea][attributing]].

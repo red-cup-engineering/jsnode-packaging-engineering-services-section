@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       e5bbf90c-0728-4ea7-b188-1ca3f2415f3f
-:public:   true
-:END:
-#+title: English capital city
-#+date [2025-08-12 Tue 05:58]
-#+index: English!capital city

@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       c6a081be-dd72-4dda-ab91-c4d6036734cc
-:public:   true
-:END:
-#+title: continent
-#+date [2025-08-12 Tue 06:50]
-#+index: continent

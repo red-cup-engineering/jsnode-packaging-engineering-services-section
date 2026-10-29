@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       e1ea6d35-c059-48c9-8086-0ec0c2c6bd1c
-:public:   true
-:END:
-#+title: installing
-#+date [2025-08-11 Mon 23:02]
-
-*/Installing/* is the [[id:32e00173-c695-4bb6-b0d2-9dc17fec128b][act]] of putting a [[id:15d9748e-213c-441b-8b69-a902d11df6b4][component]] in a [[id:0cfd72af-ade5-49a3-a367-ebf9fcdcf0da][system]].

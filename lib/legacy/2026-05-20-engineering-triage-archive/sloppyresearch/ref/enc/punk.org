@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       53132310-edf7-4f34-afdc-67c0470eda04
-:END:
-#+title: punk
-#+date: [2025-07-21 Mon 17:22]
-#+index: punk
-punk is a [[id:2d77e9d7-6819-4cc8-9189-a81b5cff3d92][music genre]].

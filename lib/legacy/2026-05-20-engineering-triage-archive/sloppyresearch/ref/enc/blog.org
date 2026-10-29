@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       31c422d2-632c-4fba-b79d-12cb387f1d19
-:public:   true
-:instantiates: [[id:1a228ca1-b625-4230-b025-71dc5cb06b03][journnal]]
-:field:    [[id:2945fa33-0393-46f0-84cc-f5c161a95de5][Website]]
-:END:
-#+title: blog
-#+date [2025-08-07 Thu 22:47]
-#+index: blog

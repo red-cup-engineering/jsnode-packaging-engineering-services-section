@@ -1,9 +1,0 @@
-{
-  "id": "observe",
-  "act": "Observe",
-  "module": "realizers.py.core",
-  "callable": "realize_observe",
-  "input_kind": "ObservationCarrier",
-  "output_kind": "ObservationRecognition",
-  "description": "Interpret ObservationCarrier using MeasurementFrame recognitions."
-}

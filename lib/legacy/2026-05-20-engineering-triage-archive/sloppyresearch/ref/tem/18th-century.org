@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       38cee5db-35e0-42cd-b408-26c94a80b861
-:public:   true
-:form:     [[id:d6ccbe66-9f3c-4c9a-9d55-acce5a743dba][Earth century]]
-:END:
-#+title: 18th Century
-#+date [2025-08-12 Tue 06:48]
-#+index: Chronology!Common Era!18th Century

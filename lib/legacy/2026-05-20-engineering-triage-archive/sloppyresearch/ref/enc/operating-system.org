@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       a68f194d-54d8-46ac-bb80-bbd29ea90059
-:public:   true
-:resource-description: (([[id:edaef069-c68d-46aa-a970-d3cb7fe3165c][resource type]] . [[id:74574b7a-6a88-4ae7-8c9a-55cb139557e4][software]]))
-:END:
-#+title: operating system
-#+date [2025-08-11 Mon 18:42]
-

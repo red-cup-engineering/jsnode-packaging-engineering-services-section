@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       9626f276-e5cc-4f4b-86a4-84f536295c7c
-:END:
-#+title: Pleurotus pulmonarius
-#+date: [2025-08-31 Sun 09:55]
-n

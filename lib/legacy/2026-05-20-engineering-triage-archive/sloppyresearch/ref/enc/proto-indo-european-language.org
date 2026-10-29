@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       415d924d-3c5c-4c3d-99cf-4c3bf5c154d4
-:public:   true
-:form:     [[id:e8bfbd06-21f6-4e9a-a42b-27a93d5c7b21][language]]
-:END:
-#+title: Proto-Indo-European language
-#+date [2025-08-12 Tue 05:49]
-#+index: Proto-Indo-European!language

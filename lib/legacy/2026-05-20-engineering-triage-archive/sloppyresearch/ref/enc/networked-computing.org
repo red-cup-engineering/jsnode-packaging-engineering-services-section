@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       3dae7b0f-d45b-45a3-920d-7c0a44b53c94
-:END:
-#+title: networked computing
-#+date: [2025-08-23 Sat 10:25]
-#+index: networked computing
-#+index: computing!networked computing
-
-*/Networked computing/* is any [[id:b25cca4d-9867-4de3-a10b-6f41dba5ff02][form]] of [[id:dd810340-ed05-4579-8c36-49995e5cc0e3][computing]] that uses multiple [[id:78293e10-93d8-4bfa-9266-fc702c17ab7e][computers]] [[id:227e61f7-6ec5-4cc8-a474-cd8f8cbcf9be][connected]] to a [[id:fc2de3b4-dfde-43a5-89a3-2b2cb00ddfd5][computer network]].

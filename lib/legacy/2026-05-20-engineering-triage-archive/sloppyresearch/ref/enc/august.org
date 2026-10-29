@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       e72b0fa2-528d-45e6-acc6-64523f6728ec
-:END:
-#+title: August
-#+date [2025-08-07 Thu 11:17]
-

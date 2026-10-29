@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       09871008-e878-4c03-b4ac-f3f9d4811e0b
-:public:   true
-:END:
-#+title: principle
-#+date: [2025-09-17 Wed 09:16]
-#+index: analysis!principle
-
-A */principle/* is a [[id:e2e604d0-d036-4ea5-83aa-cd29d541ca67][claim]] that is used as the foundation for a [[id:8b8c55ee-4c99-4c50-b6b6-efc90391cfab][system of belief]] or [[id:56602ba2-26d1-45dd-9c93-04c098683adf][analytical framework]].

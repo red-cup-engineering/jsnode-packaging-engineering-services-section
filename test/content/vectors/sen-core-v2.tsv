@@ -1,5 +1,0 @@
-# Language-neutral conformance vectors: name, canonical CBOR hex, RFC 6920 ni URI.
-star	816473746172	ni:///sha-256;U3uKJJT0vR4Qw4-gzCLa9apzf5Y3QXY-dXiIFV5IPA4
-four-neither	8364666f7572f4f4	ni:///sha-256;HJqJI2BTe-hp7h5XMEeAV1ZznFcMYmxqcCG64Bo6xb8
-mark-nfc-e-acute	82646d61726b62c3a9	ni:///sha-256;m5zkbWpUJXcC3167Cs0CwwQQf9s5SiaqPO-b-varOss
-identity-rml	836361707082636c616d826376617200816473746172	ni:///sha-256;ag2yZCXEvbi5Ieg2oQk8U1Ss6jBSxFj20qtzZT43Mek

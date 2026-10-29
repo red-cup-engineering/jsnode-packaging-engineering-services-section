@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       88b03db0-4fed-4ace-8ef6-02ea9f2182e2
-:public:   true
-:ROAM_ALIASES: publishes published
-:END:
-#+title: publishing
-#+date: [2025-08-22 Fri 22:52]
-*/Publishing/* is the [[id:32e00173-c695-4bb6-b0d2-9dc17fec128b][act]] of making [[id:930416a0-7c8d-40ac-b329-335208a99706][information]] available to an [[id:cc06dd14-4795-454b-b95e-ce5bf6efdf63][audience]].

@@ -1,9 +1,0 @@
-{
-  "id": "flow_measure_step",
-  "act": "FlowMeasureStep",
-  "module": "realizers.py.core",
-  "callable": "realize_flow_measure_step",
-  "input_kind": "PhaseSpace",
-  "output_kind": "MeasurementOutcome",
-  "description": "Couple flow to measurement via the observation kernel."
-}

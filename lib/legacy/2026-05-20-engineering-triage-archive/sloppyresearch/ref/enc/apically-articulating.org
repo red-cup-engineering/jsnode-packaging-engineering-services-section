@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       40b8538e-cacb-4cee-841b-adabe5ff8096
-:form:     [[id:c0e8804b-09db-46cc-b0cd-b4dc46eab7da][articulating]]
-:END:
-#+title: apically articulating
-#+date [2025-08-12 Tue 06:57]
-
-*/Apically articulating/* is [[id:c0e8804b-09db-46cc-b0cd-b4dc46eab7da][articulating]] done /apically/, or with the tip of the [[id:30fed6ae-b28e-4ceb-973a-b9a355447bf1][tongue]].

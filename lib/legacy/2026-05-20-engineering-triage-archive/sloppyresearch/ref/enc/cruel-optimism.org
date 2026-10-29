@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       c8d724ba-7d9c-4034-952a-4d58b0031d41
-:public:   true
-:form:     [[id:0d70ce15-b766-4982-ac59-aba581c4a19f][optimism]]
-:END:
-#+title: cruel optimism
-#+index: optimism!cruel optimism
-
-*/Cruel optimism/* is a [[id:b25cca4d-9867-4de3-a10b-6f41dba5ff02][form]] of [[id:0d70ce15-b766-4982-ac59-aba581c4a19f][optimism]] [[id:0769b1fe-4a26-4819-8115-f20b5caa6f76][depending]] on [[id:fd323e62-bf94-44c7-b098-4a68ec25c72f][impossible things]].

@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       4a29f148-bdf2-4030-961e-c258fb8708c7
-:END:
-#+title: bulletin
-#+date: [2025-07-28 Mon 22:22]
-
-A bulletin is a [[id:80ecba92-ca84-4b32-99ae-44d446b24350][text]] written for a non-specific, but potentially limited, audience, about events or information related to a specific topic.

@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       6a3fc30f-fd91-4d01-b5bb-ef4f001d934a
-:END:
-#+title: Emacs
-#+date [2025-08-11 Mon 18:49]
-

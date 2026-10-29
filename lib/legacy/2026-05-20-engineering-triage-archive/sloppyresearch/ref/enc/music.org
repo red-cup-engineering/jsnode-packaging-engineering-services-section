@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       86840788-cff4-414b-a69d-1da24b0f9444
-:END:
-#+title: music
-#+date [2025-07-31 Thu 23:13]
-

@@ -1,9 +1,0 @@
-{
-  "id": "normalize_observation",
-  "act": "NormalizeObservation",
-  "module": "realizers.py.core",
-  "callable": "realize_normalize_observation",
-  "input_kind": "MeasurementOutcome",
-  "output_kind": "NormalizedObservation",
-  "description": "Normalize measurement into observational equivalence."
-}

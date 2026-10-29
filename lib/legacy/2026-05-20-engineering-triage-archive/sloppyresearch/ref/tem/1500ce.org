@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       cecfa265-9b1f-442a-aded-e0bc150ec25c
-:public:   true
-:form:     [[id:1e6110b0-1d4d-4922-a67a-36969d9b6855][Earth year]]
-:END:
-#+title: 1500ce
-#+date [2025-08-12 Tue 05:53]
-#+index: Chronology!Common Era!16th Century!1500ce

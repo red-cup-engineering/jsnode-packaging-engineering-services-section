@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       ecaadd44-8135-4978-a337-c38050adf86e
-:public:   true
-:END:
-#+title: organ
-#+date [2025-08-12 Tue 06:58]
-#+index: organ

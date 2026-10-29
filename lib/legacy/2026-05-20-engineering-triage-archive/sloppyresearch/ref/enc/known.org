@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       f2ec0517-54e1-4cf3-ae11-ad82308bbca0
-:public:   true
-:END:
-#+title: known
-#+date: [2025-08-29 Fri 07:53]
-#+index: epistemology!knowledge!known
-
-Successfully [[id:d7649d6a-66cc-4efb-b20f-5f2b960bcab8][knowing]] a [[id:e5248432-6d1e-436e-9bdc-50fe0fcd3fe6][thing]] [[id:455ea21f-b9e3-4299-a294-5709f8195e05][results]] in it being */known/*: a [[id:265b6725-5b20-408c-8aff-593c9d76304f][member]] of the [[id:309211e6-da8c-493a-82d9-7b250fb93b84][set of knowledge]] with which knowing was done.

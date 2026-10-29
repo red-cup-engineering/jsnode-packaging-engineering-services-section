@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       4c8625c3-dbae-4eaf-91ed-f9716c9cc533
-:ROAM_ALIASES: consonants
-:public:   true
-:END:
-#+title: consonant
-#+date [2025-08-12 Tue 06:47]
-#+index: consonant

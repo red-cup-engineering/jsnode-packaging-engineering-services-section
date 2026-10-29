@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       e8e4d00e-aead-4b0a-be07-a0c30069774c
-:END:
-#+title: game
-#+date [2025-08-07 Thu 15:41]
-

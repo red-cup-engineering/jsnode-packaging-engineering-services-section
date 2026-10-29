@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       dfaffd02-f11e-4d8d-894c-8364c1477d18
-:END:
-#+title: Linux culture
-#+date: [2025-08-28 Thu 14:07]
-#+index: Linux!Linux culture
-
-*/Linux culture/* is the [[id:865f6bdd-3213-40fc-94bd-18865f6a3e89][culture]] of [[id:6a74c1c9-7620-4a95-9a06-c24a3a57ac41][Linux users]] and [[id:b52dfdf7-a9f8-40c4-a8ad-9bf1b04c0972][developers]].

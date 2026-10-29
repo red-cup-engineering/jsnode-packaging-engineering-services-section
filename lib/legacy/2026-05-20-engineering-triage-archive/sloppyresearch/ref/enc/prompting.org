@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       1e0eb1ce-bb00-4719-a657-300ded55cf7a
-:END:
-#+title: prompting
-#+date [2025-08-07 Thu 21:48]
-

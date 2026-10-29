@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       33bb59b0-93f6-49fd-916b-79c23eeb7bb8
-:public:   true
-:END:
-#+title: Great Vowel Shift
-#+date [2025-08-12 Tue 06:45]
-#+index: Great Vowel Shift

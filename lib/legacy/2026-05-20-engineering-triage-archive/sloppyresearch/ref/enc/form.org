@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       b25cca4d-9867-4de3-a10b-6f41dba5ff02
-:END:
-#+title: form
-#+date [2025-07-31 Thu 23:17]
-

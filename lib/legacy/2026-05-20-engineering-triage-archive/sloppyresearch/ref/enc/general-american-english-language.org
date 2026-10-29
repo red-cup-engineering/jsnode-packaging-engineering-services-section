@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       afe3e349-9220-4476-86d3-c9db0705a7f8
-:public:   true
-:END:
-#+title: General American English
-#+date [2025-08-12 Tue 05:41]
-#+index: English!General American English
-#+index: General American English

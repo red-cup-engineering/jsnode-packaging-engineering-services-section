@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       d754d529-5df5-4681-b500-4af39e6216c4
-:END:
-#+title: NOAHFINNCE
-#+date: [2025-07-22 Tue 08:06]
-#+index: NOAHFINNCE
-NOAHFINNCE is a [[id:de595b66-d89d-41d6-87fc-724482ec16ec][music artist]].
-* Tracks
-

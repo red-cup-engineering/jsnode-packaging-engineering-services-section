@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       af0c4f28-9979-454e-943c-dbd6f9a81731
-:END:
-#+title: General American English rhoticity
-#+date [2025-08-12 Tue 07:00]
-#+index: General American English!rhoticity
-#+index: rhoticity!General American English rhoticity

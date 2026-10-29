@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       a1ab1040-b2b4-4dc9-9738-eac2630d9f50
-:form:     [[id:711cfd7d-5129-44a9-8dc5-de61aafd5d1c][date]]
-:public:   true
-:END:
-#+title: 2025-08-07
-#+date [2025-08-07 Thu 07:38]
-
-2025-08-07 is the 7th [[id:07dbb6c2-0471-48ca-b681-fb46602a7f26][day]] in [[id:e72b0fa2-528d-45e6-acc6-64523f6728ec][August]], in the [[id:d150eaba-d55f-401c-8487-6f2f84d16ace][year]] [[id:b918d2d9-0809-43c9-b04c-1745fc3df2e0][2025ce]]

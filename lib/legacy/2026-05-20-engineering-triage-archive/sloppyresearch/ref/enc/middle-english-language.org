@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       e428f9ed-93a6-4f63-ad8c-4834a8664a4c
-:END:
-#+title: Middle English language
-#+date [2025-08-12 Tue 05:52]
-#+index: Middle English!language

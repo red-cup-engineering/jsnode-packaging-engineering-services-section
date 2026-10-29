@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       425e0762-97cb-4637-a102-50840397b5dd
-:END:
-#+title: pop
-#+date: [2025-07-21 Mon 15:10]
-#+index: pop
-pop is a [[id:2d77e9d7-6819-4cc8-9189-a81b5cff3d92][music genre]].

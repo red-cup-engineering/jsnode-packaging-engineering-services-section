@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       8ce2e717-c3ae-4de4-a97c-a563665600b2
-:END:
-#+title: fooo
-#+date [2025-07-30 Wed 17:03]
-

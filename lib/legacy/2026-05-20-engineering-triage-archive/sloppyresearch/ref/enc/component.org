@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       15d9748e-213c-441b-8b69-a902d11df6b4
-:public:   true
-:END:
-#+title: component
-#+date [2025-08-11 Mon 23:03]
-

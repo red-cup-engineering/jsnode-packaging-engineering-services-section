@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       f60cc6c1-0fcb-4e2d-8d67-ebd6dbc4eaa3
-:public:   true
-:form:     [[id:c6a081be-dd72-4dda-ab91-c4d6036734cc][continent]]
-:END:
-#+title: North America
-#+date [2025-08-12 Tue 06:49]
-#+index: North America

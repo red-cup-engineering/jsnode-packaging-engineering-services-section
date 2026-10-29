@@ -1,8 +1,0 @@
-{
-  "id": "advance_trace",
-  "act": "AdvanceTrace",
-  "module": "realizers.py.core",
-  "callable": "realize_advance_trace",
-  "input_kind": "Trace",
-  "output_kind": "Trace",
-  "description": "Advance trace with the latest operator visitation."}

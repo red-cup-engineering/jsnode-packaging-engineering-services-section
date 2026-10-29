@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       7fd79463-840a-4004-a485-cc2aadae2af4
-:END:
-#+title: Thomas Aquinas
-#+date: [2025-08-31 Sun 09:33]
-#+index: Christianity!Christian persons!Thomas Aquinas
-
-[[id:66fbad2d-8a08-49e6-ad01-55252aa3d436][patron saint]] of [[id:e58dd57e-ccfd-4c01-8ca3-5d1b359c5bee][too many open tabs]]

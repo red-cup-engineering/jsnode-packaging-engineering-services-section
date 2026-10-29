@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       4793230b-7a30-4f7d-9b00-3d1d84238882
-:public:   true
-:END:
-#+title: acting
-#+date: [2025-08-29 Fri 11:14]
-#+index: relational dynamics!acting
-
-*/Acting/* is part of [[id:7031b7c2-7bfd-410e-8ed7-fbfc81dc3afc][relational dynamics]]. A [[id:6f5aca7f-ffaf-4798-aa33-f7ef3ec2e43b][relational instantiation]] of acting is an [[id:32e00173-c695-4bb6-b0d2-9dc17fec128b][act]].

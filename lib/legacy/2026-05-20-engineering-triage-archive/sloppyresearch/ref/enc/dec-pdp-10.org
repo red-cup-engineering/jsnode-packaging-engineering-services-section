@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       dd4db8b6-eb96-4179-9471-55a19232c378
-:END:
-#+title: DEC PDP-10
-#+date: [2025-08-29 Fri 20:54]
-The */DEC PDP-10/* was a [[id:cf8fe837-d19e-42aa-a448-24ccaa3d15fe][computer mainframe model]]

@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       6d9aa7c9-f557-4778-9f72-f90b3e4714e2
-:public:   true
-:END:
-#+title: James Rowland Angell
-#+date: [2025-09-01 Mon 09:34]
-#+index: Angell!James Rowland Angell
-
-*/James Rowland Angell/* was an [[id:4d972f1c-7714-41a4-86bb-2282fd62a662][American functionalist psychologist]] and the 16th [[id:3080facb-5b8c-4a82-9f5e-8eb63f97a889][President of Yale University]], the 15th [[id:e54a067c-9eaa-4cc0-a5c6-e49d4e113a77][President of the American Psychological Association]], and developer of [[id:812819a9-8aa2-45c4-a9e1-bcd5d32c29f2][functionalist psychology]], [[id:a9f58f35-38d6-4309-8958-c5c5f209738f][influenced]] by [[id:37f410d2-336a-4185-b6c4-ca520dafa867][John Dewey]].

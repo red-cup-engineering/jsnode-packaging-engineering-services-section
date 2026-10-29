@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       e651afd7-937f-4d63-916d-a89c9a6f0a17
-:END:
-#+title: bounding
-#+date: 2025-07-19
-#+author: emsenn
-
-Bounding is an [[id:32e00173-c695-4bb6-b0d2-9dc17fec128b][act]] that [[id:c8ba8cf5-2718-43e7-9f27-126319bdfe40][induces]] the [[id:b4ae66ad-8700-4af3-b995-17cfd8b74eb9][condition]] of [[id:b188bed1-02e9-47f4-a289-713c8a3dfc35][bound]].

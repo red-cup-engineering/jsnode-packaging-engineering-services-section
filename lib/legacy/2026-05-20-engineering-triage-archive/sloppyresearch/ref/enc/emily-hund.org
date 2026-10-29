@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       d1a9d842-0364-4d7f-84dd-613bfe52fb79
-:public:   true
-:END:
-#+title: Emily Hund
-#+date: [2025-09-02 Tue 08:55]
-#+index: Hund!Emily Hund
-
-*/Emily Hund/* is a [[id:3dc21da8-2ea0-4ee0-926f-27c12118632d][social theorist]] who focuses on [[id:c4c69e81-8824-49cb-a7d1-5085ce56b0b4][influencer authenticity]] as an [[id:d0dbceba-0ddf-486e-8da3-1432b36c2622][industrial construct]].

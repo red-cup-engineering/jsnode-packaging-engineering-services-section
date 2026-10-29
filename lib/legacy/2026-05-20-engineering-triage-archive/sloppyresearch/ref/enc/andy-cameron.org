@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       e3fe9ebd-02a2-457c-bee6-6d1490d7f52b
-:END:
-#+title: Andy Cameron
-#+date: [2025-09-02 Tue 19:29]
-#+index: Andy Cameron
-
-*/Andy Cameron/* is an [[id:c000985f-f6f9-46a9-9d84-c8e2459873de][English media theorist]] notable for [[id:f7cc4bac-8a9d-43a2-a76f-4e014ae70405][authoring]] [[id:2fbf69af-0ca4-46cc-87a3-4c2f118fda2c][The Californian Ideology]] with [[id:99d3b40c-c6c2-4c9c-b498-8406d1773d68][Richard Barbrook]].

@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       b918d2d9-0809-43c9-b04c-1745fc3df2e0
-:END:
-#+title: 2025ce
-#+date [2025-08-07 Thu 11:17]
-

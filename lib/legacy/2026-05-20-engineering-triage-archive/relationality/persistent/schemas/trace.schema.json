@@ -1,9 +1,0 @@
-{
-  "$id": "https://relationality.local/schemas/trace.schema.json",
-  "title": "Trace Payload",
-  "type": "object",
-  "properties": {
-    "entries": {"type": "array"}
-  },
-  "additionalProperties": true
-}

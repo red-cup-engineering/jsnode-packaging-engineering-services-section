@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       3acf808b-12e8-4e6d-b898-ead1bb69b925
-:END:
-#+title: Guix system
-#+date: [2025-09-27 Sat 09:00]
-n

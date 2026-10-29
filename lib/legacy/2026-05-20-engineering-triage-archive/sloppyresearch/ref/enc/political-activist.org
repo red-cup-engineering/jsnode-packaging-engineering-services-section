@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       cd489fa6-d90e-49fc-b977-6e47fadd6e26
-:form:     [[id:87f607ac-a25c-4aae-b34d-e377b9fe076f][activist]]
-:field:    [[id:36eff2af-3aeb-475a-904d-7753c98dd739][politics]]
-:END:
-#+title: political activist
-#+date: [2025-08-25 Mon 09:12]
-
-A */political activist/* is a [[id:9fee0f36-1b36-43c7-b896-14b6700c7738][person]] who does some form of [[id:8748fadd-0b0a-40f7-80e7-12212f5a43be][political activism]].

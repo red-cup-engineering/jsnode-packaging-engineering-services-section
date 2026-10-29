@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       99180308-a4a7-45a9-a349-fb445fe741c0
-:public:   true
-:form:     [[id:d150eaba-d55f-401c-8487-6f2f84d16ace][year]]
-:END:
-#+title: 1700ce
-#+date [2025-08-12 Tue 06:44]

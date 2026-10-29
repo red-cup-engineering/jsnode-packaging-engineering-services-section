@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       60ed04ca-9991-40a2-8228-4ae6f46490b1
-:public:   true
-:END:
-#+title: category
-#+date [2025-08-11 Mon 18:40]
-

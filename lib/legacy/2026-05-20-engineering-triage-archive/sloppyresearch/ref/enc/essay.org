@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       495f274d-80ec-47a2-93dc-733355ef9b9c
-:form:     [[id:80ecba92-ca84-4b32-99ae-44d446b24350][text]]
-:public:   true
-:END:
-#+title: essay
-#+date [2025-08-11 Mon 18:39]
-

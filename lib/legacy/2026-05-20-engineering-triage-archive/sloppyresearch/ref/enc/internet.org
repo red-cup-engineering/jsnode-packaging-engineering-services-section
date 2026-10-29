@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       5da03f2d-b1d7-4365-9b4d-aefa47b4c369
-:public:   true
-:END:
-#+title: Internet
-#+date [2025-08-11 Mon 18:51]
-

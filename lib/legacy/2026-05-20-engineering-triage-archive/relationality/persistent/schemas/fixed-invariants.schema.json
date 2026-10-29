@@ -1,9 +1,0 @@
-{
-  "$id": "https://relationality.local/schemas/fixed-invariants.schema.json",
-  "title": "Fixed Invariants Payload",
-  "type": "object",
-  "properties": {
-    "stable_modes": {"type": "array"}
-  },
-  "additionalProperties": true
-}

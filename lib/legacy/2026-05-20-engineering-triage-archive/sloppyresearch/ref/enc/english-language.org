@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       9866885a-2569-435b-96cc-f96ec788ec18
-:ROAM_ALIASES: English
-:public:   true
-:form:     [[id:e8bfbd06-21f6-4e9a-a42b-27a93d5c7b21][language]]
-:END:
-#+title: English language
-#+date [2025-08-12 Tue 05:42]
-#+index: English!language

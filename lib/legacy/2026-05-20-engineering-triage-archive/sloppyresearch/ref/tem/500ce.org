@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       bee559cb-ee42-4129-957c-0d760c5d8869
-:public:   true
-:form:     [[id:d150eaba-d55f-401c-8487-6f2f84d16ace][year]]
-:END:
-#+title: 500ce
-#+date [2025-08-12 Tue 05:51]
-#+index: Chronology!Common Era!6th Century!500ce

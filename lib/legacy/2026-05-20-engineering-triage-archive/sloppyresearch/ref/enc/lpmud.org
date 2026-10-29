@@ -1,6 +1,0 @@
-:PROPERTIES:
-:ID:       46dab219-c7a1-4d18-8152-aeae6a92906a
-:END:
-#+title: LPMUD
-#+date: [2025-08-29 Fri 21:04]
-An */LPMUD/* is a [[id:14cc5094-e5c2-4d53-828b-0da7d5684793][multi-user dungeon]] built using [[id:ccfdafd6-4b4f-4640-8c5b-b228091f77d9][Lars Pensjö C]]

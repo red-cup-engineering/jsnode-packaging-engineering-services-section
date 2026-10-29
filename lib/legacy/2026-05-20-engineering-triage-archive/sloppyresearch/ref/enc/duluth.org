@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       939541a0-c226-48bc-b8bb-7286840e1f77
-:END:
-#+title: Duluth
-#+date: [2025-09-13 Sat 11:19]
-
-/It's cool here./

@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       91257384-4e2b-4425-987b-89d4df1592f1
-:node-relations: (([[id:428c2f61-8c85-48b8-a191-1187c2a5f2ae][extends]] . [[id:cb8eebb7-c716-43a8-8e6d-5d4dd01f68cf][conceiving]]) ([[id:428c2f61-8c85-48b8-a191-1187c2a5f2ae][extends]] . [[id:d7108183-0872-4470-896e-44d4e8dfb05b][intuiting]]) ([[id:c8065151-37ab-4d0d-b729-1dc909185fd6][not needing]] . [[id:3342d6fc-6a92-4a06-8ffb-6f0f453b789d][perceiving]]) ([[id:c8065151-37ab-4d0d-b729-1dc909185fd6][not needing]] . [[id:e2de581c-f4e8-403b-aeb7-5fcbccc1d1df][sensing]]) ([[id:c8065151-37ab-4d0d-b729-1dc909185fd6][not needing]] . [[id:ef3433a0-d9d2-453b-82de-f5b2afe9bfa6][remembering]]) ([[id:c8065151-37ab-4d0d-b729-1dc909185fd6][not needing]] . [[id:0f4b144f-4eca-4ae3-a22b-eb53a1cd1f73][wishing]]) ([[id:c8065151-37ab-4d0d-b729-1dc909185fd6][not needing]] . [[id:87351807-02bc-4455-bf01-af2f9b1eeb02][expecting]]) ([[id:c8065151-37ab-4d0d-b729-1dc909185fd6][not needing]] . [[id:223d88ab-c498-40a5-9e6e-ea07ee9472db][believing]]) ([[id:7286f2fe-ff66-4b63-ad16-2c0955d0cc48][interfacing]] . [[id:5fd154b5-9358-438e-9b93-8f19590bbe97][imagination]]) ([[id:ab477596-70c8-467c-8d61-83756e6bb443][publication]] . [[id:cc253409-9a82-4c5d-a4cd-8013f4e350c6][emsenn.net]]))
-:ROAM_ALIASES: imagine imagined
-:END:
-#+title: imagining
-#+date [2025-08-07 Thu 21:49]
-#+index: imagining
-

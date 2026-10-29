@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       2517266b-b917-4758-b104-082a8fd3b08e
-:END:
-#+title: Kolpe Oru
-#+date: [2025-09-05 Fri 21:00]
-#+index: Teraum!actors!House Oru!Kolpe Oru
-
-*/Kolpe Oru/* was a [[id:4020e332-87d9-4347-939e-7b2813ad5641][Teraumian human]] and the [[id:12860696-050c-4507-89ae-1302c18b6dec][governor]] of the [[id:8d89fa4e-4165-43e2-ae95-6ef4399b6115][Oru Barony]] on behalf of [[id:96a010d2-1e0d-4a63-843e-3f2daa277899][House Oru]].

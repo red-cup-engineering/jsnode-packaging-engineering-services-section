@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       759c3d7f-bfb5-49fe-bbb6-4103859a79b8
-:public:   true
-:END:
-#+title: Pax Barbaria
-#+date: [2025-08-26 Tue 10:19]
-#+index: Pax Barbaria
-
-*/Pax Barbaria/* is the [[id:9c5718fb-979c-41ad-87c0-e4e2ea66875b][slogan]] of the [[id:edfcde9a-3442-45e7-b7b3-521918705557][Groundhog Autonomous Zone]] and stands in [[id:acd89ed5-a2ac-4eb0-857c-f6cc9b8e1823][opposition]] to [[id:8711b5b4-bbe0-41f8-a50b-a9e9e3e6f668][Pax Romana]], [[id:9e49ccb6-00a2-475c-92e8-2b31b7b59f83][Pax Europa]], [[id:3b3831a2-eb70-43fb-a45f-313f46fe8760][Pax Americana]], and all other forms of [[id:118db761-6338-430d-9fcb-7adea5e00cfe][Pax Universi]].

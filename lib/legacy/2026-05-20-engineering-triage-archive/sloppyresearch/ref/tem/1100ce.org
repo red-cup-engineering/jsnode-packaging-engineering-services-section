@@ -1,8 +1,0 @@
-:PROPERTIES:
-:ID:       9091a427-ce81-4099-a76f-52a8c1643161
-:public:   true
-:form:     [[id:1e6110b0-1d4d-4922-a67a-36969d9b6855][Earth year]]
-:END:
-#+title: 1100ce
-#+date [2025-08-12 Tue 05:51]
-#+index: Chronology!Common Era!12th Century!1100ce

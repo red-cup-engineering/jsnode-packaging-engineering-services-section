@@ -1,9 +1,0 @@
-:PROPERTIES:
-:ID:       9fee0f36-1b36-43c7-b896-14b6700c7738
-:END:
-#+title: person
-#+date: [2025-08-25 Mon 09:27]
-
-* Codes
-** Org-mode
-- A person's ~name~ is their ~title~.
