@@ -1,8 +1,0 @@
-[submodule "pnpm-workspace-fabrication-service"]
-	path = services/pnpm-services-section/services/pnpm-workspace-services-section/services/pnpm-workspace-fabrication-service
-	url = https://github.com/red-cup-engineering/pnpm-workspace-fabrication-service.git
-	branch = main
-[submodule "npm-services-section"]
-	path = services/npm-services-section
-	url = https://github.com/red-cup-engineering/npm-engineering-services-section.git
-	branch = main
