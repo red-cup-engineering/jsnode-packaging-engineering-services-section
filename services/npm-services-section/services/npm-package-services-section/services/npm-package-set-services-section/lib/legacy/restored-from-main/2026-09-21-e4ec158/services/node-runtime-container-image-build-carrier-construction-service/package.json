@@ -1,0 +1,23 @@
+{
+  "name": "@red-cup-engineering/node-runtime-container-image-build-carrier-construction-service",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Construct deterministic credential-free container build carriers for admitted Node runtime provider requirements.",
+  "license": "MIT",
+  "exports": "./src/construct-build-carriers.mjs",
+  "files": [
+    "README.md",
+    "src"
+  ],
+  "scripts": {
+    "check": "node --check src/construct-build-carriers.mjs && node --check test/*.test.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@red-cup-engineering/oci-image-observation-service": "0.1.0"
+  },
+  "sideEffects": false
+}

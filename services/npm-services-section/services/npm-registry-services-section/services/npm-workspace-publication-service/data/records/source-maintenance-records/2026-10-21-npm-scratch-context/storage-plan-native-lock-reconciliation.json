@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "stages": [
+    {
+      "name": "original214-code-native-lock-reconciliation",
+      "lifecycle": {
+        "owner": "red-cup-engineering/npm-workspace-publication-service",
+        "invocation": "https://github.com/561-group/cold-red-gate-services-section/issues/214",
+        "purpose": "Original pnpmRelock receives currentmain+original090 native exports/dependencies with unchanged authored house-scope exclusions, source GitSourceReading/tar/currentcapabilities preserved. CLIbound managed Node24/PNPM11.28.5 and exclusiveexistingBCFstore; no actual installation/software/issuer/service effect.",
+        "kind": "unique",
+        "retention": "Retain original QA stdout/stderr and before/post admission; test fixtures are original tests temporary generic inputs.",
+        "source": [
+          {
+            "repository": "red-cup-engineering/npm-workspace-publication-service",
+            "commit": "29bd16f1394553afb075f6951d9779503e0432e7",
+            "path": "."
+          },
+          {
+            "repository": "red-cup-engineering/npm-workspace-publication-service",
+            "commit": "090b161aee08a048d6484c3c1309b2f7c51ad5d1",
+            "path": "src/named-publisher-credential.mjs"
+          }
+        ],
+        "custody": [],
+        "status": "planned"
+      },
+      "command": [
+        "/usr/bin/env",
+        "PATH=/gnu/store/kba00zrnc1d1cg9bkx0krpvc2sp7wzrh-node-24.18.0/bin:/usr/local/bin:/usr/bin:/bin",
+        "TMPDIR=/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/receiving-logs/2026-10-21-npm-scratch-context/tmp",
+        "/gnu/store/kba00zrnc1d1cg9bkx0krpvc2sp7wzrh-node-24.18.0/bin/node",
+        "--input-type=module",
+        "-e",
+        "import{readFileSync,writeFileSync,mkdirSync}from\"node:fs\";import{pnpmRelock,COMPOSITION_FILES}from \"/home/emsenn/info/lib/emsenn/services/561-group/services/561-group-services-section/services/561-group-operations-services-section/services/cold-red-gate-services-section/data/logs/machine-fabrication-logs/2026-10-21-main-metroplat/runtimes/bbc61218c9db431625993dc7c77c114941a2346e/node_modules/@red-cup-engineering/github-repository-hosting-service/src/landing-composition.mjs\";const source=\"/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/source-maintenance-logs/2026-10-21-npm-scratch-context\",logs=\"/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/receiving-logs/2026-10-21-npm-scratch-context\";const files=Object.fromEntries(COMPOSITION_FILES.map(name=>{try{return[name,readFileSync(source+\"/\"+name,\"utf8\")]}catch(e){if(e.code!==\"ENOENT\")throw e;return[name,null]}}));const options={pnpm:[\"/gnu/store/kba00zrnc1d1cg9bkx0krpvc2sp7wzrh-node-24.18.0/bin/node\",\"/gnu/store/mgvc0wl50pmq6s7ivnkylh3qa2s8lwqp-registry-runtime/node_modules/.pnpm/pnpm@11.28.5/node_modules/pnpm/bin/pnpm.mjs\",\"--network-concurrency=4\",\"--child-concurrency=1\",\"--config.store-dir=\"+\"/home/emsenn/info/lib/emsenn/services/561-group/services/561-group-services-section/services/561-group-operations-services-section/services/bare-cedar-fog-services-section/data/records/package-manager-cache-records/actor-receiving/store\",\"--config.cache-dir=\"+logs+\"/pnpm-cache\",\"--config.state-dir=\"+logs+\"/pnpm-state\"],scratch:logs+\"/relock-scratch\",cache:logs+\"/pnpm-cache\",timeout:900000};mkdirSync(options.scratch,{recursive:true});const lock=await pnpmRelock(options)(files);writeFileSync(source+\"/pnpm-lock.yaml\",lock);console.log(JSON.stringify({operation:\"original GitHub pnpmRelock\",lockBytes:Buffer.byteLength(lock),source}));"
+      ],
+      "headroom": {
+        "minFreePercent": 3,
+        "minFreeInodes": 100000,
+        "growthBytes": 134217728,
+        "growthInodes": 10000
+      },
+      "destinations": [
+        {
+          "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/receiving-logs/2026-10-21-npm-scratch-context",
+          "peakBytes": 134217728,
+          "peakInodes": 5000,
+          "basis": "Native lock-only metadata/scratch/cache/logs, no package installation; original store reused.",
+          "estimateKind": "estimate"
+        },
+        {
+          "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/source-maintenance-logs/2026-10-21-npm-scratch-context",
+          "peakBytes": 1048576,
+          "peakInodes": 100,
+          "basis": "Native generated lockfile in genuine existing source worktree.",
+          "estimateKind": "estimate"
+        },
+        {
+          "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/561-group-services-section/services/561-group-operations-services-section/services/bare-cedar-fog-services-section/data/records/package-manager-cache-records/actor-receiving/store",
+          "peakBytes": 16777216,
+          "peakInodes": 1000,
+          "basis": "Lock-only nativePNPM may update retainedmetadata; no artifactinstall and exclusiveownerstore.",
+          "estimateKind": "estimate"
+        }
+      ],
+      "backingCapacity": {
+        "kind": "wsl-host-service/1",
+        "node": "/gnu/store/kba00zrnc1d1cg9bkx0krpvc2sp7wzrh-node-24.18.0/bin/node",
+        "script": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-systems-engineering-services-section/services/computer-operating-system-services-section/services/linux-services-section/services/persistent-linux-machine-engineering-services-section/services/wsl-host-service/scripts/wsl-host.mjs",
+        "scriptSha256": "eb9d89519f73f30726d9673c5f0588e81f88235dcc0e016c84c28c6366703ec3",
+        "parameters": "/home/emsenn/info/lib/emsenn/services/561-group/services/561-group-services-section/services/561-group-operations-services-section/services/bare-cedar-fog-services-section/data/records/source-maintenance-records/2026-10-20-actor-runtime/data/records/wsl-host-service-records/bare-cedar-fog/wsl-host.json",
+        "parametersSha256": "13eb475bfd266c1aa972bf8c850973bed8016b615529d398ac65cdcc322925a4",
+        "sourceFiles": [
+          {
+            "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-systems-engineering-services-section/services/computer-operating-system-services-section/services/linux-services-section/services/persistent-linux-machine-engineering-services-section/services/wsl-host-service/scripts/wsl-host.mjs",
+            "sha256": "eb9d89519f73f30726d9673c5f0588e81f88235dcc0e016c84c28c6366703ec3"
+          },
+          {
+            "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-systems-engineering-services-section/services/computer-operating-system-services-section/services/linux-services-section/services/persistent-linux-machine-engineering-services-section/services/wsl-host-service/src/wsl-host.mjs",
+            "sha256": "755478f1da2001991c6ae6501da096ee3881dc060860ab1d0f3d83e17f51becd"
+          },
+          {
+            "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-systems-engineering-services-section/services/computer-operating-system-services-section/services/linux-services-section/services/persistent-linux-machine-engineering-services-section/services/wsl-host-service/src/backing-capacity.mjs",
+            "sha256": "5b04c9ba24a611a62fa13a1a11de0ce7ed25ada22463e86b3b1983767a586c01"
+          },
+          {
+            "path": "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-systems-engineering-services-section/services/computer-operating-system-services-section/services/linux-services-section/services/persistent-linux-machine-engineering-services-section/services/wsl-host-service/assets/observe-backing-capacity.ps1",
+            "sha256": "4c2cf7a9818943c8adf166cc1b5af6d28037b88617d6426ee2c95d6b9a079e70"
+          }
+        ]
+      }
+    }
+  ]
+}

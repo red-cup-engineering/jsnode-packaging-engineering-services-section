@@ -1,0 +1,16 @@
+{
+  "consumerPaths": [
+    "/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/source-maintenance-logs/2026-10-21-npm-scratch-context/package.json"
+  ],
+  "releases": [],
+  "pnpm": "/gnu/store/kba00zrnc1d1cg9bkx0krpvc2sp7wzrh-node-24.18.0/bin/node",
+  "pnpmArguments": [
+    "/gnu/store/mgvc0wl50pmq6s7ivnkylh3qa2s8lwqp-registry-runtime/node_modules/.pnpm/pnpm@11.28.5/node_modules/pnpm/bin/pnpm.mjs",
+    "--network-concurrency=4",
+    "--child-concurrency=1",
+    "--package-import-method=hardlink",
+    "--store-dir=/home/emsenn/info/lib/emsenn/services/561-group/services/561-group-services-section/services/561-group-operations-services-section/services/bare-cedar-fog-services-section/data/records/package-manager-cache-records/actor-receiving/store",
+    "--cache-dir=/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/receiving-logs/2026-10-21-npm-scratch-context/pnpm-cache",
+    "--config.state-dir=/home/emsenn/info/lib/emsenn/services/561-group/services/engineering-services-section/services/computer-engineering-services-section/services/computer-code-engineering-services-section/services/javascript-engineering-services-section/services/javascript-node-services-section/services/jsnode-packaging-services-section/services/npm-services-section/services/npm-registry-services-section/services/npm-workspace-publication-service/data/logs/receiving-logs/2026-10-21-npm-scratch-context/pnpm-state"
+  ]
+}

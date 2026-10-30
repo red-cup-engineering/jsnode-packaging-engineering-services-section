@@ -1,0 +1,13 @@
+{
+  "name": "@red-cup-engineering/publish-package-gate-fixture",
+  "version": "0.1.0",
+  "description": "A trivial fixture package for the publish-package gate's own dry-run integration test.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

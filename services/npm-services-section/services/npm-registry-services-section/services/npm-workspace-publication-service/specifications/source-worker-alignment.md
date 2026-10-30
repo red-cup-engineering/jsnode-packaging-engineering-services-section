@@ -1,0 +1,9 @@
+# Original source worker and payload-store alignment
+
+A child qualification must use its parent's already selected immutable native source registration. The original Code transport supplies only that bounded canonical immutable registration as explicit Node --import argv. It excludes raw NODE_OPTIONS, unrelated preload/heap flags, credentials and opaque private capabilities. Competing native contexts refuse. The original registration still receives source bytes and original SDK guards; filesystem facts do not confer private programme authority. The worker's original process-group custody, timeout and terminal evidence remain in charge. Modern request evidence records the full actual argv, including the registration, as before.
+
+The native backport adopts the existing upstream package-manager and cache/transport implementation: PNPM isolates registry metadata and uses its standing content-addressed payload store; npm uses its standing cache. The isolated worker HOME no longer diverts those caches into disposable staging. Fresh/frozen installation, registry routing and exact lock custody remain mandatory. Publication verification uses the upstream PNPM verification entrance instead of making another npm dependency tree.
+
+Invocation scratch is removed at terminal success, refusal or unexpected error. Caller-owned cache and source products remain. Uncertain outer-worker custody is preserved. The change introduces no clock, cleanup daemon, dependency-tree copy or provider purchase.
+
+Native scoped receiving runs the terminal-disposition tests, original transport tests, and test/source-worker-module-arguments.native.mjs with TEST_DATA_ROOT, NATIVE_SOURCE_TEST_STORE and NATIVE_PREVIOUS_SOURCE_TEST_STORE supplied by the existing host receiver. A real selected parent/child qualification is received against the immutable native candidate before production activation. No production or full-suite success is inferred from those fixtures.
