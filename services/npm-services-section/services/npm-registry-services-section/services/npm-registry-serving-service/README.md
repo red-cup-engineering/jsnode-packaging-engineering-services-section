@@ -1,13 +1,13 @@
-# House npm registry serving
+# Group npm registry serving
 
-This package is the house npm registry (registry.561.group): the npm registry
-protocol as npm and pnpm speak it, served from the house's package facts. It
+This package is the Group npm registry (registry.561.group): the npm registry
+protocol as npm and pnpm speak it, served from the Group's package facts. It
 runs as a MetroPlat hosted application on an instance's own listener, or as a
 standalone process; both are the same registry over the same store.
 
 ## Data: facts, blobs, and what is projected from them
 
-What the registry knows about a house package is what has happened to it, kept
+What the registry knows about a Group package is what has happened to it, kept
 as EAVT rows (`{e, a, v, t}`, the shape `eavt-services-section` reads) in an
 append-only journal per package, and its tarballs, each kept once under its
 RFC 6920 SHA-256 NI address:
@@ -26,7 +26,7 @@ maintainers, and the top-level `description`/`repository`/`license`/…
 (presented from latest, as npm's registry presents them) are derived, never
 stored.
 
-Every document served for a house package is a pure projection of its rows
+Every document served for a Group package is a pure projection of its rows
 ([`src/projection.mjs`](src/projection.mjs)): the full packument, the
 abbreviated install document, a version manifest, dist-tags, a search entry.
 Each is rendered once per journal state and cached until the journal changes.
@@ -103,7 +103,7 @@ recovery face.
 - **Revalidation**: every packument carries a strong `ETag` per
   representation and a `Last-Modified`. `If-None-Match` (or, without it,
   `If-Modified-Since`) is answered 304 until something happens to the package.
-  pnpm and npm send both; a house packument is `Cache-Control: no-cache`, so a
+  pnpm and npm send both; a Group packument is `Cache-Control: no-cache`, so a
   publish is seen at once and an unchanged package costs a 304. A public
   packument is `public, max-age=300`, as npm's registry sends it. A tarball is
   `public, max-age=31536000, immutable` with its shasum as its ETag.
@@ -121,9 +121,9 @@ recovery face.
   (`tokens` to place it elsewhere). `npm logout` revokes it. Signing in never
   creates an account.
 - **Audit**: `npm audit`'s bulk advisory request is forwarded to the uplink
-  with the house's names taken out; the uplink has no advisories for them, and
-  the house's dependency inventory is not the uplink's to read.
-- **Search**: `GET /-/v1/search` over the house packages (`scope:` and
+  with the Group's names taken out; the uplink has no advisories for them, and
+  the Group's dependency inventory is not the uplink's to read.
+- **Search**: `GET /-/v1/search` over the Group packages (`scope:` and
   `keywords:` qualifiers; a name match ranks above a description match).
 
 ## Publication
@@ -136,7 +136,7 @@ artifact per version, its canonical filename, canonical base64 and declared
 length, supplied SHA-1/SHA-512 digests, a declared repository, and each tag's
 version target. Unbound attachments, missing artifacts, conflicting bytes, and
 occupied versions are refused, and nothing is written. npm provenance-bundle
-attachments are not supported; house publication uses `--provenance=false`.
+attachments are not supported; Group publication uses `--provenance=false`.
 
 A publication then places each tarball in the blob store, links its leaf,
 appends its facts (publication, tags, and the readme the tarball ships when it
@@ -160,10 +160,10 @@ kind each violation reports:
   static `import`, `export … from` or `import("literal")` of a house-scoped
   specifier whose package is not in dependencies, peerDependencies or
   optionalDependencies. The package's own name is judged by its own `exports`
-  (`self-import`). Modules are read with the house JavaScript parser
+  (`self-import`). Modules are read with the Group JavaScript parser
   (`@red-cup-engineering/javascript-parser-service`), so comments and strings are not
-  imports; a module that names a house scope but does not parse is a `source` violation.
-- `dependency`: a declared house dependency with no published version satisfying
+  imports; a module that names a Group scope but does not parse is a `source` violation.
+- `dependency`: a declared Group dependency with no published version satisfying
   its range (npm semver; a dist-tag also resolves), or a specifier a registry
   cannot resolve (`workspace:`, `file:`, …).
 - `dependency-subpath`: an import whose subpath the highest published version
@@ -173,7 +173,7 @@ kind each violation reports:
 - `tarball`: bytes that are not an npm tarball, no readable package.json, or a
   package.json naming another package or version.
 
-House scopes default to `@red-cup-engineering`, `@lenticule-science`, `@561-group`,
+Group scopes default to `@red-cup-engineering`, `@lenticule-science`, `@561-group`,
 `@coesite-operations`, `@causeway-services`, `@emsenn` and the registry's
 `privateScopes`; configure `houseScopes` to change them, `publishGate: false` to
 turn the gate off. Imports of other packages, `node:` builtins and relative paths
@@ -190,7 +190,7 @@ facts about versions, all of it authenticated:
   it), and `dist-tags` and `maintainers` are unchanged; anything else is a 409
   naming what differs. A version that would be new needs its tarball (400).
 - Dist-tags: GET `/-/package/<name>/dist-tags[/<tag>]`, PUT a version string to
-  `.../dist-tags/<tag>`, DELETE `.../dist-tags/<tag>`, on house packages only. A
+  `.../dist-tags/<tag>`, DELETE `.../dist-tags/<tag>`, on Group packages only. A
   tag must name a published version and must not be a valid semver range;
   `latest` is moved, not removed.
 - `npm unpublish` (PUT `/-rev/`, DELETE) is a 405: versions are never removed.
@@ -206,7 +206,7 @@ read past the cap; a stored tarball is streamed from disk with its length
 instead of held; an uplink tarball over `maxUplinkTarballBytes` is not fetched
 into memory; and while the V8 heap is within a fifth of its limit a new publish
 is answered 503 with Retry-After instead of growing the heap until the process
-aborts. Public metadata and house projections each stay in a 32 MiB
+aborts. Public metadata and Group projections each stay in a 32 MiB
 least-recently-used budget (`publicMetadataBytes`, `houseMetadataBytes`).
 
 ## Receiving
