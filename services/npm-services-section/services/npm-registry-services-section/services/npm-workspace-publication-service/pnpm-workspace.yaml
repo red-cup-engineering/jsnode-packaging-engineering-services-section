@@ -1,0 +1,20 @@
+# Group package rule at 433a35f3a403fd8cee10dbc0d6830e4f16f0bafc,
+# blob df9759fd4d98f988abf1c0851e0e8d8ce822d3d0: own immutable releases
+# have no default age delay. Scopes match this owner's HOUSE_SCOPES.
+# External releases retain strict age filtering; exact pins and SRI remain.
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeExclude:
+  - '@561-group/*'
+  - '@causeway-services/*'
+  - '@coesite-operations/*'
+  - '@emsenn/*'
+  - '@emsweb/*'
+  - '@harmonious-union/*'
+  - '@koios-news/*'
+  - '@lenticule-science/*'
+  - '@red-cup-engineering/*'
+  - '@red-cup-science/*'
+  - '@rsc-quiescent/*'
+  - '@turntide-islands/*'
+  - '@union-officer-academy/*'

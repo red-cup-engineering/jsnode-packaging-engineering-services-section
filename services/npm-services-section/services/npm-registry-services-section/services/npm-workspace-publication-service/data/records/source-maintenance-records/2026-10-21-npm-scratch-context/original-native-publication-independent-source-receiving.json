@@ -1,0 +1,61 @@
+{
+  "kind": "original-code-native-publication-source-independent-receiving/v1",
+  "at": "2026-10-21T21:52:56.479282+00:00",
+  "reviewer": "/root/world_receiving",
+  "feature": "139e672a1fe8cba4de675c4869cef2d96f132505",
+  "main": "29bd16f1394553afb075f6951d9779503e0432e7",
+  "commonAncestor": "2caddbcae151b494ac49f38050b8bf5cdfe6c1c2",
+  "originalPR": "https://github.com/red-cup-engineering/npm-workspace-publication-service/pull/15",
+  "installedIdentity": [
+    {
+      "path": "src/named-publisher-credential.mjs",
+      "featureSHA256": "43c30d3b918aca5127e8a11d61f7568861564c6872d2de026849506d6186aaba",
+      "installedSHA256": "43c30d3b918aca5127e8a11d61f7568861564c6872d2de026849506d6186aaba",
+      "equal": true
+    },
+    {
+      "path": "src/publication-attempt.mjs",
+      "featureSHA256": "bd8a95f3e5f6830191f9911ac889fae108a5fd952fefe5f6eec7e9483fc411fa",
+      "installedSHA256": "bd8a95f3e5f6830191f9911ac889fae108a5fd952fefe5f6eec7e9483fc411fa",
+      "equal": true
+    },
+    {
+      "path": "src/semioverse-operations.mjs",
+      "featureSHA256": "507f3ce3c9a53b01c71ea9fc992402ff03ff5f3a8d3137af8dc4731409f5deb0",
+      "installedSHA256": "507f3ce3c9a53b01c71ea9fc992402ff03ff5f3a8d3137af8dc4731409f5deb0",
+      "equal": true
+    },
+    {
+      "path": "src/npm-publication-command.mjs",
+      "featureSHA256": "33421c02b1a9ac6d80444dddbcbf63406a3de1f39668566ed4bd0b5c71a22126",
+      "installedSHA256": "33421c02b1a9ac6d80444dddbcbf63406a3de1f39668566ed4bd0b5c71a22126",
+      "equal": true
+    },
+    {
+      "path": "src/registry.mjs",
+      "featureSHA256": "c9b1fcc6a3b78ec938383ee52171e212b04431c6b63c425b350bd875d293e9bd",
+      "installedSHA256": "c9b1fcc6a3b78ec938383ee52171e212b04431c6b63c425b350bd875d293e9bd",
+      "equal": true
+    }
+  ],
+  "sourceVerdict": "Original native host provider and retained fixed-artifact implementation received as actual installed source. Existing main improvements must remain through coherent native integration. Scratch-context correction and final combined tree/QA not yet received. No standalone file overlay authorized.",
+  "retainedSemantics": [
+    "same registry/name/version business key independent from invocation",
+    "strict claim/completion point reads before credential/effect",
+    "bounded immutable actual artifact/entire manifest checks",
+    "credential metadata+authenticated actual registry whoami before first claim",
+    "absent-only strict durable first claim permits at most one issuer",
+    "uncertain/output-loss effects remain retained without retry/expiry/reset",
+    "same-authority HTTPS actual redownload SHA512+manifest before completion",
+    "actual SEAVT/File barrier and exact completion readback"
+  ],
+  "authorityDistinction": "The existing direct Leader-authorized fixed-artifact engineering-maintenance route is authorized independently. Original factory publicationApprovalOf and typed Work/source-review composition remain open PR15 automation obligations, not a new prerequisite or claimed completion.",
+  "mainPreservation": "Main differs39 commits from common ancestor and contains artifact-member/source-build/current frozen-consumer improvements. A direct feature checkout would discard unique current capabilities; alias is merging currentmain into original feature.",
+  "pending": [
+    "independent combined final main/feature disposition",
+    "qualified scratch-context regression and source patch",
+    "ordinary original affected QA",
+    "normal original source integration and exact immutable carrier before MP487 use"
+  ],
+  "noLiveEffect": true
+}

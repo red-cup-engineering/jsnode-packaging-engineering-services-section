@@ -1,0 +1,14 @@
+{
+  "kind": "requirement",
+  "id": "source-registry-receiving-storage-boundary",
+  "subject": "Original Code source registry consumer receiving binds PNPM machine storage",
+  "source": "RSS field-history supplier receiving, 2026-10-29; original Work ni:///sha-256;KbVSgvma20MSwnrLC83uMXHz-db1xiLOZezWXHi_1MM",
+  "authorship": "engineering-repository-steward source intake",
+  "evidence": "The 0.17.0 receiveSourceRegistryConsumers invocation inherited npm_config_store_dir, but PNPM 11.28.5 ignored it and reported /home/emsenn/.local/share/pnpm/store/v11. The failed attempt and log are retained in Web Syndication data/state/rss-field-history-supplier-receiving/preparation. A subsequent explicit PNPM CLI and workspace policy selected the original colony-owned store and received the frozen graph.",
+  "requirements": [
+    "Before invoking an original package producer, explicitly receive and validate the caller-provided store, cache, temporary and machine-state locations against the authorized owner boundary, and bind the selected locations through the installed PNPM provider's supported configuration interface.",
+    "Refuse before package effects if the producer's selected storage cannot be evidenced to remain within the authorized boundary; do not infer a valid selection from ignored environment variables or mutate unrelated external state.",
+    "Retain input, provider, selected storage, original lock and terminal receiving evidence and preserve existing native lifecycle and supply-chain policy; no special RSS path, silent age exemption, new cache or hardcoded machine identity."
+  ],
+  "qualification": "Requirement only; no specification, design, implementation, shared producer repair or independent receiving is asserted."
+}

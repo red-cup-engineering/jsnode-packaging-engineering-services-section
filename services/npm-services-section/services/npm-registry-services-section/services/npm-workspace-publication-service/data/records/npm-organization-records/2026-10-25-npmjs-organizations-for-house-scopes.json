@@ -1,0 +1,66 @@
+{
+  "id": "2026-10-25-npmjs-organizations-for-house-scopes",
+  "schema": "npm-organization-record/1",
+  "owner": "red-cup-engineering/npm-workspace-publication-service",
+  "recorded-on": "2026-10-25",
+  "recorded-by": "Claude Code agent session on Bare Cedar Fog (claude-opus-5-5)",
+  "carrier": "https://github.com/red-cup-engineering/npm-workspace-publication-service/issues/52",
+  "consumer": "https://github.com/561-group/561-group-blockchain-automation-services-section/issues/9",
+  "request": "Leader, 2026-10-25: set up npm orgs for red cup et al, so on-chain work can be split into packages the compute swarm works on and installs cheaply.",
+  "observations": [
+    {
+      "fact": "Every house scope in the workspace .npmrc routes to https://registry.561.group/, the Verdaccio on Bare Cedar Fog behind the bare-cedar-fog-561-group Cloudflare tunnel.",
+      "source": "/home/emsenn/bare-cedar-fog/.npmrc"
+    },
+    {
+      "fact": "External CI installs against registry.561.group failed with HTTP 503/504 on 2026-10-24.",
+      "source": "https://github.com/red-cup-engineering/engineering-services-section/issues/36"
+    },
+    {
+      "fact": "registry.npmjs.org /-/org/red-cup-engineering/package answered {\"error\":\"Scope not found\"}; the calibration /-/org/babel/package answered 200. The other twelve scopes were not read because Cloudflare rate-limited the registry (error 1015).",
+      "observed-on": "2026-10-25"
+    },
+    {
+      "fact": "npm has no CLI or registry API that creates an organization; npm org only manages membership. Creation happens in the npmjs.com web UI by a signed-in user.",
+      "source": "npm CLI 11.17.0"
+    },
+    {
+      "fact": "The npmjs search for maintainer:emsenn and maintainer:561-group returned 0 packages, and this host has no npmjs.com login.",
+      "observed-on": "2026-10-25"
+    }
+  ],
+  "risk": "Dependency confusion: a machine without the house .npmrc resolves the house scopes from public npm, where anyone can register them.",
+  "decision": {
+    "claim": "Create a free npmjs organization (unlimited public packages, no card) for every house scope.",
+    "scopes-in-order": [
+      "red-cup-engineering",
+      "561-group",
+      "lenticule-science",
+      "coesite-operations",
+      "causeway-services",
+      "harmonious-union",
+      "emsweb",
+      "koios-news",
+      "red-cup-science",
+      "rsc-quiescent",
+      "turntide-islands",
+      "union-officer-academy"
+    ],
+    "user-scope": "emsenn is a user scope: it is the npmjs username, if it is free.",
+    "private-packages": "Packages built from private repositories stay on registry.561.group. Free organizations hold public packages only, and cash is zero.",
+    "public-packages": "Packages from public repositories also publish to npmjs, with provenance, carrying the same bytes as their registry.561.group release, under the existing Operations authorization in scripts/publish-authorized-npm-package.mjs.",
+    "routing": "The .npmrc routing for a scope changes only once everything that scope needs is on npmjs."
+  },
+  "human-step": {
+    "queued-as": "npmjs-organizations",
+    "queue": "561-group/561-group-services-section data/records/leader-decision-records/leader-decision-queue.json",
+    "why-human": "An npmjs.com account and its sign-in are held by a person; agents do not create accounts or enter passwords."
+  },
+  "next-agent-steps": [
+    "Create the organizations through Claude in Chrome once it is connected and signed in to npmjs.com, or confirm that the Leader created them.",
+    "Store a granular access token, limited to the organizations with read-write packages, as npmjs.publish-token in the credential store.",
+    "Add an npmjs target to publish-authorized-npm-package.mjs, admitted only for public-repository packages.",
+    "After each name's first publish, move it to npm trusted publishing and retire the token for it. First verify npm's current runner support against the rule github-actions-use-held-runners-without-billing.",
+    "Verify by installing a public @red-cup-engineering package on a machine with no house .npmrc."
+  ]
+}

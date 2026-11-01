@@ -1,0 +1,124 @@
+{
+  "kind": "npm.native-publication-source-candidate-receiving",
+  "version": 1,
+  "base": "29bd16f1394553afb075f6951d9779503e0432e7",
+  "feature": "090b161aee08a048d6484c3c1309b2f7c51ad5d1",
+  "laterContinuation": "139e672a1fe8cba4de675c4869cef2d96f132505",
+  "originalFeaturePR": "https://github.com/red-cup-engineering/npm-workspace-publication-service/pull/15",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 49823,
+      "sha256": "1594a1107e826bf5830ee1103046a4e3b8847b059aac770ed082d98480ccc58d"
+    },
+    {
+      "path": "package.json",
+      "bytes": 7485,
+      "sha256": "b88733273705a697d28cf27709cff5fcb9dd4e03b95fbdcded6bb04968230dcf"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 477083,
+      "sha256": "129847dd7c49cdb8e2c7813ba44c5ef946223cf04d28545b536826790774d43f"
+    },
+    {
+      "path": "src/named-publisher-credential.mjs",
+      "bytes": 12912,
+      "sha256": "d7070cf154e89f1aebdabb6b0a8ecf33d3d296a054bc1f79a4ade7774e304246"
+    },
+    {
+      "path": "src/npm-publication-command.mjs",
+      "bytes": 2656,
+      "sha256": "33421c02b1a9ac6d80444dddbcbf63406a3de1f39668566ed4bd0b5c71a22126"
+    },
+    {
+      "path": "src/publication-attempt.mjs",
+      "bytes": 19180,
+      "sha256": "bd8a95f3e5f6830191f9911ac889fae108a5fd952fefe5f6eec7e9483fc411fa"
+    },
+    {
+      "path": "src/registry.mjs",
+      "bytes": 19267,
+      "sha256": "c9b1fcc6a3b78ec938383ee52171e212b04431c6b63c425b350bd875d293e9bd"
+    },
+    {
+      "path": "src/semioverse-operations.mjs",
+      "bytes": 8102,
+      "sha256": "507f3ce3c9a53b01c71ea9fc992402ff03ff5f3a8d3137af8dc4731409f5deb0"
+    },
+    {
+      "path": "test/helpers/publication-attempt-fixture.mjs",
+      "bytes": 5777,
+      "sha256": "ba299931bd5b9f96d39c1f01fb99ea784d981b068e27bcb3066734a364a2cfd6"
+    },
+    {
+      "path": "test/named-publisher-credential.test.mjs",
+      "bytes": 17929,
+      "sha256": "eb07d011494ada6dbda35cf97d2c6045772e870d5c8675cbdd7842ecc9b27e15"
+    },
+    {
+      "path": "test/named-publisher-scratch-context.test.mjs",
+      "bytes": 4546,
+      "sha256": "6e8ca2952c797070524eb61e4ab674ba75853e49d0c711ad9d799f53b995f204"
+    },
+    {
+      "path": "test/native-registry-receiving.test.mjs",
+      "bytes": 18376,
+      "sha256": "df8cc47401df32003ff3aa6d0537efa6ace852e2db6e1feb8ff291dfb794ba19"
+    },
+    {
+      "path": "test/npm-publication-command.test.mjs",
+      "bytes": 2180,
+      "sha256": "cc98e0a0a0554bdd584a6917df31a57943e8d20f066ed251bc7dc14a5b018ea8"
+    },
+    {
+      "path": "test/publication-attempt.test.mjs",
+      "bytes": 23333,
+      "sha256": "ec05ca9181cf551a945b278ddfa9545f1b9e9cdbc39481729bc6e9dca660b721"
+    },
+    {
+      "path": "test/registry-bound-read.test.mjs",
+      "bytes": 2972,
+      "sha256": "f1adc7c2655218f6ad4c08ce41731d140dc0082566c5c55489be26741e92d78e"
+    },
+    {
+      "path": "test/semioverse-operations.test.mjs",
+      "bytes": 7935,
+      "sha256": "191b2b67948107cc43999288b056a910eba61990f37d9fc2130404a054ac20c8"
+    },
+    {
+      "path": "test/source-registry-consumer-admission.test.mjs",
+      "bytes": 13293,
+      "sha256": "37d0a83f83b60f6be000cb076ed41c0d377336d10754ae38e1cc6f48c4ab8e61"
+    }
+  ],
+  "scope": {
+    "currentMainPreserved": true,
+    "laterContinuationImported": false,
+    "scratchBoundary": "real empty private Git repository before npm cache acquisition",
+    "noSourceCommitInvented": true,
+    "originalProviderPublicCommandAllowlistUnchanged": true
+  },
+  "receiving": {
+    "providerAndSecurityCases": 43,
+    "providerAndSecurityPassed": 43,
+    "nativeNpmMetadataCases": 1,
+    "nativeNpmMetadataPassed": 1,
+    "originalRelockCommandStatus": 0,
+    "originalRelockStage": "post-stage-headroom-refused",
+    "frozenGraphReceived": false,
+    "fullOwnerQAPassed": false,
+    "sourceIntegrated": false,
+    "publicationClaimed": false
+  },
+  "openObligations": [
+    "native physical capacity admission",
+    "frozen exact generated-lock consumer",
+    "full original owner source QA",
+    "fresh immutable version planning acceptance",
+    "independent exact-head normal integration",
+    "packed bytes/API source receiving before new release use",
+    "original later139e source-provider continuation remains open",
+    "factory publicationApprovalOf real Work authority remains independently unqualified; direct Leader maintenance is separate"
+  ]
+}
