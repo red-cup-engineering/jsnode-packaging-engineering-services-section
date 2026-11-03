@@ -1,4 +1,0 @@
-export interface UpstreamCacheInput { storage: string; packageName: string; version: string; upstream?: string; backupDirectory?: string; apply?: boolean; expectedIntegrity?: string; fetcher?: typeof fetch }
-export function cacheVerdaccioUpstreamRelease(input: UpstreamCacheInput): Promise<{packageName: string; version: string; integrity: string; byteCount: number; changed: boolean; applied: boolean; priorDigest: string}>;
-
-export function cacheVerdaccioLockfile(input: Omit<UpstreamCacheInput,"packageName" | "version"> & {packageLock: {packages?: Record<string,{name?:string;version:string;resolved?:string;integrity?:string}>}}): Promise<{checked:number;missing:Array<{packageName:string;version:string;expectedIntegrity?:string}>;results:Awaited<ReturnType<typeof cacheVerdaccioUpstreamRelease>>[];applied:boolean}>;
