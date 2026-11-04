@@ -65,7 +65,7 @@ async function fixture(t,{offline=false}={}) {
   const root=await mkdtemp(join(tmpdir(),'pnpm-lock-refresh-')),cwd=join(root,'source'),home=join(root,'home'),bin=join(root,'bin'),cacheRoot=join(root,'allocation');
   await Promise.all([mkdir(cwd),mkdir(home),mkdir(bin),mkdir(cacheRoot,{mode:0o700})]);
   await Promise.all([mkdir(join(cacheRoot,'pnpm-metadata')),mkdir(join(cacheRoot,'pnpm-store'))]);
-  await symlink(join(supplier,'bin','pnpm.cjs'),join(bin,'pnpm'));
+  await symlink(join(supplier,'bin','pnpm.mjs'),join(bin,'pnpm'));
   const saved={...process.env};
   const env={PATH:bin+':'+dirname(process.execPath),HOME:home,TMPDIR:root,TEMP:root,TMP:root,
     npm_config_userconfig:join(home,'npmrc'),npm_config_globalconfig:join(home,'global-npmrc'),

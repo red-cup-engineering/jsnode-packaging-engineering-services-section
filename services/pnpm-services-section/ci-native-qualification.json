@@ -11,6 +11,21 @@
   "optionalSkippedCases": [
     "exact real consumer configuration is admitted unchanged"
   ],
+  "nativeProductSource": {
+    "file": "test/native-provider-construction-native.test.mjs",
+    "expectedNames": [
+      "receive only the complete source-constructed native Code product",
+      "actual native policy checks every existing pin with admitted inflight one",
+      "actual concurrent repeated-package metadata remains deduplicated",
+      "actual oversized metadata is checked without retaining an oversized value",
+      "actual rejected metadata is cleared while the original transport refusal survives",
+      "actual native young policy negative control remains refused",
+      "actual native integrity policy negative control remains refused",
+      "actual native url policy negative control remains refused",
+      "actual native revision policy negative control remains refused",
+      "actual native trust policy negative control remains refused"
+    ]
+  },
   "outsideThisReceiving": [
     {
       "file": "test/native-release-age.test.mjs",
@@ -35,10 +50,6 @@
     {
       "file": "test/native-registry-consumer-native.test.mjs",
       "requires": "Original npm source-worker-process supervisor (Git blob ea0f3934b231852e5c952b05b26c0f4aa565c81d) and source-worker-evidence (4924926c48a243a994bb65a624d2f4beee8b4aad), exact PNPM11.28.5/Node24.19.0; separately supervised native enrollment"
-    },
-    {
-      "file": "test/native-provider-construction-native.test.mjs",
-      "requires": "Original Node24.18.0 serial256MiB native metadata fixture with explicit owned state and complete selected upstream input"
     }
   ],
   "packer": {

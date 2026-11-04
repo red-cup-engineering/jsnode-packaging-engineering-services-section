@@ -8,10 +8,12 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {join} from 'node:path';
 import {constructNativeProvider,receiveConstructedNativeProvider} from '../src/native-provider-construction.mjs';
-import {storeAssemblyProvider} from '../src/native-provider.mjs';
+import {metadataProvider} from '../src/native-provider.mjs';
 import {PATCHED_DISTRIBUTION_SHA256,UPSTREAM_DISTRIBUTION_SHA256} from '../src/native-provider-patch.mjs';
 const run=promisify(execFile),state=process.env.PNPM_NATIVE_QUALIFICATION_STATE,upstream=process.env.PNPM_NATIVE_UPSTREAM;
-if(process.version!=='v24.18.0'||!state||!upstream)throw Error('actual Node24.18, original upstream and explicit owned qualification state required');
+// Metadata-only receiving is separate for each actual native profile. Node24.19
+// public CI does not claim the Node24.18 CRG resource qualification.
+if(!['v24.18.0','v24.19.0'].includes(process.version)||!state||!upstream)throw Error('actual Node24.18/24.19, original upstream and explicit owned qualification state required');
 const sri='sha512-'+Buffer.alloc(64,7).toString('base64'),old='2001-01-01T00:00:00.000Z',fresh=new Date().toISOString();
 const received=[],requests=[];let product,sequence=0;
 const mkdir=p=>fs.mkdirSync(p,{recursive:true,mode:0o700});
@@ -20,10 +22,10 @@ test('receive only the complete source-constructed native Code product',async()=
     ?await receiveConstructedNativeProvider(process.env.PNPM_NATIVE_CONSTRUCTED_PRODUCT)
     :await constructNativeProvider({sourceDirectory:upstream,outputDirectory:join(state,'product')});
   assert.equal(product.members,559);assert.equal(product.installationClaimed,false);assert.equal(product.publicationClaimed,false);
-  const selected=await storeAssemblyProvider(process.execPath,[product.entry],state,undefined,false);
+  const selected=await metadataProvider(process.execPath,[product.entry],state,undefined,false);
   assert.equal(selected.provider.distSHA256,PATCHED_DISTRIBUTION_SHA256);
   assert.equal(createHash('sha256').update(fs.readFileSync(join(upstream,'dist/pnpm.mjs'))).digest('hex'),UPSTREAM_DISTRIBUTION_SHA256);
-  await assert.rejects(storeAssemblyProvider(process.execPath,[join(upstream,'bin/pnpm.mjs')],state,undefined,false),/unqualified PNPM/);
+  await assert.rejects(metadataProvider(process.execPath,[join(upstream,'bin/pnpm.mjs')],state,undefined,false),/unqualified PNPM/);
   assert.equal((await receiveConstructedNativeProvider(product.directory)).inventorySHA256,product.inventorySHA256);
   global.gc?.();
 });
@@ -32,7 +34,8 @@ async function scenario(label,{count=4,concurrency=1,oversize=false,kind='positi
   const names=Array.from({length:count},(_,i)=>'native-cache-fixture-'+i),calls=new Map();let active=0,maximumActive=0;
   const server=createServer(async(req,res)=>{
     if(req.method!=='GET'){res.writeHead(405);res.end();return;}
-    const name=decodeURIComponent(req.url.split('?')[0]).slice(1),full=(req.headers.accept??'').includes('application/json');
+    const name=decodeURIComponent(req.url.split('?')[0]).slice(1),accept=req.headers.accept??'';
+    const full=!accept.includes('application/vnd.npm.install-v1+json')&&accept.includes('application/json');
     const key=name+' '+(full?'full':'abbreviated');calls.set(key,(calls.get(key)??0)+1);active++;maximumActive=Math.max(maximumActive,active);
     const finish=()=>{active--};res.once('close',finish);
     await new Promise(done=>setTimeout(done,15));

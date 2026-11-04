@@ -46,7 +46,7 @@
     {
       "cell": "finish-native-pnpm-verification-receiving:bounded-diagnostics",
       "target": "held",
-      "says": "Original public CI retains bounded exact native stage, terminal, stdout/stderr and partial native cache observations on failure. Signals, timeouts, failed starts, omitted cases and ordinary assertion failures remain unreceived; failure evidence never becomes a successful policy verdict."
+      "says": "Original public CI retains bounded exact stdout/stderr and original refusal privately, and emits only allowlisted native stage, terminal, TAP counts and bounded numeric cache observations publicly. Raw diagnostic text, arbitrary errors, credentials and secret-derived fingerprints remain private under the original native-metadata-session confidentiality contract. Local custody does not establish durable hosted retention after cleanup. Signals, timeouts, failed starts, omitted cases and ordinary assertion failures remain unreceived; failure evidence never becomes a successful policy verdict."
     },
     {
       "cell": "finish-native-pnpm-verification-receiving:complete-source-family",

@@ -153,8 +153,11 @@ receiving. Its hosted allocation is not evidence of the CRG256MiB OS cap.
 Keep every concurrency, cache, oversized/rejected-result and policy-negative
 assertion. Correct media negotiation distinguishes npm abbreviated Accept from
 its application/json fallback; an abbreviated request must not receive the
-oversized full-metadata control. Retain actual failed process output in the
-original CI job log alongside native stage, terminal and custody identities.
+oversized full-metadata control. Retain exact bounded failed process output in private local evidence. The
+original public CI job log receives only allowlisted native stage, terminal,
+TAP counts and bounded numeric observations, never raw diagnostic text or
+secret-derived fingerprints. Local custody is not a durable hosted-retention
+receipt; receive that separately before claiming cleanup-surviving evidence.
 Source, archive/installed CI, CRG resource receiving and live adoption remain
 separate; this profile neither weakens policy nor qualifies private-source lock
 construction on a public runner.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {writeFile,mkdir,symlink,copyFile,unlink,readFile} from 'node:fs/promises';
+import {writeFile,mkdir,symlink,cp,unlink,readFile,chmod,readdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {offlineFixture} from './native-precall-fixture.mjs';
 import {receiveNativeOfflineInstall,receiveNativePrecallAdmission,assertNativePrecallAdmission,receiveNativeRegistryProjectionBinding,assertNativeRegistryProjectionBinding} from '../src/native-precall-admission.mjs';
@@ -79,11 +79,19 @@ test('synthetic state only: absent after v11 refuses and closes original capabil
 });
 test('actual copied provider worker drift refuses before any native invocation',async t=>{
  const f=await setup(t);await writeFile(join(f.cwd,'pnpm-workspace.yaml'),authored);
- const supplier=join(f.root,'supplier');await mkdir(supplier);await mkdir(join(supplier,'bin'));await mkdir(join(supplier,'dist'));
- for(const file of ['package.json','bin/pnpm.cjs','bin/pnpm.mjs','dist/pnpm.mjs','dist/pnpmrc','dist/worker.js'])
-   await copyFile(join(officialSupplier,file),join(supplier,file));
- await unlink(join(f.bin,'pnpm'));await symlink(join(supplier,'bin/pnpm.cjs'),join(f.bin,'pnpm'));
+ const supplier=join(f.root,'supplier');
+ // Preserve the complete received product and its construction receipt before testing drift.
+ await cp(officialSupplier,supplier,{recursive:true});
+ // The received product may be sealed read-only; make only this disposable copy writable.
+ const writableDirectories=async directory=>{
+   await chmod(directory,0o700);
+   for(const entry of await readdir(directory,{withFileTypes:true}))
+     if(entry.isDirectory())await writableDirectories(join(directory,entry.name));
+ };
+ await writableDirectories(supplier);
+ await chmod(join(supplier,'dist/worker.js'),0o644);
+ await unlink(join(f.bin,'pnpm'));await symlink(join(supplier,'bin/pnpm.mjs'),join(f.bin,'pnpm'));
  const cap=await receiveNativePrecallAdmission(f.input);
  await writeFile(join(supplier,'dist/worker.js'),'changed');
- await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.input.installArguments}),/unqualified registry worker/);
+ await assert.rejects(assertNativePrecallAdmission(cap,{cwd:f.cwd,program:'pnpm',arguments:f.input.installArguments}),/complete native provider payload differs from its selected source/);
 });
