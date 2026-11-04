@@ -6,7 +6,8 @@ import { promisify, isDeepStrictEqual } from 'node:util';
 import { dirname, isAbsolute, join } from 'node:path';
 export const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const run = promisify(execFile);
-const distributionSHA256 = 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810';
+import {PATCHED_DISTRIBUTION_SHA256 as distributionSHA256} from './native-provider-patch.mjs';
+import {receiveConstructedNativeProvider} from './native-provider-construction.mjs';
 const variable = 'PNPM_NATIVE_OBSERVATION_CONFIG';
 export async function regular(path, limit) {
   const stat = await lstat(path);
@@ -23,6 +24,7 @@ async function qualifiedProvider(program, args, cwd, expected, probeVersion, nod
     || await realpath(join(root, manifest.bin.pnpm)) !== entry) throw new TypeError('observation requires original PNPM11.28.5');
   const distPath = join(root, 'dist', 'pnpm.mjs'), dist = await regular(distPath, 67108864);
   if (hash(dist) !== distributionSHA256) throw new TypeError('unqualified PNPM observation distribution');
+  await receiveConstructedNativeProvider(root);
   const selected = { manager: { name: 'pnpm', version: manifest.version, entrySHA256: hash(bytes) }, provider: {
     entry, entrySHA256: hash(bytes), manifestPath, manifestSHA256: hash(manifestBytes), distPath,
     distSHA256: hash(dist), shimTargetFormat: 'pnpm11-cmd-shim-target' } };
