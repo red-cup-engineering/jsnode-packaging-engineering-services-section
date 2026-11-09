@@ -8,3 +8,5 @@
 <!-- 561-group-standards:badges:end -->
 
 Holds the services for turning Node.js code into npm packages. Use when working on how packages are named, versioned, built, or distributed.
+
+[NPM Engineering](../../../node-js-packages-engineering-services-section/services/npm-engineering-services-section/) has its own checkout under Node.js Packages Engineering.
