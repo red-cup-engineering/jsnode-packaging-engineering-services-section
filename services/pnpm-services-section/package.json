@@ -1,6 +1,6 @@
 {
   "name": "@red-cup-engineering/pnpm-engineering-services-section",
-  "version": "0.1.0-dev.0",
+  "version": "0.1.0",
   "description": "Derives exact first-party release-age eligibility from received source and verified artifact evidence, preserving native PNPM policy for other selections.",
   "type": "module",
   "private": false,
