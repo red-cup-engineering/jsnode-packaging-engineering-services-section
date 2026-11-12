@@ -412,3 +412,9 @@ through PPA-26 for custody and outstanding original-worker requirements.
 The existing shared `receiveNativeTransportEnvironment` is exported through
 `./native-metadata-preparation` so original composing owners need not import a
 private PNPM module or reproduce its role grammar.
+
+## Installed package observation
+
+`./native-installed-closure` exports read-only `observeInstalledClosure({installationRoot})`. It retains actual physical package instances, aliases, declared dependency edges and installed receiving-test identities with bounded byte/topology observations. Redirected package containers and unavailable declared tests refuse. It never imports installed code or invokes a package manager.
+
+This is an observation, not a frozen-installation receipt: native execution, lock correspondence, archive verification and runtime acceptance remain explicitly false. The existing Code owner must retain its genuine private receiving object and compare installation custody before and after transfer. See `native-installed-closure.spec.md`; synthetic source cases do not replace native installed-consumer or machine receiving.
