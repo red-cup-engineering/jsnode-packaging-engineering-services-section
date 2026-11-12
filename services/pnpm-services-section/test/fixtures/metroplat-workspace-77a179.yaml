@@ -2,7 +2,7 @@ minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 overrides:
   '@red-cup-engineering/mcp-engineering-services-section': 0.1.2
-  '@red-cup-engineering/computer-system-engine': 0.1.17-dev.200
+  '@red-cup-engineering/computer-engine': 0.1.17-dev.200
   # One native Work law and identity schema across the installed host.
   '@red-cup-engineering/organizing': 0.8.0-dev.946
   '@red-cup-engineering/structural-claims-register-services-section': 0.1.2
