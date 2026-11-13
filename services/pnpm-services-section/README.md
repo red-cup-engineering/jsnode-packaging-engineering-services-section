@@ -6,7 +6,7 @@ This candidate repairs the previously unadmitted first-party route. It does not
 establish installed qualification, native institutional allocation, or a CAIRN
 consumer receipt. The canonical package identity is
 `@red-cup-engineering/pnpm-engineering-services-section`; physical source stays
-in `jsnode-packaging-services-section/services/pnpm-services-section`.
+in `jsnode-packaging-engineering-services-section/services/pnpm-services-section`.
 The existing GitHub landing publisher discovers this exact nested package using
 `repository.url` and `repository.directory` in its manifest (`landedPackages`,
 GitHub owner revision `94501f29a37ef273f3012c8236199d500433e852`). There is no new
