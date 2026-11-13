@@ -57,7 +57,7 @@ async function sourceIdentity() {
 async function readerIdentity(port) {
   record(port, ['read', 'supplier'], ['read', 'supplier']); if (typeof port.read !== 'function') throw new TypeError('original archive reader port required');
   const owner = port.supplier; record(owner, ['name', 'version', 'publicExport', 'member', 'closure', 'bindings'], ['name', 'version', 'publicExport', 'member', 'closure', 'bindings']); dense(owner.closure, 4096); dense(owner.bindings, 1024);
-  if (owner.name !== '@red-cup-engineering/npm-workspace-publication-service' || (typeof owner.version !== 'string' || owner.version.length > 128) || owner.publicExport !== './source-registry-closure' || owner.member !== 'readRegistryArchiveMembers') throw new TypeError('original archive reader supplier required');
+  if (owner.name !== '@red-cup-engineering/npm-workspace-publication-computer-code-development-systems-engineering-services-section' || (typeof owner.version !== 'string' || owner.version.length > 128) || owner.publicExport !== './source-registry-closure' || owner.member !== 'readRegistryArchiveMembers') throw new TypeError('original archive reader supplier required');
   const bindings = [], bindingPaths = new Set();
   for (const binding of owner.bindings) {
     record(binding, ['path', 'target'], ['path', 'target']);
