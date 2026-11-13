@@ -114,4 +114,4 @@ for requirement IDs, source comparisons and current execution limits.
 
 ## Acceptance
 
-Run `npm test` for the source suite. The [API reference](docs/API.md) links the source refusal and [runnable consumer example](examples/quickstart.test.mjs).
+Run `npm test` for the source suite. See the [runnable consumer example](examples/quickstart.test.mjs).
