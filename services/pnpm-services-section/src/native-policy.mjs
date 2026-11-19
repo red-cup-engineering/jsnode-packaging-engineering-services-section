@@ -105,14 +105,14 @@ function checkNativeClosure({ lock, manifest, closure, registry, registryConfigu
 /** One receiver instance is bound by the original host to its own custody.
  * Public requests supply references, never readers or received records. Tickets
  * cannot be serialized, copied, or transferred from another receiver instance. */
-export function createNativePolicyReceiver({ verificationResultOf, receivingDispositionOf }) {
-  if (typeof verificationResultOf !== 'function' || typeof receivingDispositionOf !== 'function')
+export function createNativePolicyReceiver({ verificationResultOf, receivingDispositionOf: receivingDecisionOf }) {
+  if (typeof verificationResultOf !== 'function' || typeof receivingDecisionOf !== 'function')
     throw new TypeError('original verification and receiving custody must be bound');
   const tickets = new WeakSet();
   return Object.freeze({
     async qualify({ release, verificationRef, receivingRef }) {
       const [verification, sourceReceiving] = await Promise.all([
-        verificationResultOf({ verificationRef }), receivingDispositionOf({ receivingRef }),
+        verificationResultOf({ verificationRef }), receivingDecisionOf({ receivingRef }),
       ]);
       if (verification?.ref !== verificationRef || sourceReceiving?.workRef !== receivingRef)
         return Object.freeze({ eligible: false, reason: 'CUSTODY_REFERENCE_MISMATCH' });
@@ -132,7 +132,7 @@ export function createNativePolicyReceiver({ verificationResultOf, receivingDisp
  * native lock. Caller JSON is not a receipt, and this function performs no IO.
  * The original receiver must supply authentic eligibility results and retain
  * policy/lock/manifest bytes before and after its frozen install. */
-function projectQualifiedNativePolicy({ policy = {}, lock, registry, qualifications = [], manifest, closure, registryConfiguration } = {}) {
+function projectQualifiedNativePolicy({ policy = {}, lock, registry, qualifications: validations = [], manifest, closure, registryConfiguration } = {}) {
   if (!lock || String(lock.lockfileVersion) !== '9.0' || !lock.packages || typeof lock.packages !== 'object')
     throw new TypeError('qualified native policy requires a parsed PNPM v9 lock');
   if (typeof registry !== 'string' || !/^https:\/\//u.test(registry)) throw new TypeError('exact registry required');
@@ -140,14 +140,14 @@ function projectQualifiedNativePolicy({ policy = {}, lock, registry, qualificati
   if ('minimumReleaseAgeExclude' in policy) throw new Error('preexisting age exclusions require original owner reconciliation');
   if (policy.minimumReleaseAgeStrict === false) throw new Error('strict native age filtering required');
   const selections = new Map();
-  for (const qualification of qualifications) {
-    if (qualification?.eligible !== true) continue;
-    const release = qualification.release;
+  for (const validation of validations) {
+    if (validation?.eligible !== true) continue;
+    const release = validation.release;
     const key = `${release?.name}@${release?.version}`;
-    if (key !== qualification.selection || release.registry !== registry || !qualification.verificationRef || !qualification.receivingRef)
+    if (key !== validation.selection || release.registry !== registry || !validation.verificationRef || !validation.receivingRef)
       throw new Error('qualification identity does not match native selection');
-    const installedSubset = qualification.verifiedClosure.map(expected => closure.find(actual => actual.name === expected.name && actual.version === expected.version));
-    if (installedSubset.some(value => !value) || qualification.closureDigest !== dependencyClosureDigest(installedSubset))
+    const installedSubset = validation.verifiedClosure.map(expected => closure.find(actual => actual.name === expected.name && actual.version === expected.version));
+    if (installedSubset.some(value => !value) || validation.closureDigest !== dependencyClosureDigest(installedSubset))
       throw new Error('tested closure differs from native closure');
     if (selections.has(key) && !isDeepStrictEqual(selections.get(key), release)) throw new Error('conflicting qualified selection');
     const entry = lock.packages[key];

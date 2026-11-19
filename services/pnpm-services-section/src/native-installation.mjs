@@ -105,7 +105,7 @@ async function originalInputs(cwd) {
   return result;
 }
 export function receiveArchiveReuseEvents(text, entries) {
-  const states = new Map(entries.map(e => [e.name + '@' + e.version, {selected: false, pending: false, returned: 0, refused: false}])), events = []; let ready = false, final = false, refused = false, sequence = 0;
+  const states = new Map(entries.map(e => [e.name + '@' + e.version, {selected: false, pending: false, returned: 0, refused: false}])), events = []; let ready = false, final = false, rejected = false, sequence = 0;
   for (const line of text.split('\n')) {
     if (!line) continue;
     const value = JSON.parse(line);
@@ -113,7 +113,7 @@ export function receiveArchiveReuseEvents(text, entries) {
     record(value, ['v', 'seq', 'event', 'name', 'version', 'code'], ['v', 'seq', 'event']);
     if (['ready', 'final', 'final-refused'].includes(value.event) && Object.keys(value).some(key => !['v', 'seq', 'event'].includes(key))) throw new TypeError('reuse lifecycle event invalid');
     if (value.event === 'ready') { if (ready || sequence !== 1) throw new TypeError('duplicate reuse startup'); ready = true; }
-    else if (['final', 'final-refused'].includes(value.event)) { if (!ready) throw new TypeError('reuse startup missing'); final = true; refused ||= value.event === 'final-refused'; }
+    else if (['final', 'final-refused'].includes(value.event)) { if (!ready) throw new TypeError('reuse startup missing'); final = true; rejected ||= value.event === 'final-refused'; }
     else {
       if (typeof value.name !== 'string' || typeof value.version !== 'string') throw new TypeError('reuse event identity invalid');
       if (Object.hasOwn(value, 'code') && !['native-selection-mismatch', 'snapshot-changed', 'missing-native-identity', 'native-fetcher-unavailable'].includes(value.code)) throw new TypeError('reuse failure classification invalid');
@@ -122,12 +122,12 @@ export function receiveArchiveReuseEvents(text, entries) {
       if (value.event === 'selected') old.selected = true;
       if (value.event === 'delegated') { if (!old.selected || old.pending) throw new TypeError('reuse transition invalid'); old.pending = true; }
       if (value.event === 'native-returned') { if (!old.pending) throw new TypeError('reuse transition invalid'); old.pending = false; old.returned++; }
-      if (value.event === 'refused') { refused = true; old.refused = true; }
+      if (value.event === 'refused') { rejected = true; old.refused = true; }
     }
     events.push(value);
   }
   const incomplete = [...states.values()].some(state => state.pending);
-  return {accepted: ready && final && !refused && !incomplete, ready, final, refused, events,
+  return {accepted: ready && final && !rejected && !incomplete, ready, final, refused: rejected, events,
     entries: entries.map(entry => { const state = states.get(entry.name + '@' + entry.version); return {
       name: entry.name, version: entry.version, state: state.refused ? 'refused' : state.pending ? 'delegated' : state.returned ? 'native-returned' : state.selected ? 'selected-not-delegated' : 'not-invoked',
       completedDelegations: state.returned, pendingDelegation: state.pending}; }),
@@ -141,7 +141,7 @@ export function createNativeInstallationService(options = {}) {
   if (options.qualificationRoot !== undefined && !absolute(options.qualificationRoot)) throw new TypeError('absolute qualification root required');
   const observation = createNativeObservationService(options.qualificationRoot ? {qualificationRoot: options.qualificationRoot} : {}), sessions = new WeakMap();
   const state = ticket => { const result = sessions.get(ticket); if (!result) throw new TypeError('foreign native composition session'); return result; };
-  async function custody(s, probe) {
+  async function storage(s, probe) {
     await provider(s.program, s.args, s.cwd, s.native, false);
     if (!isDeepStrictEqual(s.owner, await sourceIdentity()) || !isDeepStrictEqual(s.inputs, await originalInputs(s.cwd))) throw new TypeError('native composition source or inputs changed');
     if (!isDeepStrictEqual(s.profile, await receiveHookFreeProfile(s.cwd, s.command))) throw new TypeError('native configuration profile changed');
@@ -202,20 +202,20 @@ export function createNativeInstallationService(options = {}) {
         preparedConfiguration: reuse ? {sha256: s.configSHA256, bytes: s.configBytes, hookSHA256: s.hookSHA256, allocationLimits: reuse.allocationLimits} : null,
         observation: observed ? {supplier: observed.supplier, receiptDirectory: observed.receiptDirectory} : null});
     },
-    async revalidate(ticket) { await custody(state(ticket), true); return true; },
+    async revalidate(ticket) { await storage(state(ticket), true); return true; },
     async receive(ticket, outcome) {
-      const s = state(ticket); let custodyStatus = 'unchanged', reuseEvidence = null;
-      try { await custody(s, false); } catch { custodyStatus = 'changed-or-unread'; }
+      const s = state(ticket); let storageStatus = 'unchanged', reuseEvidence = null;
+      try { await storage(s, false); } catch { storageStatus = 'changed-or-unread'; }
       if (s.reuse) {
         try { const bytes = await regular(s.eventsPath, 262144); reuseEvidence = {...receiveArchiveReuseEvents(bytes.toString('utf8'), s.entries), stream: {bytes: bytes.length, sha256: hash(bytes)}}; }
         catch { reuseEvidence = {accepted: false, status: 'unread-or-malformed', entries: s.entries.map(e => ({name: e.name, version: e.version, state: 'unknown'}))}; }
       }
       let observed;
       if (s.observed) { try { observed = await observation.receive(s.observed.session, outcome); } catch { observed = {stdout: '', stderr: '', safeFailure: 'observation-unavailable', evidence: {coverage: {status: 'unavailable'}}}; } }
-      const accepted = custodyStatus === 'unchanged' && (!s.reuse || reuseEvidence.accepted === true);
+      const accepted = storageStatus === 'unchanged' && (!s.reuse || reuseEvidence.accepted === true);
       const stdout = Buffer.isBuffer(outcome.stdout) ? outcome.stdout : Buffer.from(outcome.stdout ?? ''), stderr = Buffer.isBuffer(outcome.stderr) ? outcome.stderr : Buffer.from(outcome.stderr ?? '');
       const evidence = {kind: 'pnpm.native-installation-composition.receipt.v1', provider: s.native, supplier: s.owner, inputs: s.inputs,
-        custody: custodyStatus, hookProfile: s.profile, admission: {accepted, requiredArchiveReuse: Boolean(s.reuse)},
+        custody: storageStatus, hookProfile: s.profile, admission: {accepted, requiredArchiveReuse: Boolean(s.reuse)},
         ...(s.reuse ? {reader: s.reader, preparedConfiguration: {sha256: s.configSHA256, bytes: s.configBytes, hookSHA256: s.hookSHA256}, archiveReuse: reuseEvidence} : {}),
         ...(observed ? {observation: observed.evidence} : {}),
         native: {invoked: outcome.invoked === true, code: Number.isSafeInteger(outcome.code) ? outcome.code : null, signal: ['SIGTERM', 'SIGKILL', 'SIGINT'].includes(outcome.signal) ? outcome.signal : null},

@@ -61,8 +61,8 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
   if (typeof name !== 'string' || name.length > 214 || !namePattern.test(name)) throw new TypeError('one exact package name required');
   if (!Array.isArray(selections) || !selections.length || selections.length > 4096) throw new TypeError('complete bounded selection inventory required');
   const url = registryURL(registry); absolute(directory); absolute(cacheDirectory);
-  const retained = clone(selections), seen = new Set();
-  for (const record of retained) {
+  const kept = clone(selections), seen = new Set();
+  for (const record of kept) {
     if (!record || typeof record.name !== 'string' || record.name.length > 214 || !namePattern.test(record.name) || typeof record.version !== 'string' || record.version.length > 128 || semver.valid(record.version) === null || !/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u.test(record.version)
       || record.registry !== registry || !supportedIntegrity(record.integrity)
       || record.explicitTarball !== undefined || record.revision !== undefined || record.resolution?.tarball !== undefined || record.resolution?.revision !== undefined)
@@ -70,7 +70,7 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
     const key = record.name + '@' + record.version;
     if (seen.has(key)) throw new TypeError('duplicate selected version'); seen.add(key);
   }
-  const selected = retained.filter(record => record.name === name);
+  const selected = kept.filter(record => record.name === name);
   if (!selected.length) throw new TypeError('query name absent from original inventory');
   policy = boundedPolicy(policy);
   canonical = boundedClone(canonical, 4096);
@@ -89,10 +89,10 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
   const expectedMirrorPath = nativeMirrorPath(cacheDirectory, url, name, 'metadata-full');
   const args = ['outdated', '--compatible', '--format=json', '--use-stderr=true', '--recursive=false', '--global=false', '--include-github-actions=false',
     `--dir=${directory}`, `--config.cache-dir=${cacheDirectory}`, name];
-  const projectionBytes = json({ files, identity, retained, directory, cacheDirectory });
+  const projectionBytes = json({ files, identity, retained: kept, directory, cacheDirectory });
   if (Buffer.byteLength(projectionBytes) > 8 * 1024 * 1024) throw new TypeError('projection serialization exceeds bound');
   return freeze({ kind: 'pnpm.native-metadata-query.v1', installableGraph: false, name, registry, representative,
-    selectedVersions: selected.map(record => record.version), originalSelections: retained, canonical: identity, policy: clone(policy),
+    selectedVersions: selected.map(record => record.version), originalSelections: kept, canonical: identity, policy: clone(policy),
     directory, cacheDirectory, expectedMirrorPath, files, arguments: args,
     projectionSHA256: sha(projectionBytes),
     requiredProvider: { node: '24.19.0', supportedNodeVersions: ['24.18.0', '24.19.0'], pnpm: '11.28.5', distributionSHA256: 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810' } });
@@ -194,7 +194,7 @@ function inspectRawNativeMetadataProfile(bytes, { name, selectedVersions }, abbr
   } catch { return incomplete('malformed-native-mirror'); }
 }
 
-const statReceipt = stat => Object.fromEntries(['dev', 'ino', 'mode', 'size', 'mtimeNs', 'ctimeNs'].map(key => [key, String(stat[key])]));
+const statRecord = stat => Object.fromEntries(['dev', 'ino', 'mode', 'size', 'mtimeNs', 'ctimeNs'].map(key => [key, String(stat[key])]));
 /** One bounded exact-path observation after the ORIGINAL producer has settled.
  * No wait, retry, file discovery, native execution, or policy-success promotion. */
 export async function receiveNativeMetadataFile(query, { maximumBytes = 64 * 1024 * 1024 } = {}) {
@@ -215,16 +215,16 @@ async function observeNativeMetadataFile(expected, maximumBytes, inspect = bytes
     if (!before.isFile() || before.size > BigInt(maximumBytes) || await realpath(path) !== path) return { ...result, reason: 'not-bounded-unredirected-regular-file' };
     handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
     const opened = await handle.stat({ bigint: true });
-    if (JSON.stringify(statReceipt(before)) !== JSON.stringify(statReceipt(opened))) return { ...result, reason: 'file-changed-before-read' };
+    if (JSON.stringify(statRecord(before)) !== JSON.stringify(statRecord(opened))) return { ...result, reason: 'file-changed-before-read' };
     // Fixed-size positional read cannot grow without bound if a writer races this receiver.
     const bytes = Buffer.alloc(Number(opened.size)); let offset = 0;
     while (offset < bytes.length) { const read = await handle.read(bytes, offset, bytes.length - offset, offset); if (!read.bytesRead) break; offset += read.bytesRead; }
     const after = await handle.stat({ bigint: true }), named = await lstat(path, { bigint: true });
-    if (offset !== bytes.length || JSON.stringify(statReceipt(opened)) !== JSON.stringify(statReceipt(after))
-      || JSON.stringify(statReceipt(after)) !== JSON.stringify(statReceipt(named)) || await realpath(path) !== path)
+    if (offset !== bytes.length || JSON.stringify(statRecord(opened)) !== JSON.stringify(statRecord(after))
+      || JSON.stringify(statRecord(after)) !== JSON.stringify(statRecord(named)) || await realpath(path) !== path)
       return { ...result, reason: 'file-changed-during-read' };
     return { ...result, fileObserved: true, regularFile: true, symlink: false, bytes: bytes.length, sha256: sha(bytes),
-      before: statReceipt(before), after: statReceipt(after), ...inspect(bytes) };
+      before: statRecord(before), after: statRecord(after), ...inspect(bytes) };
   } catch (error) { return { ...result, reason: error.code === 'ENOENT' ? 'missing-native-file' : 'unavailable-native-file' }; }
   finally { await handle?.close(); }
 }

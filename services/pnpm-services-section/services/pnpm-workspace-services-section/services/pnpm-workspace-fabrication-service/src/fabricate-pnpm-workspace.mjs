@@ -58,7 +58,7 @@ function json(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-function admitBuildPolicy(policy, pnpmVersion) {
+function validateBuildPolicy(policy, pnpmVersion) {
   if (policy === null || policy === undefined) return [];
   if (!policy || typeof policy !== "object" || Array.isArray(policy) ||
       Object.getPrototypeOf(policy) !== Object.prototype)
@@ -91,7 +91,7 @@ export function projectPnpmWorkspace(specification) {
   const internal = new Map(packages.map(({ manifest }) => [manifest.name, manifest.version]));
   const files = new Map();
   const pnpmVersion = exactVersion(source.pnpmVersion, "pnpm");
-  const policyLines = admitBuildPolicy(source.buildPolicy, pnpmVersion);
+  const policyLines = validateBuildPolicy(source.buildPolicy, pnpmVersion);
   const root = {
     name: text(source.root?.name, "root name"),
     version: exactVersion(source.root?.version, "root"),
