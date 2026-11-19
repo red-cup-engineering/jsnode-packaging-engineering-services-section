@@ -1,0 +1,48 @@
+{
+  "name": "@red-cup-engineering/pnpm-engineering-services-section",
+  "version": "0.1.2-dev.0",
+  "description": "Derives exact first-party release-age eligibility from received source and verified artifact evidence, preserving native PNPM policy for other selections.",
+  "type": "module",
+  "private": false,
+  "dependencies": {
+    "semver": "7.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/red-cup-engineering/jsnode-packaging-engineering-services-section.git",
+    "directory": "services/pnpm-services-section"
+  },
+  "exports": {
+    "./first-party-qualification": "./src/first-party-qualification.mjs",
+    "./native-policy": "./src/native-policy.mjs",
+    "./package.json": "./package.json",
+    "./native-observation": "./src/native-observation.mjs",
+    "./native-metadata-preparation": "./src/native-metadata-preparation.mjs",
+    "./native-installation": "./src/native-installation.mjs",
+    "./native-precall-admission": "./src/native-precall-admission.mjs",
+    "./native-lock-delta": "./src/native-lock-delta.mjs",
+    "./native-store-assembly": "./src/native-store-assembly.mjs",
+    "./native-provider-construction": "./src/native-provider-construction.mjs"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "package.json",
+    "native-metadata-preparation.spec.md",
+    "native-installation.spec.md",
+    "native-metadata-session.spec.md",
+    "native-precall-admission.spec.md",
+    "native-metadata-batch.spec.md",
+    "native-metadata-raw.spec.md",
+    "native-lock-delta.spec.md",
+    "native-consumer-preparation.spec.md",
+    "native-store-assembly.spec.md"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.561.group/"
+  },
+  "engines": {
+    "node": ">=24.2.0"
+  },
+  "packageManager": "pnpm@11.28.5"
+}
