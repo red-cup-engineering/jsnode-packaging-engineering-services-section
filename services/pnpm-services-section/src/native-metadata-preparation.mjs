@@ -1,3 +1,4 @@
+import { deepFreeze } from "@red-cup-engineering/signcell/values";
 import { boundedClone } from './native-metadata-data.mjs';
 import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
@@ -11,7 +12,7 @@ const namePattern = /^(?:@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*|[a-z0-9][a-
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const policyKeys = new Set(['minimumReleaseAge', 'minimumReleaseAgeStrict', 'minimumReleaseAgeExclude',
   'trustPolicy', 'trustPolicyExclude', 'trustPolicyIgnoreAfter', 'blockExoticSubdeps']);
-const freeze = value => { if (value && typeof value === 'object') { for (const child of Object.values(value)) freeze(child); Object.freeze(value); } return value; };
+
 function clone(value) { return boundedClone(value, 4 * 1024 * 1024); }
 function boundedPolicy(input) {
   const policy = boundedClone(input, 65536);
@@ -91,7 +92,7 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
     `--dir=${directory}`, `--config.cache-dir=${cacheDirectory}`, name];
   const projectionBytes = json({ files, identity, retained, directory, cacheDirectory });
   if (Buffer.byteLength(projectionBytes) > 8 * 1024 * 1024) throw new TypeError('projection serialization exceeds bound');
-  return freeze({ kind: 'pnpm.native-metadata-query.v1', installableGraph: false, name, registry, representative,
+  return deepFreeze({ kind: 'pnpm.native-metadata-query.v1', installableGraph: false, name, registry, representative,
     selectedVersions: selected.map(record => record.version), originalSelections: retained, canonical: identity, policy: clone(policy),
     directory, cacheDirectory, expectedMirrorPath, files, arguments: args,
     projectionSHA256: sha(projectionBytes),
@@ -129,7 +130,7 @@ export function projectNativeMetadataBatchQuery(input) {
     names, directory: first.directory, cacheDirectory: first.cacheDirectory,
     ...(raw ? {...refinement, policy: first.policy} : {}) });
   if (Buffer.byteLength(projectionBytes) > 8 * 1024 * 1024) throw new TypeError('projection serialization exceeds bound');
-  return freeze({ kind: 'pnpm.native-metadata-batch-query.v1', installableGraph: false, names, members,
+  return deepFreeze({ kind: 'pnpm.native-metadata-batch-query.v1', installableGraph: false, names, members,
     expectedMirrorPaths: members.map(member => member.expectedMirrorPath), registry: first.registry,
     originalSelections: first.originalSelections, canonical: first.canonical, policy: first.policy,
     ...refinement,
@@ -262,7 +263,7 @@ export async function receiveNativeMetadataBatchFiles(query, options = {}) {
     }));
     files.push({name:member.name, ...observed});
   }
-  return freeze({kind:'pnpm.native-metadata-batch-files.v1', projectionSHA256:expected.projectionSHA256, files,
+  return deepFreeze({kind:'pnpm.native-metadata-batch-files.v1', projectionSHA256:expected.projectionSHA256, files,
     allFilesObserved:files.every(file => file.fileObserved), nativeReaderConsumed:false, strictPolicyVerified:false, installationReceived:false});
 }
 

@@ -1,3 +1,4 @@
+import { deepFreeze, isRecord } from "@red-cup-engineering/signcell/values";
 // PNPM-owned closed publisher admission. This module never launches a process.
 import { access, lstat, realpath } from 'node:fs/promises';
 import { constants } from 'node:fs';
@@ -23,8 +24,8 @@ const registryConsumer = 'registry-consumer';
 const own = (value, key) => Object.hasOwn(value, key);
 const refusal = reason => { throw new TypeError(`native pre-call profile: ${reason}`); };
 const shimHash = '67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad';
-const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const ownRecord = value => plain(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))
+
+const ownRecord = value => isRecord(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))
   && Reflect.ownKeys(value).every(key => typeof key === 'string' && Object.getOwnPropertyDescriptor(value,key).enumerable && Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value')); 
 function registry(value) {
   let url; try { url = new URL(value); } catch { refusal('invalid registry'); }
@@ -273,12 +274,12 @@ async function snapshot(input) {
   const nodePath = await realpath(process.execPath), nodeBytes = await regular(nodePath, 268435456);
   files.push({path: nodePath, exists: true, sha256: hash(nodeBytes), bytes: nodeBytes.length});
   const manifest = await identity(join(input.cwd, 'package.json'), true), pkg = JSON.parse(manifest.text);
-  if (!plain(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager')
+  if (!isRecord(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager')
     : input.sourceProfile === registryConsumer ? own(pkg,'packageManager') && pkg.packageManager !== 'pnpm@11.28.5'
     : pkg.packageManager !== 'pnpm@11.28.5'))
     refusal(input.sourceProfile === noManagerPin ? 'no manager declaration permitted in explicit no-pin profile' : 'exact legacy manager pin required');
   for (const field of ['engines','devEngines']) if (own(pkg, field)) {
-    if (!plain(pkg[field]) || own(pkg[field], 'runtime') || own(pkg[field], 'packageManager')) refusal('manager/runtime activation declaration unsupported');
+    if (!isRecord(pkg[field]) || own(pkg[field], 'runtime') || own(pkg[field], 'packageManager')) refusal('manager/runtime activation declaration unsupported');
   }
   if (input.registryProjectionPolicy && own(pkg,'pnpm')) refusal('manifest PNPM configuration outside registry projection profile');
   const ws = await identity(join(input.cwd, 'pnpm-workspace.yaml'), input.sourceProfile !== registryConsumer);
@@ -372,7 +373,7 @@ export async function assertNativePrecallAdmission(capability, command) {
     if (command.environment !== undefined) boundedClone(command.environment, 262144);
     if (state.input.environmentProfile === inheritedTransport && !isDeepStrictEqual(command.environment, state.input.environment)) refusal('command environment differs from admitted launch');
     if (state.input.environmentProfile === undefined && command.environment !== undefined) refusal('explicit command environment requires inherited transport profile');
-    if (!plain(command) || Object.keys(command).some(key => !['cwd','program','arguments','environment'].includes(key)) || command.cwd !== current.cwd
+    if (!isRecord(command) || Object.keys(command).some(key => !['cwd','program','arguments','environment'].includes(key)) || command.cwd !== current.cwd
       || typeof command.program !== 'string' || await executable(command.program, state.input.environment ?? process.env) !== current.selected
       || !current.allowedCommands.some(args => isDeepStrictEqual(args, command.arguments))) refusal('command outside admitted set');
   }
@@ -592,10 +593,7 @@ export async function receiveNativePreparedInstall(capability, result) {
 const registryProjectionPolicy = 'registry-projection-consumer-v2';
 const registryWorkerSHA256 = '5878ae8493ead2e083a4fbf33844d2d463ecebb1a1cd3fc86c04be16721bf156';
 const registryProjectionBindings = new WeakMap();
-const freezeRegistry = value => {
-  if (value && typeof value === 'object') { Object.values(value).forEach(freezeRegistry); Object.freeze(value); }
-  return value;
-};
+
 async function effectiveRegistryStore(input) {
   const path = join(input.cacheRoot,'pnpm-store','v11');
   let stat;
@@ -647,7 +645,7 @@ export async function receiveNativeRegistryProjectionBinding(capability) {
     || !isDeepStrictEqual(await effectiveRegistryStore(state.input),state.projection.after))
     refusal('registry projection source or store custody changed');
   const p=state.projection, provider=state.received.supplier.provider;
-  const binding=freezeRegistry({kind:'native-registry-projection-binding-v2',policy:registryProjectionPolicy,
+  const binding=deepFreeze({kind:'native-registry-projection-binding-v2',policy:registryProjectionPolicy,
     version:2,routeSet:'pnpm11-registry-cafs-and-link-v1',routeEvidence:'source-qualified-closed-set',observedRoute:null,
     routes:['buffer-map','buffer-stream','verified-store-reuse','existing-linked-tree-reuse'],
     managerEntrySHA256:provider.entrySHA256,managerDistributionSHA256:provider.distSHA256,workerSHA256:registryWorkerSHA256,

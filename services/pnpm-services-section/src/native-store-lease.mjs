@@ -1,3 +1,4 @@
+import { isEqual } from "@red-cup-engineering/signcell/values";
 /** PNPM-owned native v11 store read under SQLite's original exclusive connection lock. */
 import {lstat,realpath} from 'node:fs/promises';
 import {isAbsolute,join,resolve} from 'node:path';
@@ -10,7 +11,7 @@ const directory=async path=>{
  return s;
 };
 const identity=s=>({device:String(s.dev),inode:String(s.ino),bytes:String(s.size),mtimeNs:String(s.mtimeNs),ctimeNs:String(s.ctimeNs)});
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+
 
 /**
  * The caller supplies the native manager's ACTUAL store-path result.
@@ -41,7 +42,7 @@ export async function withFrozenPnpmStore({storeDirectory,installationDirectory}
   if(before.device!==String(held.dev)||before.inode!==String(held.ino)||await realpath(file)!==file)
    throw new Error('native store index changed before exclusive receiving');
   const result=await work();
-  if(!same(before,identity(await lstat(file,{bigint:true})))||await realpath(file)!==file)
+  if(!isEqual(before,identity(await lstat(file,{bigint:true})))||await realpath(file)!==file)
    throw new Error('native store index changed during immutable receiving');
   return {result,receipt:{kind:'pnpm.native-frozen-store-read',storeDirectory,installationDirectory,
    index:before,writerExclusion:'sqlite-exclusive-connection',storeRowsWritten:false}};

@@ -1,3 +1,4 @@
+import { isNonEmptyString } from "@red-cup-engineering/signcell/values";
 /** Deterministic policy over records resolved by the original receiving owner.
  * This pure function does not authenticate caller-supplied JSON. Only the
  * original receiver may bind its result to an effective native policy. */
@@ -19,7 +20,7 @@ export function dependencyClosureDigest(closure) {
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/u.test(value);
 const integrity = value => typeof value === 'string' && /^sha512-[A-Za-z0-9+/]{86}==$/u.test(value);
 const exact = value => typeof value === 'string' && semver.valid(value) === value;
-const text = value => typeof value === 'string' && value.length > 0;
+
 const no = reason => Object.freeze({ eligible: false, reason });
 
 /**
@@ -28,10 +29,10 @@ const no = reason => Object.freeze({ eligible: false, reason });
  * No review state or prose is interpreted as authority here.
  */
 export function assessArtifactVerification({ release, verification } = {}) {
-  if (!release || !text(release.name) || !exact(release.version) || !integrity(release.integrity)
-    || !text(release.registry) || !sha(release.sourceRevision) || !Number.isSafeInteger(release.repositoryId))
+  if (!release || !isNonEmptyString(release.name) || !exact(release.version) || !integrity(release.integrity)
+    || !isNonEmptyString(release.registry) || !sha(release.sourceRevision) || !Number.isSafeInteger(release.repositoryId))
     return no('INVALID_EXACT_RELEASE');
-  if (verification?.kind !== 'npm.artifact-verification.v1' || !text(verification.ref)
+  if (verification?.kind !== 'npm.artifact-verification.v1' || !isNonEmptyString(verification.ref)
     ) return no('VERIFICATION_NOT_RECEIVED');
   if (!isDeepStrictEqual(verification.release, release)) return no('ARTIFACT_IDENTITY_MISMATCH');
   if (!sha(verification.sourceDigest) || !sha(verification.closureDigest)
@@ -44,12 +45,12 @@ export function assessArtifactVerification({ release, verification } = {}) {
   if (!phases.has('source') || !phases.has('packed') || [...phases].some(phase => !['source','packed'].includes(phase)))
     return no('SOURCE_AND_PACKED_SUITES_REQUIRED');
   for (const suite of verification.suites) {
-    if (!Array.isArray(suite.requiredFiles) || suite.requiredFiles.length === 0 || !suite.requiredFiles.every(text)
+    if (!Array.isArray(suite.requiredFiles) || suite.requiredFiles.length === 0 || !suite.requiredFiles.every(isNonEmptyString)
       || new Set(suite.requiredFiles).size !== suite.requiredFiles.length || !Array.isArray(suite.testedFiles)
       || !isDeepStrictEqual([...suite.requiredFiles].sort(), [...suite.testedFiles].sort()))
       return no('REQUIRED_FILE_UNCOVERED');
-    if (!text(suite.id) || names.has(suite.id) || !text(suite.command)
-      || !Array.isArray(suite.args) || !suite.args.every(text)) return no('INVALID_SUITE_ENROLLMENT');
+    if (!isNonEmptyString(suite.id) || names.has(suite.id) || !isNonEmptyString(suite.command)
+      || !Array.isArray(suite.args) || !suite.args.every(isNonEmptyString)) return no('INVALID_SUITE_ENROLLMENT');
     names.add(suite.id);
     const result = suite.result;
     if (!result || result.code !== 0 || result.signal != null || result.timedOut !== false
@@ -62,12 +63,12 @@ export function assessArtifactVerification({ release, verification } = {}) {
     // Optional skips are source-enrolled, individually identified and retained
     // by the producer. They cannot cover a required case or an unknown skip.
     if (!Array.isArray(suite.requiredCases) || suite.requiredCases.length === 0
-      || !suite.requiredCases.every(text) || new Set(suite.requiredCases).size !== suite.requiredCases.length
-      || !Array.isArray(suite.passedCases) || !suite.passedCases.every(text)
+      || !suite.requiredCases.every(isNonEmptyString) || new Set(suite.requiredCases).size !== suite.requiredCases.length
+      || !Array.isArray(suite.passedCases) || !suite.passedCases.every(isNonEmptyString)
       || suite.passedCases.length !== count.pass || new Set(suite.passedCases).size !== suite.passedCases.length
       || !suite.requiredCases.every(name => suite.passedCases.includes(name))
       || !Array.isArray(suite.optionalSkippedCases) || suite.optionalSkippedCases.length !== count.skipped
-      || !suite.optionalSkippedCases.every(text) || new Set(suite.optionalSkippedCases).size !== suite.optionalSkippedCases.length
+      || !suite.optionalSkippedCases.every(isNonEmptyString) || new Set(suite.optionalSkippedCases).size !== suite.optionalSkippedCases.length
       || suite.optionalSkippedCases.some(name => suite.requiredCases.includes(name) || suite.passedCases.includes(name))) return no('REQUIRED_CASE_UNCOVERED');
   }
   for (const field of ['requiredFiles', 'requiredCases']) {
@@ -82,8 +83,8 @@ export function assessArtifactVerification({ release, verification } = {}) {
 
 export function assessFirstPartyEligibility({ release, verification, sourceReceiving } = {}) {
   if (sourceReceiving?.kind !== 'github.branch-receiving.disposition.v1'
-    || sourceReceiving.state !== 'received' || !text(sourceReceiving.receivedBy)
-    || !text(sourceReceiving.workRef)) return no('SOURCE_NOT_RECEIVED');
+    || sourceReceiving.state !== 'received' || !isNonEmptyString(sourceReceiving.receivedBy)
+    || !isNonEmptyString(sourceReceiving.workRef)) return no('SOURCE_NOT_RECEIVED');
   const sourceRevision = sourceReceiving.artifactVerificationRef === verification?.ref
     ? sourceReceiving.artifactSourceRevision : sourceReceiving.headSha;
   if (sourceReceiving.repositoryId !== release?.repositoryId || sourceRevision !== release?.sourceRevision)

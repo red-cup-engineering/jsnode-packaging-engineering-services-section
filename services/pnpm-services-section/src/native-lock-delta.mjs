@@ -1,11 +1,12 @@
+import { deepFreeze, isRecord } from "@red-cup-engineering/signcell/values";
 // Pure diagnostic comparison. No YAML parser, native operation, filesystem or
 // source/artifact/policy authority is supplied by this module.
 import {isDeepStrictEqual} from 'node:util';
 import semver from 'semver';
 
 const own=(v,k)=>Object.hasOwn(v,k);
-const record=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
-const freeze=v=>{if(v&&typeof v==='object'){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
+
+
 const namePattern=/^(?:@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*|[a-z0-9][a-z0-9._-]*)$/u;
 const versionPattern=/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u;
 const contractFields=['dependencies','devDependencies','optionalDependencies','peerDependencies','peerDependenciesMeta',
@@ -40,18 +41,18 @@ function finiteClone(input){
  return visit(input,0);
 }
 function exactKeys(value,keys){
- if(!record(value)||Object.keys(value).length!==keys.length||keys.some(k=>!own(value,k)))throw new TypeError('exact lock diagnostic fields required');
+ if(!isRecord(value)||Object.keys(value).length!==keys.length||keys.some(k=>!own(value,k)))throw new TypeError('exact lock diagnostic fields required');
 }
 function packageSelection(value,name){
  exactKeys(value,['manifest','integrity']);const m=value.manifest;
- requireScope(record(m)&&m.name===name&&typeof m.version==='string'&&m.version.length<=128&&versionPattern.test(m.version)&&semver.valid(m.version)!==null,'exact-selected-package-identity-required');
+ requireScope(isRecord(m)&&m.name===name&&typeof m.version==='string'&&m.version.length<=128&&versionPattern.test(m.version)&&semver.valid(m.version)!==null,'exact-selected-package-identity-required');
  const match=typeof value.integrity==='string'&&/^sha512-([A-Za-z0-9+/]+={0,2})$/u.exec(value.integrity);
  requireScope(Boolean(match)&&Buffer.from(match[1],'base64').length===64&&Buffer.from(match[1],'base64').toString('base64')===match[1],'canonical-selected-sha512-required');
- for(const field of ['engines','devEngines'])if(own(m,field))requireScope(record(m[field])&&!own(m[field],'runtime')&&!own(m[field],'packageManager'),'selected-runtime-activation-unsupported');
+ for(const field of ['engines','devEngines'])if(own(m,field))requireScope(isRecord(m[field])&&!own(m[field],'runtime')&&!own(m[field],'packageManager'),'selected-runtime-activation-unsupported');
  for(const field of ['bundledDependencies','bundleDependencies'])if(own(m,field))requireScope(m[field]===false||Array.isArray(m[field])&&m[field].length===0,'selected-bundled-payload-unsupported');
  return m;
 }
-function emptyMap(m,key){return !own(m,key)||record(m[key])&&Object.keys(m[key]).length===0;}
+function emptyMap(m,key){return !own(m,key)||isRecord(m[key])&&Object.keys(m[key]).length===0;}
 function additionPackage(m,integrity){
  for(const field of ['dependencies','optionalDependencies','peerDependencies','peerDependenciesMeta','dependenciesMeta'])requireScope(emptyMap(m,field),'addition-runtime-dependencies-or-peers-unsupported');
  const value={resolution:{integrity}};
@@ -63,22 +64,22 @@ function additionPackage(m,integrity){
   requireScope(Array.isArray(m[field])&&m[field].every(v=>typeof v==='string'&&v.length>0),'unsupported-selected-platform');value[field]=m[field];
  }
  if(own(m,'deprecated')){requireScope(typeof m.deprecated==='string','unsupported-selected-deprecation');if(m.deprecated)value.deprecated=m.deprecated;}
- if(own(m,'bin'))requireScope(typeof m.bin==='string'||record(m.bin)&&Object.values(m.bin).every(v=>typeof v==='string'),'unsupported-selected-bin');
- if(own(m,'directories'))requireScope(record(m.directories)&&(!own(m.directories,'bin')||typeof m.directories.bin==='string'),'unsupported-selected-directories');
+ if(own(m,'bin'))requireScope(typeof m.bin==='string'||isRecord(m.bin)&&Object.values(m.bin).every(v=>typeof v==='string'),'unsupported-selected-bin');
+ if(own(m,'directories'))requireScope(isRecord(m.directories)&&(!own(m.directories,'bin')||typeof m.directories.bin==='string'),'unsupported-selected-directories');
  const hasBin=own(m,'bin')?(typeof m.bin==='string'?m.bin.length>0:Object.keys(m.bin).length>0):Boolean(m.directories?.bin);
  if(hasBin)value.hasBin=true;
  // Normalize object prototypes consistently with the already-received trees.
  return finiteClone(value);
 }
 function rootLock(lock){
- requireScope(record(lock)&&['9.0',9].includes(lock.lockfileVersion)&&record(lock.importers)&&record(lock.importers['.']),'root-lockfile-nine-required');
- for(const field of ['packages','snapshots'])requireScope(!own(lock,field)||record(lock[field]),'lock-record-map-required');
- const root=lock.importers['.'];for(const field of dependencyFields)requireScope(!own(root,field)||record(root[field]),'root-lock-dependency-map-required');
+ requireScope(isRecord(lock)&&['9.0',9].includes(lock.lockfileVersion)&&isRecord(lock.importers)&&isRecord(lock.importers['.']),'root-lockfile-nine-required');
+ for(const field of ['packages','snapshots'])requireScope(!own(lock,field)||isRecord(lock[field]),'lock-record-map-required');
+ const root=lock.importers['.'];for(const field of dependencyFields)requireScope(!own(root,field)||isRecord(root[field]),'root-lock-dependency-map-required');
  return root;
 }
 function manifestRoot(m,name){
- requireScope(record(m)&&typeof m.name==='string'&&m.name!==name,'consumer-manifest-required');
- for(const field of dependencyFields){requireScope(!own(m,field)||record(m[field]),'consumer-dependency-map-required');if(field!=='dependencies')requireScope(!own(m[field]??{},name),'selected-root-alias-in-other-category');}
+ requireScope(isRecord(m)&&typeof m.name==='string'&&m.name!==name,'consumer-manifest-required');
+ for(const field of dependencyFields){requireScope(!own(m,field)||isRecord(m[field]),'consumer-dependency-map-required');if(field!=='dependencies')requireScope(!own(m[field]??{},name),'selected-root-alias-in-other-category');}
 }
 function suffixOf(reference,version){
  requireScope(typeof reference==='string'&&(reference===version||reference.startsWith(version+'(')),'selected-reference-is-not-exact');
@@ -106,7 +107,7 @@ function refuseOtherReferences(lock,name,version,packageKey,snapshotKey){
    const childPath=[...path,key],selectedKey=path.length===1&&(path[0]==='packages'&&key===packageKey||path[0]==='snapshots'&&key===snapshotKey);
    requireScope(selectedKey||!hasToken(key,packageKey),'inherited-or-multiple-old-context');
    if(key===name&&!samePath(childPath,rootPath)){
-    const ref=typeof child==='string'?child:record(child)?child.version:null;
+    const ref=typeof child==='string'?child:isRecord(child)?child.version:null;
     requireScope(!(typeof ref==='string'&&(ref===version||ref.startsWith(version+'('))),'inherited-old-reference');
    }
    visit(child,childPath);
@@ -129,7 +130,7 @@ function mismatchPaths(expected,actual){
  function visit(a,b,path){
   if(isDeepStrictEqual(a,b))return;
   if(paths.length>=64){truncated=true;return;}
-  if(record(a)&&record(b)){
+  if(isRecord(a)&&isRecord(b)){
    for(const key of [...new Set([...Object.keys(a),...Object.keys(b)])].sort()){
     if(!own(a,key)||!own(b,key)){if(paths.length<64)paths.push([...path,key]);else truncated=true;}
     else visit(a[key],b[key],[...path,key]);
@@ -142,7 +143,7 @@ function mismatchPaths(expected,actual){
 export function compareNativeRootDependencyLockDelta(input){
  const value=finiteClone(input);exactKeys(value,['beforeLock','afterLock','beforeManifest','afterManifest','change']);
  const {beforeLock,afterLock,beforeManifest,afterManifest,change}=value;
- if(!record(change)||!['add','replace'].includes(change.kind))throw new TypeError('named lock delta kind required');
+ if(!isRecord(change)||!['add','replace'].includes(change.kind))throw new TypeError('named lock delta kind required');
  exactKeys(change,change.kind==='add'?['kind','name','next']:['kind','name','prior','next']);
  const result={kind:'pnpm.native-lock-delta-diagnostic.v1',accepted:false,semanticComparisonOnly:true,
   nativeExecutionReceived:false,policyVerified:false,artifactVerificationReceived:false,installationReceived:false};
@@ -170,13 +171,13 @@ export function compareNativeRootDependencyLockDelta(input){
   }else{
    requireScope(prior.version!==next.version,'replacement-version-unchanged');
    for(const field of contractFields)requireScope(own(prior,field)===own(next,field)&&isDeepStrictEqual(prior[field],next[field]),'replacement-manifest-contract-changed:'+field);
-   const edge=beforeRoot.dependencies?.[name];requireScope(record(edge)&&Object.keys(edge).length===2&&edge.specifier===prior.version&&own(edge,'version'),'prior-root-lock-selection-mismatch');
+   const edge=beforeRoot.dependencies?.[name];requireScope(isRecord(edge)&&Object.keys(edge).length===2&&edge.specifier===prior.version&&own(edge,'version'),'prior-root-lock-selection-mismatch');
    suffix=suffixOf(edge.version,prior.version);const oldKey=keyFor(name,prior.version),oldSnapshotKey=oldKey+suffix;
    requireScope(!hasToken(suffix,oldKey),'self-referential-selected-peer-context');
    const selectedPackages=Object.keys(expected.packages).filter(k=>k===oldKey||k.startsWith(oldKey+'(')),selectedSnapshots=Object.keys(expected.snapshots).filter(k=>k===oldKey||k.startsWith(oldKey+'('));
    requireScope(selectedPackages.length===1&&selectedPackages[0]===oldKey&&selectedSnapshots.length===1&&selectedSnapshots[0]===oldSnapshotKey,'ambiguous-or-missing-selected-context');
-   const oldPackage=expected.packages[oldKey];requireScope(record(oldPackage)&&record(oldPackage.resolution)&&Object.keys(oldPackage.resolution).length===1&&oldPackage.resolution.integrity===change.prior.integrity,'prior-selected-integrity-or-resolution-mismatch');
-   requireScope(record(expected.snapshots[oldSnapshotKey]),'selected-snapshot-record-required');
+   const oldPackage=expected.packages[oldKey];requireScope(isRecord(oldPackage)&&isRecord(oldPackage.resolution)&&Object.keys(oldPackage.resolution).length===1&&oldPackage.resolution.integrity===change.prior.integrity,'prior-selected-integrity-or-resolution-mismatch');
+   requireScope(isRecord(expected.snapshots[oldSnapshotKey]),'selected-snapshot-record-required');
    refuseOtherReferences(beforeLock,name,prior.version,oldKey,oldSnapshotKey);
    oldPackage.resolution.integrity=change.next.integrity;expected.packages[newKey]=oldPackage;delete expected.packages[oldKey];
    expected.snapshots[newKey+suffix]=expected.snapshots[oldSnapshotKey];delete expected.snapshots[oldSnapshotKey];
@@ -189,21 +190,21 @@ export function compareNativeRootDependencyLockDelta(input){
    after:{importers:Object.keys(afterLock.importers).length,packages:Object.keys(afterLock.packages??{}).length,snapshots:Object.keys(afterLock.snapshots??{}).length}};
   result.selection.preservedPeerSuffix=suffix;
  }catch(error){if(!(error instanceof Refusal))throw error;result.reason=error.message;}
- return freeze(result);
+ return deepFreeze(result);
 }
 
 /** Conservative pre-effect input classification, not a native lock parser or
  * resolver. In particular, no registry-only result grants archive/store effects. */
 export function inspectNativeRegistryLockProfile(input){
  const value=finiteClone(input);
- const unchanged=record(value)&&own(value,'profile');
- exactKeys(value,unchanged?['lock','manifest','profile']:record(value)&&own(value,'change')?['lock','manifest','change']:['lock','manifest']);
+ const unchanged=isRecord(value)&&own(value,'profile');
+ exactKeys(value,unchanged?['lock','manifest','profile']:isRecord(value)&&own(value,'change')?['lock','manifest','change']:['lock','manifest']);
  if(unchanged&&value.profile!=='unchanged-registry-consumer')throw new TypeError('explicit unchanged registry consumer profile required');
  const result={kind:'pnpm.native-registry-lock-profile-diagnostic.v1',accepted:false,semanticComparisonOnly:true,
   nativeExecutionReceived:false,policyVerified:false,artifactVerificationReceived:false,installationReceived:false};
  const exactVersion=v=>typeof v==='string'&&v.length<=128&&versionPattern.test(v)&&semver.valid(v)!==null;
  const validName=v=>typeof v==='string'&&v.length<=214&&namePattern.test(v);
- const fields=(v,allowed,reason)=>requireScope(record(v)&&Object.keys(v).every(k=>allowed.includes(k)),reason);
+ const fields=(v,allowed,reason)=>requireScope(isRecord(v)&&Object.keys(v).every(k=>allowed.includes(k)),reason);
  const integrity=v=>{const m=typeof v==='string'&&/^sha512-([A-Za-z0-9+/]+={0,2})$/u.exec(v);return Boolean(m)&&Buffer.from(m[1],'base64').length===64&&Buffer.from(m[1],'base64').toString('base64')===m[1];};
  function packageKey(key,peers=false){
   requireScope(typeof key==='string','exact-registry-package-key-required');
@@ -219,31 +220,31 @@ export function inspectNativeRegistryLockProfile(input){
   requireScope(Object.keys(lock.importers).length===1,'root-only-lock-required');
   if(own(lock,'settings')){fields(lock.settings,['autoInstallPeers','excludeLinksFromLockfile'],'unsupported-lock-settings');
    requireScope((!own(lock.settings,'autoInstallPeers')||typeof lock.settings.autoInstallPeers==='boolean')&&(!own(lock.settings,'excludeLinksFromLockfile')||lock.settings.excludeLinksFromLockfile===false),'unsupported-lock-settings');}
-  if(own(lock,'overrides')){requireScope(record(lock.overrides),'unsupported-lock-overrides');for(const [selector,version]of Object.entries(lock.overrides)){
+  if(own(lock,'overrides')){requireScope(isRecord(lock.overrides),'unsupported-lock-overrides');for(const [selector,version]of Object.entries(lock.overrides)){
    if(!validName(selector))packageKey(selector);requireScope(exactVersion(version),'unsupported-lock-overrides');}}
-  requireScope(record(manifest)&&validName(manifest.name),'consumer-manifest-required');
+  requireScope(isRecord(manifest)&&validName(manifest.name),'consumer-manifest-required');
   for(const key of ['pnpm','overrides','resolutions','workspaces','dependenciesMeta',...(!unchanged?['peerDependenciesMeta']:[])])requireScope(!own(manifest,key),'unsupported-manifest-configuration:'+key);
   if(unchanged&&own(manifest,'peerDependenciesMeta')){
-   requireScope(record(manifest.peerDependenciesMeta),'unsupported-consumer-peer-metadata');
-   for(const [name,meta]of Object.entries(manifest.peerDependenciesMeta))requireScope(validName(name)&&own(manifest.peerDependencies??{},name)&&record(meta)&&Object.keys(meta).length===1&&meta.optional===true,'unsupported-consumer-peer-metadata');
+   requireScope(isRecord(manifest.peerDependenciesMeta),'unsupported-consumer-peer-metadata');
+   for(const [name,meta]of Object.entries(manifest.peerDependenciesMeta))requireScope(validName(name)&&own(manifest.peerDependencies??{},name)&&isRecord(meta)&&Object.keys(meta).length===1&&meta.optional===true,'unsupported-consumer-peer-metadata');
   }
   if(own(manifest,'packageManager'))requireScope(manifest.packageManager==='pnpm@11.28.5','unsupported-manifest-package-manager');
-  for(const key of ['engines','devEngines'])if(own(manifest,key))requireScope(record(manifest[key])&&!own(manifest[key],'runtime')&&!own(manifest[key],'packageManager')&&Object.values(manifest[key]).every(v=>typeof v==='string'),'unsupported-manifest-runtime-configuration');
+  for(const key of ['engines','devEngines'])if(own(manifest,key))requireScope(isRecord(manifest[key])&&!own(manifest[key],'runtime')&&!own(manifest[key],'packageManager')&&Object.values(manifest[key]).every(v=>typeof v==='string'),'unsupported-manifest-runtime-configuration');
   const declared=new Set(),roles=new Map();for(const field of dependencyFields){if(!own(manifest,field))continue;
-   requireScope(record(manifest[field]),'exact-manifest-registry-map-required');for(const [name,version]of Object.entries(manifest[field])){
+   requireScope(isRecord(manifest[field]),'exact-manifest-registry-map-required');for(const [name,version]of Object.entries(manifest[field])){
     const prior=roles.get(name);
     const peerDevelopment=unchanged&&field==='peerDependencies'&&prior?.field==='devDependencies'&&prior.version===version;
     requireScope(validName(name)&&exactVersion(version)&&(!declared.has(name)||peerDevelopment),'exact-unique-manifest-registry-dependency-required');declared.add(name);roles.set(name,{field,version});}}
   const packages=lock.packages??Object.create(null),snapshots=lock.snapshots??Object.create(null),represented=new Set();
   for(const [key,pkg]of Object.entries(packages)){
    packageKey(key);fields(pkg,['resolution','engines','cpu','os','libc','deprecated','hasBin','peerDependencies','peerDependenciesMeta'],'unsupported-registry-package-fields');
-   requireScope(record(pkg.resolution)&&Object.keys(pkg.resolution).length===1&&integrity(pkg.resolution.integrity),'canonical-integrity-only-registry-resolution-required');
-   if(own(pkg,'engines'))requireScope(record(pkg.engines)&&!own(pkg.engines,'runtime')&&!own(pkg.engines,'packageManager')&&Object.values(pkg.engines).every(v=>typeof v==='string'),'unsupported-package-engines');
+   requireScope(isRecord(pkg.resolution)&&Object.keys(pkg.resolution).length===1&&integrity(pkg.resolution.integrity),'canonical-integrity-only-registry-resolution-required');
+   if(own(pkg,'engines'))requireScope(isRecord(pkg.engines)&&!own(pkg.engines,'runtime')&&!own(pkg.engines,'packageManager')&&Object.values(pkg.engines).every(v=>typeof v==='string'),'unsupported-package-engines');
    for(const field of ['cpu','os','libc'])if(own(pkg,field))requireScope(Array.isArray(pkg[field])&&pkg[field].every(v=>typeof v==='string'&&v.length>0),'unsupported-package-platform');
    if(own(pkg,'deprecated'))requireScope(typeof pkg.deprecated==='string','unsupported-package-deprecation');
    if(own(pkg,'hasBin'))requireScope(pkg.hasBin===true,'unsupported-package-bin-flag');
-   if(own(pkg,'peerDependencies')){requireScope(record(pkg.peerDependencies),'unsupported-package-peer-map');for(const [name,range]of Object.entries(pkg.peerDependencies))requireScope(validName(name)&&typeof range==='string'&&semver.validRange(range)!==null,'unsupported-package-peer-range');}
-   if(own(pkg,'peerDependenciesMeta')){requireScope(record(pkg.peerDependenciesMeta),'unsupported-package-peer-metadata');for(const [name,meta]of Object.entries(pkg.peerDependenciesMeta))requireScope(validName(name)&&own(pkg.peerDependencies??{},name)&&record(meta)&&Object.keys(meta).length===1&&meta.optional===true,'unsupported-package-peer-metadata');}
+   if(own(pkg,'peerDependencies')){requireScope(isRecord(pkg.peerDependencies),'unsupported-package-peer-map');for(const [name,range]of Object.entries(pkg.peerDependencies))requireScope(validName(name)&&typeof range==='string'&&semver.validRange(range)!==null,'unsupported-package-peer-range');}
+   if(own(pkg,'peerDependenciesMeta')){requireScope(isRecord(pkg.peerDependenciesMeta),'unsupported-package-peer-metadata');for(const [name,meta]of Object.entries(pkg.peerDependenciesMeta))requireScope(validName(name)&&own(pkg.peerDependencies??{},name)&&isRecord(meta)&&Object.keys(meta).length===1&&meta.optional===true,'unsupported-package-peer-metadata');}
   }
   let references=0;
   function dependency(name,reference){
@@ -254,16 +255,16 @@ export function inspectNativeRegistryLockProfile(input){
    const parsed=packageKey(key,true);requireScope(own(packages,parsed.base),'orphan-registry-snapshot');represented.add(parsed.base);
    fields(snapshot,['dependencies','optionalDependencies','transitivePeerDependencies','optional'],'unsupported-registry-snapshot-fields');
    if(own(snapshot,'optional'))requireScope(snapshot.optional===true,'unsupported-snapshot-optional-flag');
-   for(const field of ['dependencies','optionalDependencies'])if(own(snapshot,field)){requireScope(record(snapshot[field]),'exact-snapshot-registry-map-required');for(const [name,ref]of Object.entries(snapshot[field]))dependency(name,ref);}
+   for(const field of ['dependencies','optionalDependencies'])if(own(snapshot,field)){requireScope(isRecord(snapshot[field]),'exact-snapshot-registry-map-required');for(const [name,ref]of Object.entries(snapshot[field]))dependency(name,ref);}
    if(own(snapshot,'transitivePeerDependencies'))requireScope(Array.isArray(snapshot.transitivePeerDependencies)&&snapshot.transitivePeerDependencies.every(validName)&&new Set(snapshot.transitivePeerDependencies).size===snapshot.transitivePeerDependencies.length,'unsupported-transitive-peer-names');
   }
   requireScope(represented.size===Object.keys(packages).length,'orphan-registry-package');
   fields(root,['dependencies','devDependencies','optionalDependencies'],'unsupported-root-importer-fields');
   const aliases=new Set();for(const field of ['dependencies','devDependencies','optionalDependencies'])if(own(root,field))for(const [name,edge]of Object.entries(root[field])){
-   requireScope(record(edge)&&Object.keys(edge).length===2&&own(edge,'specifier')&&own(edge,'version')&&exactVersion(edge.specifier)&&!aliases.has(name),'exact-unique-root-registry-edge-required');aliases.add(name);dependency(name,edge.version);}
+   requireScope(isRecord(edge)&&Object.keys(edge).length===2&&own(edge,'specifier')&&own(edge,'version')&&exactVersion(edge.specifier)&&!aliases.has(name),'exact-unique-root-registry-edge-required');aliases.add(name);dependency(name,edge.version);}
   if(own(value,'change')){
    const change=value.change;
-   requireScope(record(change)&&['add','replace'].includes(change.kind),'supported-selected-change-required');
+   requireScope(isRecord(change)&&['add','replace'].includes(change.kind),'supported-selected-change-required');
    exactKeys(change,change.kind==='add'?['kind','name','next']:['kind','name','prior','next']);
    const name=change.name;requireScope(validName(name),'exact-selected-name-required');
    const next=packageSelection(change.next,name),prior=change.kind==='replace'?packageSelection(change.prior,name):null;
@@ -271,14 +272,14 @@ export function inspectNativeRegistryLockProfile(input){
    const newKey=keyFor(name,next.version);
    requireScope(!Object.keys(packages).some(k=>k===newKey||k.startsWith(newKey+'('))&&!Object.keys(snapshots).some(k=>k===newKey||k.startsWith(newKey+'(')),'new-selected-key-already-present');
    for(const selected of prior?[prior,next]:[next])for(const field of ['dependencies','optionalDependencies','peerDependencies'])if(own(selected,field)){
-    requireScope(record(selected[field]),'selected-registry-dependency-map-required');
+    requireScope(isRecord(selected[field]),'selected-registry-dependency-map-required');
     for(const [dependency,range]of Object.entries(selected[field]))requireScope(validName(dependency)&&typeof range==='string'&&semver.validRange(range)!==null,'selected-exotic-dependency-unsupported');
    }
    if(!prior){refuseExistingName(lock,name);additionPackage(next,change.next.integrity);}
    else{
     requireScope(prior.version!==next.version,'replacement-version-unchanged');
     for(const field of contractFields)requireScope(own(prior,field)===own(next,field)&&isDeepStrictEqual(prior[field],next[field]),'replacement-manifest-contract-changed:'+field);
-    const edge=root.dependencies?.[name];requireScope(record(edge)&&edge.specifier===prior.version,'prior-root-lock-selection-mismatch');
+    const edge=root.dependencies?.[name];requireScope(isRecord(edge)&&edge.specifier===prior.version,'prior-root-lock-selection-mismatch');
     const suffix=suffixOf(edge.version,prior.version),oldKey=keyFor(name,prior.version),oldSnapshot=oldKey+suffix;
     requireScope(!hasToken(suffix,oldKey),'self-referential-selected-peer-context');
     requireScope(Object.keys(snapshots).filter(k=>k===oldKey||k.startsWith(oldKey+'(')).length===1&&own(snapshots,oldSnapshot),'ambiguous-or-missing-selected-context');
@@ -290,5 +291,5 @@ export function inspectNativeRegistryLockProfile(input){
   if(unchanged)result.profile='unchanged-registry-consumer';
   result.accepted=true;result.reason='complete-registry-only-input-profile';result.counts={packages:Object.keys(packages).length,snapshots:Object.keys(snapshots).length,references,manifestDeclarations:declared.size};
  }catch(error){if(!(error instanceof Refusal))throw error;result.reason=error.message;}
- return freeze(result);
+ return deepFreeze(result);
 }

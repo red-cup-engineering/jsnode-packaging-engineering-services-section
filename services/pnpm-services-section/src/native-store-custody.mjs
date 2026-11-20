@@ -1,9 +1,10 @@
+import { isEqual } from "@red-cup-engineering/signcell/values";
 /** Explicit PNPM owner migration for a legacy per-user cache, before frozen read custody. */
 import {open,lstat,realpath} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {isAbsolute,join,resolve} from 'node:path';
 const identity=s=>({device:String(s.dev),inode:String(s.ino),bytes:String(s.size),mtimeNs:String(s.mtimeNs)});
-const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+
 export async function receiveExistingNativeStoreOwnerPermissions({storeBase,storeDirectory}){
  if(process.platform!=='linux'||typeof process.getuid!=='function'||typeof storeBase!=='string'||!isAbsolute(storeBase)||resolve(storeBase)!==storeBase||storeDirectory!==join(storeBase,'v11'))
   throw new TypeError('canonical existing native v11 store required');
@@ -32,7 +33,7 @@ export async function receiveExistingNativeStoreOwnerPermissions({storeBase,stor
    row.after=Number(after.mode&0o777n);
    if(after.dev!==current.dev||after.ino!==current.ino||named.dev!==current.dev||named.ino!==current.ino||row.after!==0o700)throw new Error('native private store permission receiving changed identity');
   }
-  if(!same(receipt.index,identity(await lstat(indexPath,{bigint:true})))||await realpath(indexPath)!==indexPath)throw new Error('native index changed during permission receiving');
+  if(!isEqual(receipt.index,identity(await lstat(indexPath,{bigint:true})))||await realpath(indexPath)!==indexPath)throw new Error('native index changed during permission receiving');
   receipt.state='received';return receipt;
  }catch(error){receipt.state=receipt.state==='preflight'?'refused':'partial';error.nativeStoreOwnerPermissions=receipt;throw error;}
  finally{for(const item of held.reverse())await item.handle.close();}

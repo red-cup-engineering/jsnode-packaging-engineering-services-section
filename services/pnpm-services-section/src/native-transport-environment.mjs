@@ -1,3 +1,4 @@
+import { deepFreeze } from "@red-cup-engineering/signcell/values";
 // Original metadata transport grammar, shared without importing its effectful composition.
 import { hash } from './native-provider.mjs';
 const own = (value, allowed, required = allowed) => {
@@ -8,7 +9,7 @@ const own = (value, allowed, required = allowed) => {
   }
   if (required.some(key => !Object.hasOwn(value, key))) throw new TypeError('required data field absent');
 };
-const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
+
 const environmentKeys = new Set(['PATH','HOME','XDG_CONFIG_HOME','NODE_USE_ENV_PROXY','NODE_EXTRA_CA_CERTS','SSL_CERT_FILE',
   'HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy','NO_PROXY','no_proxy',
   'NPM_CONFIG_PROXY','NPM_CONFIG_HTTP_PROXY','NPM_CONFIG_HTTPS_PROXY','NPM_CONFIG_NOPROXY',
@@ -35,5 +36,5 @@ export function receiveNativeTransportEnvironment(input, policy) {
     result[key] = value;
   }
   if (Object.keys(policy.stable).some(key => !Object.hasOwn(result,key)) || Object.keys(policy.relays).some(key => !Object.hasOwn(result,key))) throw new TypeError('environment input absent');
-  return { values: freeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: hash(JSON.stringify(result)) } };
+  return { values: deepFreeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: hash(JSON.stringify(result)) } };
 }

@@ -1,3 +1,4 @@
+import { deepFreeze } from "@red-cup-engineering/signcell/values";
 import { boundedClone, parseBatchMetadataOutput } from './native-metadata-data.mjs';
 import { mkdir, open, readFile, realpath, lstat, readdir } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
@@ -17,7 +18,7 @@ const own = (value, allowed, required = allowed) => {
   }
   if (required.some(key => !Object.hasOwn(value, key))) throw new TypeError('required data field absent');
 };
-const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
+
 const copy = value => JSON.parse(JSON.stringify(value));
 import { receiveNativeTransportEnvironment as receiveEnvironment } from './native-transport-environment.mjs';
 export { receiveNativeTransportEnvironment } from './native-transport-environment.mjs';
@@ -115,11 +116,11 @@ function createMetadataPreparationService(batch) {
       await mkdir(query.directory,{mode:0o700});
       for(const [name,text]of Object.entries(query.files)) {const handle=await open(join(query.directory,name),'wx',0o600);try{await handle.writeFile(text);}finally{await handle.close();}}
       const profile=await receiveMetadataConfigurationProfile(query,environment.values);
-      const s={phase:'prepared-producer',busy:false,query,environment,environmentPolicy:freeze(copy(input.environmentPolicy)),environmentFiles,
-        source,provider:native,program:input.program,entry:input.entry,receipts:input.receiptDirectory,limits:freeze(copy(input.limits)),profile,builtin:{path:builtinPath,sha256:hash(builtinBytes)}};
+      const s={phase:'prepared-producer',busy:false,query,environment,environmentPolicy:deepFreeze(copy(input.environmentPolicy)),environmentFiles,
+        source,provider:native,program:input.program,entry:input.entry,receipts:input.receiptDirectory,limits:deepFreeze(copy(input.limits)),profile,builtin:{path:builtinPath,sha256:hash(builtinBytes)}};
       const saved=await receipt(s,'prepared',{kind:kind('prepared'),query,provider:native,source,profile,environment:environment.identity});
       const ticket=Object.freeze({kind:kind('ticket')});sessions.set(ticket,s);
-      return freeze({ticket,projection:query,prepared:saved,provider:native});
+      return deepFreeze({ticket,projection:query,prepared:saved,provider:native});
     },
     async revalidate(ticket,input) {
       const s=state(ticket);own(input,['phase','environment']);
@@ -131,10 +132,10 @@ function createMetadataPreparationService(batch) {
         await custody(s);
         if(input.phase==='producer') {for(const path of paths(s.query)) await absent(path);}
         else {const mirror=await observe(s.query);if(!unchanged(mirror,s.mirror))throw new TypeError('received metadata changed');}
-        const request=freeze({type:'JavascriptNodeCommandExecutionRequest',version:1,command:s.program,
+        const request=deepFreeze({type:'JavascriptNodeCommandExecutionRequest',version:1,command:s.program,
           arguments:[s.entry,...s.query.arguments,...(input.phase==='reader'?['--config.offline=true']:[])],directory:s.query.directory,environment:environment.values,input:null});
         await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:hash(JSON.stringify(request)),environment:environment.identity});
-        s.request=request;s.phase=input.phase+'-in-flight';return freeze({request,policy:s.limits});
+        s.request=request;s.phase=input.phase+'-in-flight';return deepFreeze({request,policy:s.limits});
       } catch(error){s.phase='failed';throw error;} finally{s.busy=false;}
     },
     async receive(ticket,input) {
@@ -142,7 +143,7 @@ function createMetadataPreparationService(batch) {
       if(!['producer','reader'].includes(input.phase)||s.phase!==input.phase+'-in-flight'||s.busy)throw new TypeError('metadata receiving transition refused');
       s.busy=true;
       try {
-        if(input.uncertain===true){s.phase='unknown';return freeze({accepted:false,state:'unknown',receipt:await receipt(s,input.phase+'-unknown',{kind:kind('unknown'),phase:input.phase})});}
+        if(input.uncertain===true){s.phase='unknown';return deepFreeze({accepted:false,state:'unknown',receipt:await receipt(s,input.phase+'-unknown',{kind:kind('unknown'),phase:input.phase})});}
         const execution=boundedClone(input.executionReceipt,16*1024*1024,1048576);
         own(execution,['type','version','request','result']);
         if(execution.type!=='JavascriptNodeCommandExecutionReceipt'||execution.version!==1||!isDeepStrictEqual(execution.request,s.request)) throw new TypeError('native receipt request mismatch');
@@ -164,7 +165,7 @@ function createMetadataPreparationService(batch) {
           &&outputMatches&&observed(mirror)&&(input.phase==='producer'||unchanged(mirror,s.mirror));
         s.phase=accepted?(input.phase==='producer'?'producer-received':'complete'):'failed';if(accepted)s.mirror=mirror;
         const evidence={kind:kind('received'),phase:input.phase,state:s.phase,accepted:Boolean(accepted),native:{status:native.status,signal:native.signal,errorPresent:native.error!==''},outputComplete:complete,custody:custodyStatus,raw,mirror,strictPolicyVerified:false,installationReceived:false};
-        return freeze({...evidence,receipt:await receipt(s,input.phase+'-received',evidence)});
+        return deepFreeze({...evidence,receipt:await receipt(s,input.phase+'-received',evidence)});
       }catch(error){s.phase='failed';throw error;}finally{s.busy=false;}
     }
   });
