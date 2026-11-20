@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {UPSTREAM_DISTRIBUTION_SHA256,UPSTREAM_INVENTORY_SHA256,
   PATCHED_DISTRIBUTION_SHA256,PATCHED_INVENTORY_SHA256,patchNativeDistribution} from './native-provider-patch.mjs';
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
-const RECORD='.native-provider-construction.json';
+const RECEIPT='.native-provider-construction.json';
 const MANIFEST='2dd7bab34254562873ed6a748748f7259b727b143c2f8cca9966069cfdcae800';
 const ENTRY='ff3224d46b47fbb24a7e9fe15fededef7e00892d07d4e376b6762d4899906bfd';
 const between=(parent,child)=>{const r=relative(parent,child);return r===''||r!=='..'&&!r.startsWith('../')&&!isAbsolute(r);};
@@ -32,7 +32,7 @@ async function payload(directory,{constructed=false}={}) {
     const entries=(await readdir(dir,{withFileTypes:true})).sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
     for(const entry of entries){
       const path=scope?scope+'/'+entry.name:entry.name;
-      if(constructed&&path===RECORD)continue;
+      if(constructed&&path===RECEIPT)continue;
       if(members.length>=10000)throw new TypeError('native provider member bound exceeded');
       const address=join(dir,entry.name),stat=await lstat(address);
       if(stat.isDirectory()){members.push({path,kind:'directory'});await walk(address,path);}
@@ -51,18 +51,18 @@ async function payload(directory,{constructed=false}={}) {
 }
 export async function receiveConstructedNativeProvider(directory) {
   const received=await payload(directory,{constructed:true});
-  const record=JSON.parse(await originalFile(join(directory,RECORD),1048576));
-  if(record.kind!=='pnpm.native-provider-construction/v1'
-    ||record.input.inventorySHA256!==UPSTREAM_INVENTORY_SHA256
-    ||record.input.distributionSHA256!==UPSTREAM_DISTRIBUTION_SHA256
-    ||record.product.inventorySHA256!==PATCHED_INVENTORY_SHA256
-    ||record.product.distributionSHA256!==PATCHED_DISTRIBUTION_SHA256
-    ||record.product.members!==559||record.installationClaimed!==false||record.publicationClaimed!==false)
+  const receipt=JSON.parse(await originalFile(join(directory,RECEIPT),1048576));
+  if(receipt.kind!=='pnpm.native-provider-construction/v1'
+    ||receipt.input.inventorySHA256!==UPSTREAM_INVENTORY_SHA256
+    ||receipt.input.distributionSHA256!==UPSTREAM_DISTRIBUTION_SHA256
+    ||receipt.product.inventorySHA256!==PATCHED_INVENTORY_SHA256
+    ||receipt.product.distributionSHA256!==PATCHED_DISTRIBUTION_SHA256
+    ||receipt.product.members!==559||receipt.installationClaimed!==false||receipt.publicationClaimed!==false)
     throw new TypeError('original provider construction receipt is not bound to the actual payload');
   return {directory,entry:join(directory,'bin/pnpm.mjs'),distributionSHA256:PATCHED_DISTRIBUTION_SHA256,
     installationClaimed:false,publicationClaimed:false,
     inventorySHA256:received.inventorySHA256,members:received.members.length,bytes:received.bytes,
-    receiptSHA256:digest(await originalFile(join(directory,RECORD),1048576))};
+    receiptSHA256:digest(await originalFile(join(directory,RECEIPT),1048576))};
 }
 export async function constructNativeProvider(input) {
   if(!input||Object.getPrototypeOf(input)!==Object.prototype
@@ -90,14 +90,14 @@ export async function constructNativeProvider(input) {
       await writeFile(destination,bytes,{flag:'wx',mode:member.executable?0o755:0o644});
     }
     await payload(sourceDirectory);
-    const record={kind:'pnpm.native-provider-construction/v1',input:{directory:sourceDirectory,
+    const receipt={kind:'pnpm.native-provider-construction/v1',input:{directory:sourceDirectory,
       inventorySHA256:UPSTREAM_INVENTORY_SHA256,distributionSHA256:UPSTREAM_DISTRIBUTION_SHA256,
       members:source.members.length,bytes:source.bytes},recipe:{moduleSHA256:digest(await readFile(fileURLToPath(import.meta.url))),
       patchModuleSHA256:digest(await readFile(new URL('./native-provider-patch.mjs',import.meta.url))),
       sharedMetadataBytes:8388608,verifierMetadataBytes:8388608,sharedTTLms:120000,verificationConcurrency:'selected networkConcurrency'},
       product:{directory:outputDirectory,inventorySHA256:PATCHED_INVENTORY_SHA256,distributionSHA256:PATCHED_DISTRIBUTION_SHA256,members:559},
       installationClaimed:false,publicationClaimed:false};
-    await writeFile(join(outputDirectory,RECORD),JSON.stringify(record,null,2)+'\n',{flag:'wx',mode:0o444});
+    await writeFile(join(outputDirectory,RECEIPT),JSON.stringify(receipt,null,2)+'\n',{flag:'wx',mode:0o444});
     const received=await receiveConstructedNativeProvider(outputDirectory);
     for(const member of source.members.filter(x=>x.kind==='file'))
       await chmod(join(outputDirectory,member.path),member.executable?0o555:0o444);

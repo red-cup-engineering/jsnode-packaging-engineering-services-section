@@ -11,9 +11,9 @@ export function createNativeMetadataCacheGroup(byteLimit, ttl, scope, options = 
   const clock = options.clock ?? (() => performance.now());
   const report = options.report ?? (value => logger("metadata-cache-retention").debug(value));
   const settled = new Map();
-  let keptBytes = 0, peakKeptBytes = 0, pendingEntries = 0, peakPendingEntries = 0;
+  let retainedBytes = 0, peakRetainedBytes = 0, pendingEntries = 0, peakPendingEntries = 0;
   let evictions = 0, oversizedEntries = 0, rejectedEntries = 0;
-  const stats = () => ({ scope, byteLimit, retainedBytes: keptBytes, peakRetainedBytes: peakKeptBytes, pendingEntries,
+  const stats = () => ({ scope, byteLimit, retainedBytes, peakRetainedBytes, pendingEntries,
     peakPendingEntries, settledEntries: settled.size, evictions, oversizedEntries, rejectedEntries });
   const emit = () => { try { report(stats()); } catch { /* Diagnostics never change a policy result. */ } };
   const costOf = (value, key) => {
@@ -48,21 +48,21 @@ export function createNativeMetadataCacheGroup(byteLimit, ttl, scope, options = 
   };
   const release = entry => {
     if (!settled.delete(entry)) return;
-    keptBytes -= entry.bytes;
+    retainedBytes -= entry.bytes;
     if (entry.owner.settled.get(entry.key) === entry) entry.owner.settled.delete(entry.key);
   };
   const retain = (owner, key, value, observed) => {
     let bytes;
     try { bytes = costOf(observed, key); } catch { bytes = byteLimit + 1; }
     if (bytes > byteLimit) { oversizedEntries++; emit(); return; }
-    while (keptBytes + bytes > byteLimit || settled.size >= 10000) {
+    while (retainedBytes + bytes > byteLimit || settled.size >= 10000) {
       const oldest = settled.keys().next().value;
       if (!oldest) break;
       release(oldest); evictions++;
     }
     const entry = { owner, key, value, bytes, expiresAt: ttl ? clock() + ttl : Infinity };
-    owner.settled.set(key, entry); settled.set(entry, true); keptBytes += bytes;
-    peakKeptBytes = Math.max(peakKeptBytes, keptBytes); emit();
+    owner.settled.set(key, entry); settled.set(entry, true); retainedBytes += bytes;
+    peakRetainedBytes = Math.max(peakRetainedBytes, retainedBytes); emit();
   };
   return {
     stats,
@@ -150,14 +150,14 @@ export function patchNativeDistribution(input) {
   const shared = originalFunction(source, 'createDefaultPackageMetaCache');
   source = replaceOnce(source, shared, createNativeMetadataCacheGroup.toString() + '\nvar nativeSharedMetadataCaches, nativeVerifierMetadataCaches;\nfunction createDefaultPackageMetaCache() {\n  nativeSharedMetadataCaches ??= createNativeMetadataCacheGroup(8 * 1024 * 1024, 120 * 1e3, "shared");\n  return nativeSharedMetadataCaches.createMap();\n}');
   const iteration = originalFunction(source, 'iterateLockfileViolations');
-  let validated = replaceOnce(iteration, '  const limit = pLimit(concurrency ?? DEFAULT_CONCURRENCY);',
+  let admitted = replaceOnce(iteration, '  const limit = pLimit(concurrency ?? DEFAULT_CONCURRENCY);',
     '  const selectedConcurrency = concurrency ?? DEFAULT_CONCURRENCY;\n  const limit = pLimit(selectedConcurrency);\n  let active = 0, maximumActive = 0, checked = 0;');
-  validated = replaceOnce(validated, '  const verifyCandidate = async (candidate) => {\n    try {',
+  admitted = replaceOnce(admitted, '  const verifyCandidate = async (candidate) => {\n    try {',
     '  const verifyCandidate = async (candidate) => {\n    active++; maximumActive = Math.max(maximumActive, active);\n    try {');
-  validated = replaceOnce(validated, '      fetchError ??= err2;\n    }\n  };',
+  admitted = replaceOnce(admitted, '      fetchError ??= err2;\n    }\n  };',
     '      fetchError ??= err2;\n    } finally { active--; checked++; }\n  };');
-  validated = replaceOnce(validated, '  if (fetchError != null)\n    throw fetchError;',
+  admitted = replaceOnce(admitted, '  if (fetchError != null)\n    throw fetchError;',
     '  logger("lockfile-verification-admission").debug({ selectedConcurrency, maximumActive, checked });\n  if (fetchError != null)\n    throw fetchError;');
-  source = replaceOnce(source, iteration, validated);
+  source = replaceOnce(source, iteration, admitted);
   return Buffer.from(source, 'utf8');
 }

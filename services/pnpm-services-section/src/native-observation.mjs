@@ -191,11 +191,11 @@ export function createNativeObservationService(options = {}) {
       const stdoutBytes = Buffer.isBuffer(outcome.stdout) ? outcome.stdout : Buffer.from(typeof outcome.stdout === 'string' ? outcome.stdout : '');
       const stderrBytes = Buffer.isBuffer(outcome.stderr) ? outcome.stderr : Buffer.from(typeof outcome.stderr === 'string' ? outcome.stderr : '');
       const stdout = stdoutBytes.toString('utf8');
-      const storage = { preInvocationRevalidated: s.revalidations > 0, afterSettlement: 'unchanged' };
+      const custody = { preInvocationRevalidated: s.revalidations > 0, afterSettlement: 'unchanged' };
       try {
         await provider(s.program, s.args, s.cwd, s.native, false);
         if (!isDeepStrictEqual(s.owner, await supplier()) || (await regular(s.configPath, 2 * 1024 * 1024)).toString('utf8') !== s.configText) throw new Error('changed');
-      } catch { storage.afterSettlement = 'changed-or-unavailable'; }
+      } catch { custody.afterSettlement = 'changed-or-unavailable'; }
       const native = projectNative(stdout, s.selection.targets, s.selection.maximumEvents, s.selection.maximumBytes);
       native.partial ||= !stdoutBytes.equals(Buffer.from(stdout));
       let transport = { events: [], partial: true, ready: false, final: false }, readError = false;
@@ -210,7 +210,7 @@ export function createNativeObservationService(options = {}) {
         errorCode: outcome.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? outcome.code : null };
       const evidence = { kind: 'pnpm.native-observation.receipt.v1', context: { ...context }, provider: s.native, supplier: s.owner,
         preparedConfiguration: { sha256: hash(s.configText), bytes: Buffer.byteLength(s.configText) },
-        custody: storage, coverage: { status: native.partial || transport.partial || readError || storage.afterSettlement !== 'unchanged' ? 'partial' : 'observed-prefix',
+        custody, coverage: { status: native.partial || transport.partial || readError || custody.afterSettlement !== 'unchanged' ? 'partial' : 'observed-prefix',
           scope: 'selected-main-process-events', selectionComplete: false, nativePartial: native.partial,
           transportPartial: transport.partial, readError, finalMarker: transport.final, discardedNativeRecords: native.discarded },
         terminal, streams: { stdout: { representation: Buffer.isBuffer(outcome.stdout) ? 'original-bytes' : 'utf8-representation', bytes: stdoutBytes.length, sha256: hash(stdoutBytes) }, stderr: { representation: Buffer.isBuffer(outcome.stderr) ? 'original-bytes' : 'utf8-representation', bytes: stderrBytes.length, sha256: hash(stderrBytes) } },

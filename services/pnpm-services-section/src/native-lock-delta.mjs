@@ -12,8 +12,8 @@ const contractFields=['dependencies','devDependencies','optionalDependencies','p
   'dependenciesMeta','exports','imports','engines','devEngines','type','main','module','browser','bin','directories',
   'cpu','os','libc','bundledDependencies','bundleDependencies'];
 const dependencyFields=['dependencies','devDependencies','optionalDependencies','peerDependencies'];
-class Rejection extends Error {}
-const requireScope=(condition,reason)=>{if(!condition)throw new Rejection(reason);};
+class Refusal extends Error {}
+const requireScope=(condition,reason)=>{if(!condition)throw new Refusal(reason);};
 
 function finiteClone(input){
  let bytes=0,nodes=0;const ancestors=new Set();
@@ -188,7 +188,7 @@ export function compareNativeRootDependencyLockDelta(input){
   result.counts={before:{importers:Object.keys(beforeLock.importers).length,packages:Object.keys(beforeLock.packages??{}).length,snapshots:Object.keys(beforeLock.snapshots??{}).length},
    after:{importers:Object.keys(afterLock.importers).length,packages:Object.keys(afterLock.packages??{}).length,snapshots:Object.keys(afterLock.snapshots??{}).length}};
   result.selection.preservedPeerSuffix=suffix;
- }catch(error){if(!(error instanceof Rejection))throw error;result.reason=error.message;}
+ }catch(error){if(!(error instanceof Refusal))throw error;result.reason=error.message;}
  return freeze(result);
 }
 
@@ -289,6 +289,6 @@ export function inspectNativeRegistryLockProfile(input){
   }
   if(unchanged)result.profile='unchanged-registry-consumer';
   result.accepted=true;result.reason='complete-registry-only-input-profile';result.counts={packages:Object.keys(packages).length,snapshots:Object.keys(snapshots).length,references,manifestDeclarations:declared.size};
- }catch(error){if(!(error instanceof Rejection))throw error;result.reason=error.message;}
+ }catch(error){if(!(error instanceof Refusal))throw error;result.reason=error.message;}
  return freeze(result);
 }

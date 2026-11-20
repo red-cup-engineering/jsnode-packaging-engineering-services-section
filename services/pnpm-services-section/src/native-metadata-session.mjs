@@ -53,7 +53,7 @@ async function sourceIdentity() {
   await visit(dependencyRoot); dependency.sort((a,b)=>a.path.localeCompare(b.path));
   return {local,dependency,binding:{resolved,manifestPath}};
 }
-async function record(s, name, value) {
+async function receipt(s, name, value) {
   await directory(s.receipts);
   const text = JSON.stringify(value,null,2)+'\n';
   if (Buffer.byteLength(text)>16*1024*1024) throw new TypeError('phase receipt bound exceeded');
@@ -85,7 +85,7 @@ function createMetadataPreparationService(batch) {
   const kind = suffix => batch ? `pnpm.metadata.batch.${suffix}.v1` : `pnpm.metadata.${suffix}.v1`;
   const sessions = new WeakMap();
   const state = ticket => { const s=sessions.get(ticket); if(!s) throw new TypeError('foreign metadata ticket'); return s; };
-  async function storage(s) {
+  async function custody(s) {
     await directory(dirname(s.query.directory));
     await directory(s.query.cacheDirectory);
     await directory(s.receipts);
@@ -117,7 +117,7 @@ function createMetadataPreparationService(batch) {
       const profile=await receiveMetadataConfigurationProfile(query,environment.values);
       const s={phase:'prepared-producer',busy:false,query,environment,environmentPolicy:freeze(copy(input.environmentPolicy)),environmentFiles,
         source,provider:native,program:input.program,entry:input.entry,receipts:input.receiptDirectory,limits:freeze(copy(input.limits)),profile,builtin:{path:builtinPath,sha256:hash(builtinBytes)}};
-      const saved=await record(s,'prepared',{kind:kind('prepared'),query,provider:native,source,profile,environment:environment.identity});
+      const saved=await receipt(s,'prepared',{kind:kind('prepared'),query,provider:native,source,profile,environment:environment.identity});
       const ticket=Object.freeze({kind:kind('ticket')});sessions.set(ticket,s);
       return freeze({ticket,projection:query,prepared:saved,provider:native});
     },
@@ -128,12 +128,12 @@ function createMetadataPreparationService(batch) {
       s.busy=true;
       try {
         const environment=receiveEnvironment(input.environment,s.environmentPolicy); s.environment=environment;
-        await storage(s);
+        await custody(s);
         if(input.phase==='producer') {for(const path of paths(s.query)) await absent(path);}
         else {const mirror=await observe(s.query);if(!unchanged(mirror,s.mirror))throw new TypeError('received metadata changed');}
         const request=freeze({type:'JavascriptNodeCommandExecutionRequest',version:1,command:s.program,
           arguments:[s.entry,...s.query.arguments,...(input.phase==='reader'?['--config.offline=true']:[])],directory:s.query.directory,environment:environment.values,input:null});
-        await record(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:hash(JSON.stringify(request)),environment:environment.identity});
+        await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:hash(JSON.stringify(request)),environment:environment.identity});
         s.request=request;s.phase=input.phase+'-in-flight';return freeze({request,policy:s.limits});
       } catch(error){s.phase='failed';throw error;} finally{s.busy=false;}
     },
@@ -142,7 +142,7 @@ function createMetadataPreparationService(batch) {
       if(!['producer','reader'].includes(input.phase)||s.phase!==input.phase+'-in-flight'||s.busy)throw new TypeError('metadata receiving transition refused');
       s.busy=true;
       try {
-        if(input.uncertain===true){s.phase='unknown';return freeze({accepted:false,state:'unknown',receipt:await record(s,input.phase+'-unknown',{kind:kind('unknown'),phase:input.phase})});}
+        if(input.uncertain===true){s.phase='unknown';return freeze({accepted:false,state:'unknown',receipt:await receipt(s,input.phase+'-unknown',{kind:kind('unknown'),phase:input.phase})});}
         const execution=boundedClone(input.executionReceipt,16*1024*1024,1048576);
         own(execution,['type','version','request','result']);
         if(execution.type!=='JavascriptNodeCommandExecutionReceipt'||execution.version!==1||!isDeepStrictEqual(execution.request,s.request)) throw new TypeError('native receipt request mismatch');
@@ -151,8 +151,8 @@ function createMetadataPreparationService(batch) {
         if(native.type!=='JavascriptNodeCommandExecutionResult'||native.version!==1||typeof native.error!=='string'||!(native.status===null||Number.isInteger(native.status))||!(native.signal===null||typeof native.signal==='string'))throw new TypeError('native result contract mismatch');
         if(typeof native.stdout!=='string'||typeof native.stderr!=='string'||native.stdout.length>s.limits.outputLimit||native.stderr.length>s.limits.outputLimit)throw new TypeError('bounded native output required');
         // Original error/result preserved privately even if later custody fails.
-        const raw=await record(s,input.phase+'-execution',execution);
-        let storageStatus='unchanged';try{await storage(s);}catch{storageStatus='changed-or-unread';}
+        const raw=await receipt(s,input.phase+'-execution',execution);
+        let custodyStatus='unchanged';try{await custody(s);}catch{custodyStatus='changed-or-unread';}
         const complete=native.stdout.length<s.limits.outputLimit&&native.stderr.length<s.limits.outputLimit;
         let parsed=null;try{if(complete)parsed=batch?parseBatchMetadataOutput(native.stdout):JSON.parse(native.stdout);}catch{}
         const mirror=await observe(s.query);
@@ -160,11 +160,11 @@ function createMetadataPreparationService(batch) {
           ? Object.keys(parsed).length===s.query.names.length&&s.query.members.every(member=>Object.hasOwn(parsed,member.name)&&parsed[member.name]?.wanted===member.representative
             &&(s.query.category!=='abbreviated'||parsed[member.name]?.latest===member.representative))
           : parsed[s.query.name]?.wanted===s.query.representative);
-        const accepted=storageStatus==='unchanged'&&complete&&native.signal===null&&native.error===''&&[0,1].includes(native.status)
+        const accepted=custodyStatus==='unchanged'&&complete&&native.signal===null&&native.error===''&&[0,1].includes(native.status)
           &&outputMatches&&observed(mirror)&&(input.phase==='producer'||unchanged(mirror,s.mirror));
         s.phase=accepted?(input.phase==='producer'?'producer-received':'complete'):'failed';if(accepted)s.mirror=mirror;
-        const evidence={kind:kind('received'),phase:input.phase,state:s.phase,accepted:Boolean(accepted),native:{status:native.status,signal:native.signal,errorPresent:native.error!==''},outputComplete:complete,custody:storageStatus,raw,mirror,strictPolicyVerified:false,installationReceived:false};
-        return freeze({...evidence,receipt:await record(s,input.phase+'-received',evidence)});
+        const evidence={kind:kind('received'),phase:input.phase,state:s.phase,accepted:Boolean(accepted),native:{status:native.status,signal:native.signal,errorPresent:native.error!==''},outputComplete:complete,custody:custodyStatus,raw,mirror,strictPolicyVerified:false,installationReceived:false};
+        return freeze({...evidence,receipt:await receipt(s,input.phase+'-received',evidence)});
       }catch(error){s.phase='failed';throw error;}finally{s.busy=false;}
     }
   });

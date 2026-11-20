@@ -7,7 +7,7 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export async function receiveExistingNativeStoreOwnerPermissions({storeBase,storeDirectory}){
  if(process.platform!=='linux'||typeof process.getuid!=='function'||typeof storeBase!=='string'||!isAbsolute(storeBase)||resolve(storeBase)!==storeBase||storeDirectory!==join(storeBase,'v11'))
   throw new TypeError('canonical existing native v11 store required');
- const held=[],record={kind:'pnpm.native-store-owner-permissions.v1',state:'preflight',directories:[],index:null,contentsTraversed:false,payloadModesChanged:false};
+ const held=[],receipt={kind:'pnpm.native-store-owner-permissions.v1',state:'preflight',directories:[],index:null,contentsTraversed:false,payloadModesChanged:false};
  try{
   // Open and receive BOTH existing directories and the index before changing either.
   for(const path of[storeBase,storeDirectory]){
@@ -21,19 +21,19 @@ export async function receiveExistingNativeStoreOwnerPermissions({storeBase,stor
   const indexPath=join(storeDirectory,'index.db'),index=await lstat(indexPath,{bigint:true});
   if(!index.isFile()||await realpath(indexPath)!==indexPath||index.uid!==BigInt(process.getuid())||index.dev!==held[1].before.dev||index.size<100n||index.size>268435456n)
    throw new TypeError('bounded existing native PNPM index required; no store is initialized');
-  record.index=identity(index);
-  record.state='applying';
+  receipt.index=identity(index);
+  receipt.state='applying';
   for(const item of held){
    const current=await lstat(item.path,{bigint:true});
    if(current.dev!==item.before.dev||current.ino!==item.before.ino||await realpath(item.path)!==item.path)throw new Error('native store path changed before permission receiving');
-   const row={path:item.path,device:String(current.dev),inode:String(current.ino),before:Number(current.mode&0o777n),after:null};record.directories.push(row);
+   const row={path:item.path,device:String(current.dev),inode:String(current.ino),before:Number(current.mode&0o777n),after:null};receipt.directories.push(row);
    await item.handle.chmod(0o700);
    const after=await item.handle.stat({bigint:true}),named=await lstat(item.path,{bigint:true});
    row.after=Number(after.mode&0o777n);
    if(after.dev!==current.dev||after.ino!==current.ino||named.dev!==current.dev||named.ino!==current.ino||row.after!==0o700)throw new Error('native private store permission receiving changed identity');
   }
-  if(!same(record.index,identity(await lstat(indexPath,{bigint:true})))||await realpath(indexPath)!==indexPath)throw new Error('native index changed during permission receiving');
-  record.state='received';return record;
- }catch(error){record.state=record.state==='preflight'?'refused':'partial';error.nativeStoreOwnerPermissions=record;throw error;}
+  if(!same(receipt.index,identity(await lstat(indexPath,{bigint:true})))||await realpath(indexPath)!==indexPath)throw new Error('native index changed during permission receiving');
+  receipt.state='received';return receipt;
+ }catch(error){receipt.state=receipt.state==='preflight'?'refused':'partial';error.nativeStoreOwnerPermissions=receipt;throw error;}
  finally{for(const item of held.reverse())await item.handle.close();}
 }

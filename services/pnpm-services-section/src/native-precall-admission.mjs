@@ -21,21 +21,21 @@ const inheritedTransport = 'inherited-native-transport';
 const noManagerPin = 'root-package-no-manager-pin';
 const registryConsumer = 'registry-consumer';
 const own = (value, key) => Object.hasOwn(value, key);
-const rejection = reason => { throw new TypeError(`native pre-call profile: ${reason}`); };
+const refusal = reason => { throw new TypeError(`native pre-call profile: ${reason}`); };
 const shimHash = '67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const ownRecord = value => plain(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value))
   && Reflect.ownKeys(value).every(key => typeof key === 'string' && Object.getOwnPropertyDescriptor(value,key).enumerable && Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value')); 
 function registry(value) {
-  let url; try { url = new URL(value); } catch { rejection('invalid registry'); }
-  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || (url.href !== value && url.href !== value + '/') || url.pathname !== '/') rejection('unsupported registry');
+  let url; try { url = new URL(value); } catch { refusal('invalid registry'); }
+  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || (url.href !== value && url.href !== value + '/') || url.pathname !== '/') refusal('unsupported registry');
 }
 function originalInstall(args, operation) {
-  if (!Array.isArray(args) || args.some(arg => typeof arg !== 'string')) rejection('invalid command arguments');
+  if (!Array.isArray(args) || args.some(arg => typeof arg !== 'string')) refusal('invalid command arguments');
   if (args.length !== 9 || args[0] !== 'install' || args[1] !== (operation === lockRefresh ? '--no-frozen-lockfile' : '--frozen-lockfile') || args[2] !== '--registry'
-      || args[4] !== '--cache-dir' || args[6] !== '--store-dir' || args[8] !== '--config.prefer-offline=false') rejection('unsupported original install grammar');
+      || args[4] !== '--cache-dir' || args[6] !== '--store-dir' || args[8] !== '--config.prefer-offline=false') refusal('unsupported original install grammar');
   registry(args[3]);
-  for (const index of [5, 7]) if (!isAbsolute(args[index]) || resolve(args[index]) !== args[index]) rejection('cache and store must be normalized absolute paths');
+  for (const index of [5, 7]) if (!isAbsolute(args[index]) || resolve(args[index]) !== args[index]) refusal('cache and store must be normalized absolute paths');
   return args.slice();
 }
 /** Explicit owner transformation for the native-module publication recipe. Source policy is untouched. */
@@ -87,45 +87,45 @@ export function deriveNativePreparedOnlineInstallArguments(originalArguments) {
   return Object.freeze([...deriveNativeLifecycleDisabledInstallArguments(alreadyPrepared ? originalArguments.slice(0, 10) : originalArguments),
     '--config.update-notifier=false']);
 }
-async function cacheStorage(input) {
+async function cacheCustody(input) {
   const root = input.cacheRoot;
-  if (typeof root !== 'string' || !isAbsolute(root) || resolve(root) !== root) rejection('explicit normalized cache allocation required');
+  if (typeof root !== 'string' || !isAbsolute(root) || resolve(root) !== root) refusal('explicit normalized cache allocation required');
   const inside = (parent, child) => { const path = relative(parent, child); return path === '' || (path !== '..' && !path.startsWith('..' + sep) && !isAbsolute(path)); };
-  if (inside(root, input.cwd) || inside(input.cwd, root)) rejection('cache allocation overlaps source');
+  if (inside(root, input.cwd) || inside(input.cwd, root)) refusal('cache allocation overlaps source');
   const directories = [];
   for (const path of [root, join(root, 'pnpm-metadata'), join(root, 'pnpm-store')]) {
     const stat = await lstat(path);
     if (!stat.isDirectory() || stat.uid !== process.getuid() || await realpath(path) !== path
-      || (path === root && (stat.mode & 0o077) !== 0)) rejection('cache allocation must be owned, private and unredirected');
+      || (path === root && (stat.mode & 0o077) !== 0)) refusal('cache allocation must be owned, private and unredirected');
     directories.push({path, dev: stat.dev, ino: stat.ino, uid: stat.uid, mode: stat.mode});
   }
-  if (input.installArguments[5] !== directories[1].path || input.installArguments[7] !== directories[2].path) rejection('command cache paths differ from allocation');
+  if (input.installArguments[5] !== directories[1].path || input.installArguments[7] !== directories[2].path) refusal('command cache paths differ from allocation');
   return {directories, verdict: await identity(join(root, 'pnpm-metadata', 'lockfile-verified.jsonl'), false, 8388608)};
 }
 function commands(args, mode, operation) {
   if (operation === lockRefresh) {
     const derived = mode === offlineLockRefresh ? deriveNativeOfflineLockfileRefreshArguments(args) : deriveNativeLockfileRefreshArguments(args);
-    if (!isDeepStrictEqual(args, derived)) rejection('explicit lockfile-only lifecycle suppression required');
+    if (!isDeepStrictEqual(args, derived)) refusal('explicit lockfile-only lifecycle suppression required');
     return [args.slice()];
   }
   if (mode === preparedOfflineMode) {
-    if (!isDeepStrictEqual(args, deriveNativePreparedOfflineInstallArguments(args))) rejection('explicit prepared offline verifier grammar required');
+    if (!isDeepStrictEqual(args, deriveNativePreparedOfflineInstallArguments(args))) refusal('explicit prepared offline verifier grammar required');
     return [args.slice(), ['--version']];
   }
   if (mode === preparedOnlineMode) {
-    if (!isDeepStrictEqual(args, deriveNativePreparedOnlineInstallArguments(args))) rejection('explicit prepared online grammar required');
+    if (!isDeepStrictEqual(args, deriveNativePreparedOnlineInstallArguments(args))) refusal('explicit prepared online grammar required');
     return [args.slice(), ['--version']];
   }
   if (mode === onlineMode) {
-    if (!isDeepStrictEqual(args, deriveNativeOnlineFrozenInstallArguments(args))) rejection('explicit online frozen reporter grammar required');
+    if (!isDeepStrictEqual(args, deriveNativeOnlineFrozenInstallArguments(args))) refusal('explicit online frozen reporter grammar required');
     return [args.slice(), ['--version']];
   }
   if (mode === offlineMode) {
-    if (!Array.isArray(args) || args.length !== 12 || args[10] !== '--offline' || args[11] !== '--reporter=ndjson') rejection('explicit offline reporter grammar required');
+    if (!Array.isArray(args) || args.length !== 12 || args[10] !== '--offline' || args[11] !== '--reporter=ndjson') refusal('explicit offline reporter grammar required');
     commands(args.slice(0, 10));
     return [args.slice(), ['--version'], ['list', '--recursive', '--depth=-1', '--json']];
   }
-  if (!Array.isArray(args) || args.length !== 10 || args[9] !== '--ignore-scripts') rejection('explicit native lifecycle suppression required');
+  if (!Array.isArray(args) || args.length !== 10 || args[9] !== '--ignore-scripts') refusal('explicit native lifecycle suppression required');
   originalInstall(args.slice(0, -1));
   return [args.slice(), ['--version'], ['list', '--recursive', '--depth=-1', '--json']];
 }
@@ -135,21 +135,21 @@ async function identity(path, required = false, limit = 16777216) {
 }
 async function absent(path) {
   try { await lstat(path); } catch (error) { if (error.code === 'ENOENT') return {path, exists: false}; throw error; }
-  rejection('unexpected configuration or alternate manifest at ' + path);
+  refusal('unexpected configuration or alternate manifest at ' + path);
 }
 async function executable(name, env = process.env) {
   if (name.includes('/')) {
-    if (!isAbsolute(name)) rejection('relative executable');
+    if (!isAbsolute(name)) refusal('relative executable');
     await access(name, constants.X_OK);
     return realpath(name);
   }
   for (const part of (env.PATH ?? '').split(':')) {
-    if (!isAbsolute(part)) rejection('PATH must contain only absolute directories');
+    if (!isAbsolute(part)) refusal('PATH must contain only absolute directories');
     const path = join(part, name);
     try { const stat = await lstat(path); if (stat.isFile() || stat.isSymbolicLink()) { await access(path, constants.X_OK); return await realpath(path); } }
     catch (error) { if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR' && error.code !== 'EACCES') throw error; }
   }
-  rejection('executable not found');
+  refusal('executable not found');
 }
 const workerKeys = new Set(['PATH','LANG','LC_ALL','TZ','SystemRoot','WINDIR','HOME','TMPDIR','TEMP','TMP',
   'npm_config_userconfig','npm_config_globalconfig','npm_config_ignore_scripts','npm_config_update_notifier','npm_config_audit','npm_config_fund']);
@@ -160,30 +160,30 @@ function environment(input) {
   // PATH/HOME are shared stable inputs; all other worker fields stay worker-owned.
   const transport = explicit ? Object.fromEntries(Object.entries(values).filter(([key]) => !workerKeys.has(key) || ['PATH','HOME'].includes(key))) : null;
   if (explicit) {
-    if (Object.hasOwn(values, 'NPM_CONFIG_PREFIX')) rejection('unsupported inherited prefix configuration');
+    if (Object.hasOwn(values, 'NPM_CONFIG_PREFIX')) refusal('unsupported inherited prefix configuration');
     receiveNativeTransportEnvironment(transport, input.environmentPolicy);
-  } else for (const key of Object.keys(values)) if (!workerKeys.has(key)) rejection('unsupported launch environment field ' + key);
-  for (const value of Object.values(values)) if (typeof value !== 'string' || value.length > 8192 || /[\0\r\n]/u.test(value)) rejection('bounded own-data environment required');
+  } else for (const key of Object.keys(values)) if (!workerKeys.has(key)) refusal('unsupported launch environment field ' + key);
+  for (const value of Object.values(values)) if (typeof value !== 'string' || value.length > 8192 || /[\0\r\n]/u.test(value)) refusal('bounded own-data environment required');
   for (const key of ['HOME','TMPDIR','TEMP','TMP','npm_config_userconfig','npm_config_globalconfig'])
-    if (!isAbsolute(values[key] ?? '') || resolve(values[key]) !== values[key]) rejection('missing or non-normalized environment path ' + key);
-  if (values.npm_config_ignore_scripts !== 'true') rejection('original worker npm control required');
-  for (const key of ['npm_config_update_notifier','npm_config_audit','npm_config_fund']) if (values[key] !== 'false') rejection('original worker control required: ' + key);
-  if (values.XDG_CONFIG_HOME !== undefined && (!isAbsolute(values.XDG_CONFIG_HOME) || resolve(values.XDG_CONFIG_HOME) !== values.XDG_CONFIG_HOME)) rejection('non-normalized configuration home');
+    if (!isAbsolute(values[key] ?? '') || resolve(values[key]) !== values[key]) refusal('missing or non-normalized environment path ' + key);
+  if (values.npm_config_ignore_scripts !== 'true') refusal('original worker npm control required');
+  for (const key of ['npm_config_update_notifier','npm_config_audit','npm_config_fund']) if (values[key] !== 'false') refusal('original worker control required: ' + key);
+  if (values.XDG_CONFIG_HOME !== undefined && (!isAbsolute(values.XDG_CONFIG_HOME) || resolve(values.XDG_CONFIG_HOME) !== values.XDG_CONFIG_HOME)) refusal('non-normalized configuration home');
   return {values, sha256: hash(JSON.stringify(Object.keys(values).sort().map(key => [key, values[key]])))};
 }
 function workspace(text, registry = false, projection = false) {
   inspectHookFreeYaml(text);
-  if (text.includes('${')) rejection('configuration interpolation unsupported');
+  if (text.includes('${')) refusal('configuration interpolation unsupported');
   if (registry) return registryWorkspace(text, projection);
   const seen = new Set();
   for (const line of text.split(/\r?\n/u)) {
     if (!line.trim() || /^\s*#/u.test(line) || /^ /u.test(line)) continue;
     const key = /^([^:]+):/u.exec(line)?.[1];
-    if (!['packages','minimumReleaseAge','minimumReleaseAgeStrict','minimumReleaseAgeExclude'].includes(key) || seen.has(key)) rejection('unsupported or duplicate workspace setting');
+    if (!['packages','minimumReleaseAge','minimumReleaseAgeStrict','minimumReleaseAgeExclude'].includes(key) || seen.has(key)) refusal('unsupported or duplicate workspace setting');
     seen.add(key);
-    if (key === 'packages' && !/^packages: *\[\] *(?:#.*)?$/u.test(line)) rejection('only the local root workspace is qualified');
+    if (key === 'packages' && !/^packages: *\[\] *(?:#.*)?$/u.test(line)) refusal('only the local root workspace is qualified');
   }
-  if (!seen.has('packages')) rejection('explicit root-only workspace required');
+  if (!seen.has('packages')) refusal('explicit root-only workspace required');
 }
 function registryWorkspace(text, projection = false) {
   const seen=new Set(),overrides=new Set();let parent;
@@ -193,27 +193,27 @@ function registryWorkspace(text, projection = false) {
     if(!line.trim()||/^\s*#/u.test(line))continue;
     if(!line.startsWith(' ')){
       const root=/^([A-Za-z][A-Za-z0-9]*): *(.*?) *(?:#.*)?$/u.exec(line);
-      if(!root||seen.has(root[1])||!['packages','minimumReleaseAge','minimumReleaseAgeStrict','minimumReleaseAgeExclude','overrides',...(projection ? ['sideEffectsCache'] : [])].includes(root[1]))rejection('unsupported registry workspace setting');
+      if(!root||seen.has(root[1])||!['packages','minimumReleaseAge','minimumReleaseAgeStrict','minimumReleaseAgeExclude','overrides',...(projection ? ['sideEffectsCache'] : [])].includes(root[1]))refusal('unsupported registry workspace setting');
       seen.add(parent=root[1]);const value=root[2];
       if(parent==='sideEffectsCache'&&value!=='false'||parent==='packages'&&value!=='[]'||parent==='minimumReleaseAge'&&!/^(?:0|[1-9][0-9]*)$/u.test(value)
         ||parent==='minimumReleaseAgeStrict'&&!['true','false'].includes(value)
-        ||['minimumReleaseAgeExclude','overrides'].includes(parent)&&value!=='')rejection('unsupported registry workspace value');
+        ||['minimumReleaseAgeExclude','overrides'].includes(parent)&&value!=='')refusal('unsupported registry workspace value');
     }else if(parent==='overrides'){
       const entry=/^  (?:'([^']+)'|"([^"]+)"|([^:\s]+)): +(?:'([^']+)'|"([^"]+)"|([^\s]+)) *(?:#.*)?$/u.exec(line);
       const key=entry&&(entry[1]??entry[2]??entry[3]),value=entry&&(entry[4]??entry[5]??entry[6]);
-      if(!entry||!name.test(key)||!version.test(value)||overrides.has(key))rejection('registry overrides require unique exact package versions');
+      if(!entry||!name.test(key)||!version.test(value)||overrides.has(key))refusal('registry overrides require unique exact package versions');
       overrides.add(key);
     }else if(parent==='minimumReleaseAgeExclude'){
       const entry=/^  - (?:'([^']+)'|"([^"]+)"|([^\s]+)) *(?:#.*)?$/u.exec(line);
-      if(!entry||!/^[@a-z0-9*][@a-zA-Z0-9._/*+-]*$/u.test(entry[1]??entry[2]??entry[3]))rejection('unsupported literal registry age exemption');
-    }else rejection('unsupported nested registry workspace value');
+      if(!entry||!/^[@a-z0-9*][@a-zA-Z0-9._/*+-]*$/u.test(entry[1]??entry[2]??entry[3]))refusal('unsupported literal registry age exemption');
+    }else refusal('unsupported nested registry workspace value');
   }
 }
 function npmrc(text) {
   for (const line of text.split(/\r?\n/u)) {
     if (!line.trim() || /^\s*[#;]/u.test(line)) continue;
     const match = /^(?:registry|@[a-z0-9][a-z0-9._-]*:registry)=(https:\/\/[^\s]+)$/u.exec(line);
-    if (!match) rejection('unsupported project registry configuration');
+    if (!match) refusal('unsupported project registry configuration');
     registry(match[1]);
   }
 }
@@ -221,7 +221,7 @@ function npmrc(text) {
 // deciding membership. An absent local workspace is not absence of policy.
 const workspaceNames = ['pnpm-workspace.yaml','pnpm-workspaces.yaml','pnpm-workspaces.yml',
   'pnpm-workspace.yml','.pnpm-workspace.yaml','.pnpm-workspace.yml','.pnpm-workspaces.yaml','.pnpm-workspaces.yml'];
-async function registryWorkspaceStorage(cwd, local) {
+async function registryWorkspaceCustody(cwd, local) {
   const files = [];
   for (const name of workspaceNames.slice(1)) files.push(await absent(join(cwd,name)));
   if (!local.exists) {
@@ -234,7 +234,7 @@ async function registryWorkspaceStorage(cwd, local) {
 }
 async function snapshot(input) {
   const launch = environment(input), env = launch.values;
-  if (process.platform !== 'linux' || !isAbsolute(input.cwd) || await realpath(input.cwd) !== input.cwd) rejection('real Linux root required');
+  if (process.platform !== 'linux' || !isAbsolute(input.cwd) || await realpath(input.cwd) !== input.cwd) refusal('real Linux root required');
   const allowedCommands = commands(input.installArguments, input.qualificationMode, input.operation);
   const offline = [offlineMode, offlineLockRefresh, preparedOfflineMode].includes(input.qualificationMode);
   const refreshing = input.operation === lockRefresh;
@@ -244,7 +244,7 @@ async function snapshot(input) {
     : input.qualificationMode === onlineMode ? deriveNativeOnlineFrozenInstallArguments(input.originalInstallArguments)
     : offline ? deriveNativeOfflineFrozenInstallArguments(input.originalInstallArguments)
     : deriveNativeLifecycleDisabledInstallArguments(input.originalInstallArguments);
-  if (!isDeepStrictEqual(derived, input.installArguments)) rejection('original and derived command differ');
+  if (!isDeepStrictEqual(derived, input.installArguments)) refusal('original and derived command differ');
   const transformation = {kind: refreshing ? (offline ? 'pnpm.publisher-offline-lockfile-refresh.v1' : 'pnpm.publisher-lockfile-refresh.v1')
     : input.qualificationMode === preparedOfflineMode ? 'pnpm.prepared-offline-frozen.v1'
     : input.qualificationMode === preparedOnlineMode ? 'pnpm.prepared-online-frozen.v1'
@@ -252,23 +252,23 @@ async function snapshot(input) {
     : offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
   transformation.identity = hash(JSON.stringify(transformation));
   const selected = await executable(input.pnpm, env);
-  if (await executable('node', env) !== await realpath(process.execPath)) rejection('PATH Node differs from receiving runtime');
+  if (await executable('node', env) !== await realpath(process.execPath)) refusal('PATH Node differs from receiving runtime');
   const root = dirname(dirname(selected)), entry = join(root, 'bin', 'pnpm.mjs');
   const supplier = await provider(process.execPath, [entry], input.cwd, undefined, false);
   if (supplier.provider.entrySHA256 !== 'ff3224d46b47fbb24a7e9fe15fededef7e00892d07d4e376b6762d4899906bfd'
-    || supplier.provider.manifestSHA256 !== '2dd7bab34254562873ed6a748748f7259b727b143c2f8cca9966069cfdcae800') rejection('unqualified provider entry or manifest');
+    || supplier.provider.manifestSHA256 !== '2dd7bab34254562873ed6a748748f7259b727b143c2f8cca9966069cfdcae800') refusal('unqualified provider entry or manifest');
   const files = [];
   if (input.registryProjectionPolicy) {
     const worker = await identity(join(root,'dist','worker.js'), true);
-    if (worker.sha256 !== registryWorkerSHA256) rejection('unqualified registry worker');
+    if (worker.sha256 !== registryWorkerSHA256) refusal('unqualified registry worker');
     files.push(worker);
   }
   if (selected !== entry) {
-    if (selected !== join(root, 'bin', 'pnpm.cjs')) rejection('unsupported provider launcher');
-    const shim = await identity(selected, true); if (shim.sha256 !== shimHash) rejection('provider compatibility shim changed'); files.push(shim);
+    if (selected !== join(root, 'bin', 'pnpm.cjs')) refusal('unsupported provider launcher');
+    const shim = await identity(selected, true); if (shim.sha256 !== shimHash) refusal('provider compatibility shim changed'); files.push(shim);
   }
   const builtin = await identity(join(root, 'dist', 'pnpmrc'), true);
-  if (builtin.text.split(/\r?\n/u).some(line => line.trim() && !/^\s*#/u.test(line))) rejection('provider builtin settings unsupported');
+  if (builtin.text.split(/\r?\n/u).some(line => line.trim() && !/^\s*#/u.test(line))) refusal('provider builtin settings unsupported');
   files.push(builtin);
   const nodePath = await realpath(process.execPath), nodeBytes = await regular(nodePath, 268435456);
   files.push({path: nodePath, exists: true, sha256: hash(nodeBytes), bytes: nodeBytes.length});
@@ -276,22 +276,22 @@ async function snapshot(input) {
   if (!plain(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager')
     : input.sourceProfile === registryConsumer ? own(pkg,'packageManager') && pkg.packageManager !== 'pnpm@11.28.5'
     : pkg.packageManager !== 'pnpm@11.28.5'))
-    rejection(input.sourceProfile === noManagerPin ? 'no manager declaration permitted in explicit no-pin profile' : 'exact legacy manager pin required');
+    refusal(input.sourceProfile === noManagerPin ? 'no manager declaration permitted in explicit no-pin profile' : 'exact legacy manager pin required');
   for (const field of ['engines','devEngines']) if (own(pkg, field)) {
-    if (!plain(pkg[field]) || own(pkg[field], 'runtime') || own(pkg[field], 'packageManager')) rejection('manager/runtime activation declaration unsupported');
+    if (!plain(pkg[field]) || own(pkg[field], 'runtime') || own(pkg[field], 'packageManager')) refusal('manager/runtime activation declaration unsupported');
   }
-  if (input.registryProjectionPolicy && own(pkg,'pnpm')) rejection('manifest PNPM configuration outside registry projection profile');
+  if (input.registryProjectionPolicy && own(pkg,'pnpm')) refusal('manifest PNPM configuration outside registry projection profile');
   const ws = await identity(join(input.cwd, 'pnpm-workspace.yaml'), input.sourceProfile !== registryConsumer);
   if (ws.exists) workspace(ws.text,input.sourceProfile === registryConsumer,Boolean(input.registryProjectionPolicy));
-  if (input.sourceProfile === registryConsumer) files.push(...await registryWorkspaceStorage(input.cwd,ws));
+  if (input.sourceProfile === registryConsumer) files.push(...await registryWorkspaceCustody(input.cwd,ws));
   const rc = await identity(join(input.cwd, '.npmrc')); if (rc.exists) npmrc(rc.text);
   files.push(manifest, ws, rc, await identity(join(input.cwd, 'pnpm-lock.yaml'), true));
   for (const key of ['npm_config_userconfig','npm_config_globalconfig']) {
-    const file = await identity(env[key], true); if (file.bytes !== 0) rejection('original empty worker config required'); files.push(file);
+    const file = await identity(env[key], true); if (file.bytes !== 0) refusal('original empty worker config required'); files.push(file);
   }
   const home = env.HOME, configHome = env.XDG_CONFIG_HOME ?? join(home, '.config');
   for (const key of ['NODE_EXTRA_CA_CERTS','SSL_CERT_FILE']) if (env[key]) {
-    if (!isAbsolute(env[key]) || resolve(env[key]) !== env[key]) rejection('non-normalized CA input');
+    if (!isAbsolute(env[key]) || resolve(env[key]) !== env[key]) refusal('non-normalized CA input');
     files.push(await identity(env[key], true, 1048576));
   }
   for (const path of [join(home,'.npmrc'), join(configHome,'pnpm','config.yaml'), join(configHome,'pnpm','auth.ini'),
@@ -306,31 +306,31 @@ async function snapshot(input) {
     : input.qualificationMode === onlineMode ? 'pnpm.publisher-online-precall-profile.v1'
     : offline ? 'pnpm.publisher-offline-precall-profile.v1' : 'pnpm.publisher-precall-profile.v1',
     sourceProfile: input.sourceProfile ?? 'root-package-legacy-manager-pin',
-    ...(offline || [preparedOnlineMode,onlineMode].includes(input.qualificationMode) || input.preparedCache ? {cache: await cacheStorage(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
+    ...(offline || [preparedOnlineMode,onlineMode].includes(input.qualificationMode) || input.preparedCache ? {cache: await cacheCustody(input)} : {}), cwd: input.cwd, selected, environmentSHA256: launch.sha256, ...(input.environmentProfile ? {environmentProfile: input.environmentProfile} : {}), supplier, allowedCommands, transformation,
     files: files.map(({text,...file}) => file)};
 }
 /** Static admission of the actual original publisher child. No process is run. */
-export async function receiveNativePrecallValidation(input) { return receivePrecall(input, false); }
-export async function receiveNativeRegistryProjectionSourceStorage(input) { return receivePrecall(input, true); }
+export async function receiveNativePrecallAdmission(input) { return receivePrecall(input, false); }
+export async function receiveNativeRegistryProjectionSourceCustody(input) { return receivePrecall(input, true); }
 async function receivePrecall(input, sourceObservationOnly) {
-  if (!ownRecord(input) || Object.keys(input).some(key => !['cwd','pnpm','installArguments','originalInstallArguments','qualificationMode','cacheRoot','operation','sourceProfile','environmentProfile','environment','environmentPolicy','registryProjectionPolicy'].includes(key)) || typeof input.pnpm !== 'string') rejection('invalid admission request');
-  if (input.environmentProfile !== undefined && input.environmentProfile !== inheritedTransport) rejection('unsupported environment profile');
+  if (!ownRecord(input) || Object.keys(input).some(key => !['cwd','pnpm','installArguments','originalInstallArguments','qualificationMode','cacheRoot','operation','sourceProfile','environmentProfile','environment','environmentPolicy','registryProjectionPolicy'].includes(key)) || typeof input.pnpm !== 'string') refusal('invalid admission request');
+  if (input.environmentProfile !== undefined && input.environmentProfile !== inheritedTransport) refusal('unsupported environment profile');
   if ((input.environmentProfile === inheritedTransport) !== (input.environment !== undefined && input.environmentPolicy !== undefined)
-    || (input.environmentProfile === undefined && (input.environment !== undefined || input.environmentPolicy !== undefined))) rejection('explicit environment and transport policy must be paired');
-  if (input.operation !== undefined && input.operation !== lockRefresh) rejection('unsupported operation');
-  if (input.sourceProfile !== undefined && ![noManagerPin,registryConsumer].includes(input.sourceProfile)) rejection('unsupported source profile');
-  if (input.sourceProfile === registryConsumer && input.operation !== undefined) rejection('registry consumer profile admits frozen operations only');
-  if (input.qualificationMode !== undefined && ![offlineMode, onlineMode, offlineLockRefresh, preparedOfflineMode, preparedOnlineMode].includes(input.qualificationMode)) rejection('unsupported qualification mode');
-  if (input.operation === lockRefresh && [preparedOnlineMode,onlineMode].includes(input.qualificationMode)) rejection('prepared qualification does not match operation');
+    || (input.environmentProfile === undefined && (input.environment !== undefined || input.environmentPolicy !== undefined))) refusal('explicit environment and transport policy must be paired');
+  if (input.operation !== undefined && input.operation !== lockRefresh) refusal('unsupported operation');
+  if (input.sourceProfile !== undefined && ![noManagerPin,registryConsumer].includes(input.sourceProfile)) refusal('unsupported source profile');
+  if (input.sourceProfile === registryConsumer && input.operation !== undefined) refusal('registry consumer profile admits frozen operations only');
+  if (input.qualificationMode !== undefined && ![offlineMode, onlineMode, offlineLockRefresh, preparedOfflineMode, preparedOnlineMode].includes(input.qualificationMode)) refusal('unsupported qualification mode');
+  if (input.operation === lockRefresh && [preparedOnlineMode,onlineMode].includes(input.qualificationMode)) refusal('prepared qualification does not match operation');
   if (input.operation === lockRefresh && [offlineMode, preparedOfflineMode].includes(input.qualificationMode)
-    || input.operation !== lockRefresh && input.qualificationMode === offlineLockRefresh) rejection('offline qualification does not match operation');
-  if (input.qualificationMode === undefined && input.cacheRoot !== undefined) rejection('cache admission requires explicit offline mode');
+    || input.operation !== lockRefresh && input.qualificationMode === offlineLockRefresh) refusal('offline qualification does not match operation');
+  if (input.qualificationMode === undefined && input.cacheRoot !== undefined) refusal('cache admission requires explicit offline mode');
   if (sourceObservationOnly && (input.registryProjectionPolicy !== registryProjectionPolicy || input.sourceProfile !== registryConsumer
     || input.qualificationMode !== undefined || input.cacheRoot !== undefined || input.operation !== undefined))
-    rejection('read-only registry source custody requires source-only projection profile');
+    refusal('read-only registry source custody requires source-only projection profile');
   if (input.registryProjectionPolicy !== undefined && (input.registryProjectionPolicy !== registryProjectionPolicy
     || input.sourceProfile !== registryConsumer || (!sourceObservationOnly && ![offlineMode,onlineMode,preparedOfflineMode].includes(input.qualificationMode))))
-    rejection('registry projection requires explicit registry frozen profile');
+    refusal('registry projection requires explicit registry frozen profile');
   const frozen = {cwd: input.cwd, pnpm: input.pnpm,
     ...(input.registryProjectionPolicy ? {registryProjectionPolicy: input.registryProjectionPolicy} : {}),
     ...(input.environmentProfile ? {environmentProfile: input.environmentProfile,
@@ -342,39 +342,39 @@ async function receivePrecall(input, sourceObservationOnly) {
   const received = await snapshot(frozen);
   const transformation = Object.freeze({...received.transformation, originalArguments: Object.freeze(received.transformation.originalArguments.slice()), derivedArguments: Object.freeze(received.transformation.derivedArguments.slice())});
   const capability = Object.freeze({kind: sourceObservationOnly ? 'pnpm.registry-projection-source-custody.v1' : received.kind, identity: hash(JSON.stringify(received)), transformation});
-  const projection = frozen.registryProjectionPolicy && !sourceObservationOnly ? await registryProjectionValidation(frozen, received) : null;
+  const projection = frozen.registryProjectionPolicy && !sourceObservationOnly ? await registryProjectionAdmission(frozen, received) : null;
   if (sourceObservationOnly) await registryProjectionConfiguration(frozen,received);
   capabilities.set(capability, {input: frozen, received, projection, sourceObservationOnly, offlineReceived: false});
   return capability;
 }
 /** Call before each native operation or original producer entry. Caller retains sole-writer custody. */
-export async function assertNativePrecallValidation(capability, command) {
-  const state = capabilities.get(capability); if (!state) rejection('unrecognized process-local capability');
-  if (state.sourceObservationOnly) rejection('read-only source custody cannot authorize a command');
-  if (command !== undefined && !ownRecord(command)) rejection('own-data command required');
-  if (state.lockRefreshClosed) rejection('lock refresh receiving consumed the capability');
-  if (state.preparedClosed) rejection('prepared installation capability is closed');
-  if (state.input.qualificationMode === preparedOfflineMode && command === undefined) rejection('prepared offline profile permits exact commands only, not producer entry');
-  if (state.input.qualificationMode === preparedOnlineMode && command === undefined) rejection('prepared online profile permits exact commands only, not producer entry');
-  if (state.input.environmentProfile === inheritedTransport && command === undefined) rejection('explicit launch environment requires an exact command; producer entry is not admitted');
-  if (state.input.operation === lockRefresh && command === undefined) rejection('lock refresh permits only its exact command, not producer entry');
-  if (state.offlineFailed) rejection('offline receiving failed; capability is closed');
-  if (state.offlineReceived && command !== undefined && isDeepStrictEqual(command.arguments, state.input.installArguments)) rejection('offline installation capability is single-use');
+export async function assertNativePrecallAdmission(capability, command) {
+  const state = capabilities.get(capability); if (!state) refusal('unrecognized process-local capability');
+  if (state.sourceObservationOnly) refusal('read-only source custody cannot authorize a command');
+  if (command !== undefined && !ownRecord(command)) refusal('own-data command required');
+  if (state.lockRefreshClosed) refusal('lock refresh receiving consumed the capability');
+  if (state.preparedClosed) refusal('prepared installation capability is closed');
+  if (state.input.qualificationMode === preparedOfflineMode && command === undefined) refusal('prepared offline profile permits exact commands only, not producer entry');
+  if (state.input.qualificationMode === preparedOnlineMode && command === undefined) refusal('prepared online profile permits exact commands only, not producer entry');
+  if (state.input.environmentProfile === inheritedTransport && command === undefined) refusal('explicit launch environment requires an exact command; producer entry is not admitted');
+  if (state.input.operation === lockRefresh && command === undefined) refusal('lock refresh permits only its exact command, not producer entry');
+  if (state.offlineFailed) refusal('offline receiving failed; capability is closed');
+  if (state.offlineReceived && command !== undefined && isDeepStrictEqual(command.arguments, state.input.installArguments)) refusal('offline installation capability is single-use');
   if ([offlineMode,onlineMode].includes(state.input.qualificationMode) && !state.offlineReceived
-    && (command === undefined || !isDeepStrictEqual(command.arguments, state.input.installArguments))) rejection('offline installation must be received before producer entry');
+    && (command === undefined || !isDeepStrictEqual(command.arguments, state.input.installArguments))) refusal('offline installation must be received before producer entry');
   const current = await snapshot(state.input);
   if (state.projection) {
     const store = await effectiveRegistryStore(state.input);
-    if (!isDeepStrictEqual(store,state.projection.after ?? state.projection.before)) rejection('effective registry store custody changed');
+    if (!isDeepStrictEqual(store,state.projection.after ?? state.projection.before)) refusal('effective registry store custody changed');
   }
-  if (!isDeepStrictEqual(current,state.received)) rejection('admitted source, provider or context changed');
+  if (!isDeepStrictEqual(current,state.received)) refusal('admitted source, provider or context changed');
   if (command !== undefined) {
     if (command.environment !== undefined) boundedClone(command.environment, 262144);
-    if (state.input.environmentProfile === inheritedTransport && !isDeepStrictEqual(command.environment, state.input.environment)) rejection('command environment differs from admitted launch');
-    if (state.input.environmentProfile === undefined && command.environment !== undefined) rejection('explicit command environment requires inherited transport profile');
+    if (state.input.environmentProfile === inheritedTransport && !isDeepStrictEqual(command.environment, state.input.environment)) refusal('command environment differs from admitted launch');
+    if (state.input.environmentProfile === undefined && command.environment !== undefined) refusal('explicit command environment requires inherited transport profile');
     if (!plain(command) || Object.keys(command).some(key => !['cwd','program','arguments','environment'].includes(key)) || command.cwd !== current.cwd
       || typeof command.program !== 'string' || await executable(command.program, state.input.environment ?? process.env) !== current.selected
-      || !current.allowedCommands.some(args => isDeepStrictEqual(args, command.arguments))) rejection('command outside admitted set');
+      || !current.allowedCommands.some(args => isDeepStrictEqual(args, command.arguments))) refusal('command outside admitted set');
   }
   return capability.identity;
 }
@@ -383,7 +383,7 @@ export async function assertNativePrecallValidation(capability, command) {
 export async function receiveNativeLockfileRefresh(capability, result) {
   const state = capabilities.get(capability);
   if (!state || state.input.operation !== lockRefresh || state.lockRefreshClosed)
-    rejection('unrecognized or already received lock refresh');
+    refusal('unrecognized or already received lock refresh');
   state.lockRefreshClosed = true;
   const path = join(state.input.cwd, 'pnpm-lock.yaml');
   const lockOf = value => value?.files.find(file => file.path === path) ?? null;
@@ -398,7 +398,7 @@ export async function receiveNativeLockfileRefresh(capability, result) {
       ...(value.cache ? {cache: {...value.cache, verdict: undefined}} : {})});
     if (!isDeepStrictEqual(withoutLock(current), withoutLock(state.received))) {
       const changed = Object.keys(current).filter(key => !isDeepStrictEqual(withoutLock(current)[key], withoutLock(state.received)[key]));
-      rejection('admitted source, policy, provider or context changed during lock refresh: ' + changed.join(', '));
+      refusal('admitted source, policy, provider or context changed during lock refresh: ' + changed.join(', '));
     }
     const terminal = result?.terminal, observation = result?.observation;
     if (terminal?.invoked !== true || terminal.code !== 0 || terminal.signal !== null
@@ -406,7 +406,7 @@ export async function receiveNativeLockfileRefresh(capability, result) {
       || observation?.complete !== true || !Number.isSafeInteger(observation.startedAt)
       || !Number.isSafeInteger(observation.endedAt) || observation.startedAt < 0
       || observation.endedAt < observation.startedAt)
-      rejection('complete successful original lock-refresh execution required');
+      refusal('complete successful original lock-refresh execution required');
     state.refreshed = {snapshot: current, interval: {...observation}};
     return Object.freeze({kind: 'pnpm.publisher-lockfile-refresh.v1', admissionIdentity: capability.identity,
       sourceProfile: current.sourceProfile, offline: state.input.qualificationMode === offlineLockRefresh,
@@ -438,30 +438,30 @@ export async function receiveNativeOnlineInstall(capability, result) {
 }
 async function receiveInitialFrozenInstall(capability,result,mode) {
   const state = capabilities.get(capability);
-  if (!state || state.input.qualificationMode !== mode || state.offlineReceived || state.offlineFailed) rejection('unrecognized or already received offline installation');
+  if (!state || state.input.qualificationMode !== mode || state.offlineReceived || state.offlineFailed) refusal('unrecognized or already received offline installation');
   // Any receiving attempt consumes the installation transition; a refused
   // operation cannot reuse its capability to retry or enter the producer.
   state.offlineFailed = true;
   let verification, current;
   try {
-  if (result?.lockfilePath !== join(state.input.cwd, 'pnpm-lock.yaml')) rejection('verification result names another source lock');
+  if (result?.lockfilePath !== join(state.input.cwd, 'pnpm-lock.yaml')) refusal('verification result names another source lock');
   current = await snapshot(state.input);
   const before = {...state.received, cache: {...state.received.cache, verdict: undefined}};
   const after = {...current, cache: {...current.cache, verdict: undefined}};
-  if (!isDeepStrictEqual(before, after)) rejection('admitted source, provider or cache allocation changed during installation');
+  if (!isDeepStrictEqual(before, after)) refusal('admitted source, provider or cache allocation changed during installation');
   verification = receiveNativeOfflineVerification(result);
-  if (!verification.accepted) rejection('fresh native verification not received: ' + verification.reason);
+  if (!verification.accepted) refusal('fresh native verification not received: ' + verification.reason);
   if (!current.cache.verdict.exists || current.cache.verdict.sha256 === state.received.cache.verdict.sha256)
-    rejection('native verification verdict persistence unestablished');
+    refusal('native verification verdict persistence unestablished');
   const emitted = current.cache.verdict.text.split('\n').filter(Boolean).map(line => {
     try { return {line, record: JSON.parse(line)}; } catch { return null; }
   }).filter(row => row?.record?.lockfile?.path === result.lockfilePath
     && typeof row.record.verifiedAt === 'string'
     && Date.parse(row.record.verifiedAt) >= result.observation.startedAt
     && Date.parse(row.record.verifiedAt) <= result.observation.endedAt).at(-1);
-  if (!emitted) rejection('matching native verification verdict persistence unestablished');
-  const {text: priorText, ...priorResult} = state.received.cache.verdict;
-  const {text: resultText, ...verdict} = current.cache.verdict;
+  if (!emitted) refusal('matching native verification verdict persistence unestablished');
+  const {text: priorText, ...priorVerdict} = state.received.cache.verdict;
+  const {text: verdictText, ...verdict} = current.cache.verdict;
   if (state.projection) state.projection.after = await receiveRegistryStoreTransition(state);
   state.received = current;
   state.offlineReceived = true;
@@ -471,7 +471,7 @@ async function receiveInitialFrozenInstall(capability,result,mode) {
     nativeProvider: Object.freeze(boundedClone(current.supplier, 65536)),
     policyVerification: 'fresh-native', verification,
     persistedVerification: Object.freeze({verifiedAt: emitted.record.verifiedAt, lockfilePath: result.lockfilePath, recordSHA256: hash(emitted.line)}),
-    priorVerdict: Object.freeze(priorResult), verdict: Object.freeze(verdict)});
+    priorVerdict: Object.freeze(priorVerdict), verdict: Object.freeze(verdict)});
   } catch (error) {
     const publicIdentity = value => value ? (({text, ...identity}) => identity)(value) : null;
     error[mode === offlineMode ? 'nativeOfflineEvidence' : 'nativeOnlineEvidence'] = Object.freeze({kind: mode === offlineMode ? 'pnpm.publisher-offline-refusal.v1' : 'pnpm.publisher-online-refusal.v1',
@@ -483,12 +483,12 @@ async function receiveInitialFrozenInstall(capability,result,mode) {
 }
 
 
-function sharedPreparedStorage(value) {
+function sharedPreparedCustody(value) {
   return {...value, kind: undefined, allowedCommands: undefined, transformation: undefined};
 }
 async function preparedHistory(snapshot, interval) {
   const path = join(snapshot.cwd, 'pnpm-lock.yaml'), history = snapshot.cache?.verdict;
-  if (!history?.exists || !history.text.endsWith('\n')) rejection('prepared native history is absent or partial');
+  if (!history?.exists || !history.text.endsWith('\n')) refusal('prepared native history is absent or partial');
   let selected;
   for (const line of history.text.split('\n')) {
     if (!line) continue;
@@ -503,7 +503,7 @@ async function preparedHistory(snapshot, interval) {
     || !row.lockfile.hash || row.lockfile.size !== Number(stat.size)
     || row.lockfile.mtimeNs !== String(stat.mtimeNs) || row.lockfile.inode !== String(stat.ino)
     || !ownRecord(row.policy) || (interval && (at < interval.startedAt || at > interval.endedAt)))
-    rejection('prepared same-path native history/stat causality is unreceived');
+    refusal('prepared same-path native history/stat causality is unreceived');
   return {lineSHA256: hash(selected.line), row: boundedClone(row, 1048576),
     stat: {size: Number(stat.size), mtimeNs: String(stat.mtimeNs), inode: String(stat.ino)}};
 }
@@ -513,23 +513,23 @@ function preparedTerminal(result) {
     || terminal.timedOut !== false || terminal.truncated !== false || terminal.failedToStart !== false
     || observation?.complete !== true || !Number.isSafeInteger(observation.startedAt)
     || !Number.isSafeInteger(observation.endedAt) || observation.startedAt < 0
-    || observation.endedAt < observation.startedAt) rejection('successful complete original prepared execution required');
+    || observation.endedAt < observation.startedAt) refusal('successful complete original prepared execution required');
 }
 /** Original process-local predecessor only; not a serialized receiving receipt.
  * Semantic lock delta and complete artifact-effect admission remain at composer. */
-export async function receiveNativePreparedInstallValidation(predecessor, options = {}) {
-  if (!ownRecord(options) || Object.keys(options).some(key => key !== 'offline')) rejection('own-data prepared options required');
+export async function receiveNativePreparedInstallAdmission(predecessor, options = {}) {
+  if (!ownRecord(options) || Object.keys(options).some(key => key !== 'offline')) refusal('own-data prepared options required');
   const offline = own(options, 'offline') ? options.offline : false;
   const previous = capabilities.get(predecessor);
   if (typeof offline !== 'boolean' || !previous || previous.preparedNextConsumed
-    || !(previous.refreshed || previous.preparedReceived || previous.initialReceived)) rejection('original received process-local preparation required');
-  if (previous.sourceObservationOnly || (previous.projection && !offline)) rejection('registry projection requires prepared offline receiving');
+    || !(previous.refreshed || previous.preparedReceived || previous.initialReceived)) refusal('original received process-local preparation required');
+  if (previous.sourceObservationOnly || (previous.projection && !offline)) refusal('registry projection requires prepared offline receiving');
   previous.preparedNextConsumed = true;
   const checkpoint = previous.preparedReceived ?? previous.refreshed ?? previous.initialReceived;
   const priorNow = await snapshot(previous.input);
-  if (!isDeepStrictEqual(priorNow, checkpoint.snapshot)) rejection('prepared predecessor source or history changed');
+  if (!isDeepStrictEqual(priorNow, checkpoint.snapshot)) refusal('prepared predecessor source or history changed');
   if (previous.projection && (!previous.projection.after || !isDeepStrictEqual(await effectiveRegistryStore(previous.input),previous.projection.after)))
-    rejection('prepared predecessor effective store changed');
+    refusal('prepared predecessor effective store changed');
   const history = await preparedHistory(priorNow, previous.refreshed?.interval);
   const originalInstallArguments = previous.input.originalInstallArguments.slice(0,9);
   originalInstallArguments[1] = '--frozen-lockfile';
@@ -537,12 +537,12 @@ export async function receiveNativePreparedInstallValidation(predecessor, option
   const input = {...previous.input, operation: undefined, qualificationMode: offline ? preparedOfflineMode : preparedOnlineMode,
     cacheRoot: previous.input.cacheRoot, originalInstallArguments, installArguments, preparedCache: true};
   const current = await snapshot(input);
-  if (!isDeepStrictEqual(sharedPreparedStorage(current), sharedPreparedStorage(priorNow))) rejection('prepared operation changes original custody');
+  if (!isDeepStrictEqual(sharedPreparedCustody(current), sharedPreparedCustody(priorNow))) refusal('prepared operation changes original custody');
   const capability = Object.freeze({kind: 'pnpm.prepared-native-installation-precall.v1',
     identity: hash(JSON.stringify(current)), offline, predecessorIdentity: predecessor.identity,
     transformation: Object.freeze({...current.transformation})});
-  const projection = previous.projection ? await registryProjectionValidation(input,current) : null;
-  if (projection && !projection.before.exists) rejection('prepared registry store must already exist');
+  const projection = previous.projection ? await registryProjectionAdmission(input,current) : null;
+  if (projection && !projection.before.exists) refusal('prepared registry store must already exist');
   capabilities.set(capability, {input, received: current, projection, preparedHistory: history, offlineReceived: false});
   return capability;
 }
@@ -550,20 +550,20 @@ export async function receiveNativePreparedInstallValidation(predecessor, option
  * binds the native cached decision to the actual held original refresh history. */
 export async function receiveNativePreparedInstall(capability, result) {
   const state = capabilities.get(capability);
-  if (!state?.preparedHistory || state.preparedClosed) rejection('unrecognized or closed prepared installation');
+  if (!state?.preparedHistory || state.preparedClosed) refusal('unrecognized or closed prepared installation');
   state.preparedClosed = true;
   let current, verification;
   try {
     preparedTerminal(result);
     current = await snapshot(state.input);
-    if (!isDeepStrictEqual(current, state.received)) rejection('prepared source, lock, provider or native history changed');
+    if (!isDeepStrictEqual(current, state.received)) refusal('prepared source, lock, provider or native history changed');
     const history = await preparedHistory(current);
-    if (!isDeepStrictEqual(history, state.preparedHistory)) rejection('prepared native history/stat changed');
+    if (!isDeepStrictEqual(history, state.preparedHistory)) refusal('prepared native history/stat changed');
     if (capability.offline) {
-      if (result.lockfilePath !== join(state.input.cwd, 'pnpm-lock.yaml')) rejection('another prepared source lock');
+      if (result.lockfilePath !== join(state.input.cwd, 'pnpm-lock.yaml')) refusal('another prepared source lock');
       verification = receiveNativeCachedVerification({stdout: result.stdout, lockfilePath: result.lockfilePath,
         terminal: {invoked: true, code: 0, signal: null}, observation: result.observation}, history.row.verifiedAt);
-      if (!verification.accepted) rejection('prepared cached native verification unreceived: ' + verification.reason);
+      if (!verification.accepted) refusal('prepared cached native verification unreceived: ' + verification.reason);
     }
     if (state.projection) state.projection.after = await receiveRegistryStoreTransition(state);
     state.preparedReceived = {snapshot: current};
@@ -603,7 +603,7 @@ async function effectiveRegistryStore(input) {
     if (error.code === 'ENOENT') return {path,exists:false}; throw error;
   }
   if (!stat.isDirectory() || stat.uid !== process.getuid() || await realpath(path) !== path)
-    rejection('effective v11 store must be owned and unredirected');
+    refusal('effective v11 store must be owned and unredirected');
   return {path,exists:true,dev:stat.dev,ino:stat.ino,uid:stat.uid,mode:stat.mode};
 }
 async function registryProjectionConfiguration(input, received) {
@@ -614,19 +614,19 @@ async function registryProjectionConfiguration(input, received) {
     if (!line.trim() || /^\s*#/u.test(line) || line.startsWith(' ')) continue;
     const key = /^([A-Za-z][A-Za-z0-9]*):/u.exec(line)?.[1];
     if (!['lockfileVersion','settings','overrides','importers','packages','snapshots'].includes(key) || keys.has(key))
-      rejection('registry projection excludes lock transforms and unsupported root fields');
+      refusal('registry projection excludes lock transforms and unsupported root fields');
     keys.add(key);
   }
   const ws = await identity(join(input.cwd,'pnpm-workspace.yaml'),true);
   if (!/^sideEffectsCache: false *(?:#.*)?$/mu.test(ws.text))
-    rejection('registry projection requires authored sideEffectsCache: false; native default is true');
+    refusal('registry projection requires authored sideEffectsCache: false; native default is true');
   const configuration = {sideEffectsCacheRead:false,remoteSideEffects:false,patches:false,alternateManifestTransforms:false,
     source:'explicit-workspace-false/closed-native-config-v1',
     resolver:{distributionSHA256:received.supplier.provider.distSHA256,defaultLine:177557,resolverLines:[179010,179022]},
     files:received.files.filter(file => ['package.json','pnpm-workspace.yaml','.npmrc'].includes(file.path.slice(file.path.lastIndexOf('/')+1)))};
   return {configuration,configSHA256:hash(JSON.stringify(configuration)),lockSHA256:lock.sha256};
 }
-async function registryProjectionValidation(input, received) {
+async function registryProjectionAdmission(input, received) {
   return {...await registryProjectionConfiguration(input,received),before:await effectiveRegistryStore(input),
     allocation:received.cache.directories,
     storeAllocationSHA256:hash(JSON.stringify(received.cache.directories))};
@@ -634,7 +634,7 @@ async function registryProjectionValidation(input, received) {
 async function receiveRegistryStoreTransition(state) {
   const after = await effectiveRegistryStore(state.input), before = state.projection.before;
   if (!after.exists || (before.exists && !isDeepStrictEqual(before,after)))
-    rejection('effective v11 store creation or retained custody unreceived');
+    refusal('effective v11 store creation or retained custody unreceived');
   return after;
 }
 /** No caller-supplied facts are accepted. Original native receiving must precede
@@ -642,10 +642,10 @@ async function receiveRegistryStoreTransition(state) {
 export async function receiveNativeRegistryProjectionBinding(capability) {
   const state = capabilities.get(capability);
   if (!state?.projection || !(state.offlineReceived || state.preparedReceived) || state.offlineFailed || !state.projection.after)
-    rejection('original successful frozen registry receiving required');
+    refusal('original successful frozen registry receiving required');
   if (!isDeepStrictEqual(await snapshot(state.input),state.received)
     || !isDeepStrictEqual(await effectiveRegistryStore(state.input),state.projection.after))
-    rejection('registry projection source or store custody changed');
+    refusal('registry projection source or store custody changed');
   const p=state.projection, provider=state.received.supplier.provider;
   const binding=freezeRegistry({kind:'native-registry-projection-binding-v2',policy:registryProjectionPolicy,
     version:2,routeSet:'pnpm11-registry-cafs-and-link-v1',routeEvidence:'source-qualified-closed-set',observedRoute:null,
@@ -664,16 +664,16 @@ export async function receiveNativeRegistryProjectionBinding(capability) {
 }
 export async function assertNativeRegistryProjectionBinding(binding) {
   const capability=registryProjectionBindings.get(binding);
-  if (!capability) rejection('unrecognized process-local registry projection binding');
+  if (!capability) refusal('unrecognized process-local registry projection binding');
   const current=await receiveNativeRegistryProjectionBinding(capability);
-  if (!isDeepStrictEqual(current,binding)) rejection('registry projection binding changed');
+  if (!isDeepStrictEqual(current,binding)) refusal('registry projection binding changed');
   return binding;
 }
 
 /** Read-only source observation is deliberately not a command capability. */
-export async function assertNativeRegistryProjectionSourceStorage(capability) {
+export async function assertNativeRegistryProjectionSourceCustody(capability) {
   const state=capabilities.get(capability);
-  if (!state?.sourceObservationOnly) rejection('unrecognized read-only registry source custody');
-  if (!isDeepStrictEqual(await snapshot(state.input),state.received)) rejection('read-only registry source custody changed');
+  if (!state?.sourceObservationOnly) refusal('unrecognized read-only registry source custody');
+  if (!isDeepStrictEqual(await snapshot(state.input),state.received)) refusal('read-only registry source custody changed');
   return capability.identity;
 }

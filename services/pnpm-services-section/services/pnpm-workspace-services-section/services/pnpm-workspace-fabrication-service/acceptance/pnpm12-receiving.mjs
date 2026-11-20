@@ -80,12 +80,12 @@ try {
     if (decision !== 'explicit-denial') delete policy[externalMatcher];
     if (decision === 'registry-only-denial') policy[registryOnlyMatcher] = false;
     await writeFile(specPath, JSON.stringify({ ...specification, buildPolicy: policy }));
-    const record = JSON.parse(mustPass(run(process.execPath, [packedCLI, '--specification', specPath, '--output', output], temp), `fabricate ${decision}`));
+    const receipt = JSON.parse(mustPass(run(process.execPath, [packedCLI, '--specification', specPath, '--output', output], temp), `fabricate ${decision}`));
 
     // Independently read bytes from the filesystem, not from its projection.
     const digest = createHash('sha256');
-    for (const file of record.files) digest.update(file).update('\0').update(await readFile(join(output, file))).update('\0');
-    assert.equal(digest.digest('hex'), record.digest);
+    for (const file of receipt.files) digest.update(file).update('\0').update(await readFile(join(output, file))).update('\0');
+    assert.equal(digest.digest('hex'), receipt.digest);
 
     const marker = join(temp, `${decision}.marker`);
     const env = { PNPM_ASSAY_MARKER: marker };
@@ -142,10 +142,10 @@ try {
         `PNPM MUST reject incompatible local provider: ${install.stdout}\n${install.stderr}`);
       // PNPM 12 wraps error prose across lines. Normalize only whitespace,
       // and require the exact refused requirement and held provider version.
-      const rejection = (install.stdout + install.stderr).replace(/\s+/gu, ' ');
-      assert.match(rejection,
+      const refusal = (install.stdout + install.stderr).replace(/\s+/gu, ' ');
+      assert.match(refusal,
         /No matching version found for @receiving\/provider@workspace:\^2\.0\.0 inside the workspace/u);
-      assert.match(rejection, /Available versions: 1\.2\.3/u);
+      assert.match(refusal, /Available versions: 1\.2\.3/u);
     }
   }
   console.log('CF-PNPM-014: PNPM 12.9.1 retained compatible local provider and refused incompatible declared range');

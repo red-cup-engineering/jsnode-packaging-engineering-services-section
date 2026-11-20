@@ -28,7 +28,7 @@ async function inputs(cwd){
 /** Original PNPM capability. The original Code caller owns the finite native process. */
 export function createNativeStoreAssemblyService(){
  const sessions=new WeakMap(),state=ticket=>{const s=sessions.get(ticket);if(!s)throw new TypeError('foreign native store assembly session');return s;};
- async function storage(s,probe){
+ async function custody(s,probe){
   if(!isDeepStrictEqual(s.source,await source())||!isDeepStrictEqual(s.inputs,await inputs(s.cwd))||!isDeepStrictEqual(s.profile,await receiveOwnedHookProfile(s.cwd)))throw new TypeError('native assembly source, inputs or configuration changed');
   await storeAssemblyProvider(process.execPath,[s.entry],s.cwd,s.provider,probe);
   if(hash(await regular(s.hook,1048576))!==s.hookSHA256)throw new TypeError('native assembly importer changed');
@@ -56,8 +56,8 @@ export function createNativeStoreAssemblyService(){
    const storeDirectory=(await run(process.execPath,[input.entry,'--store-dir',input.storeBase,'store','path'],{cwd:input.cwd,timeout:10000,maxBuffer:65536})).stdout.trim();
    if(storeDirectory!==join(input.storeBase,'v11'))throw new TypeError('original PNPM native store selection differs');
    await directory(storeDirectory);
-   const recordDirectory=await mkdtemp(join(input.receiptDirectory,'.pnpm-store-assembly-'));
-   const hook=join(recordDirectory,'importer.mjs'),events=join(recordDirectory,'imports.json');
+   const receiptDirectory=await mkdtemp(join(input.receiptDirectory,'.pnpm-store-assembly-'));
+   const hook=join(receiptDirectory,'importer.mjs'),events=join(receiptDirectory,'imports.json');
    const importerURL=pathToFileURL(fileURLToPath(new URL('./native-strict-store-importer.mjs',import.meta.url))).href;
    const hookText='import{writeFileSync}from"node:fs";\nimport{createStrictStoreImporter}from '+JSON.stringify(importerURL)+';\n'+
     'const importer=await createStrictStoreImporter('+JSON.stringify({storeDirectory,installationDirectory:input.cwd})+');\n'+
@@ -67,25 +67,25 @@ export function createNativeStoreAssemblyService(){
    const command=Object.freeze({program:process.execPath,arguments:Object.freeze([input.entry,'--dir',input.cwd,...input.policyArguments,'install','--ignore-scripts','--frozen-lockfile','--offline','--frozen-store','--store-dir',input.storeBase,'--global-pnpmfile',hook,'--config.enable-global-virtual-store=false','--reporter=append-only'])});
    const s={entry:input.entry,cwd:input.cwd,source:selectedSource,inputs:selectedInputs,profile,provider,storeDirectory,hook,hookSHA256:hash(hookText),events,command,lease:null,running:false,finished:false};
    const ticket=Object.freeze({kind:'pnpm.native-store-assembly.session.v1'});sessions.set(ticket,s);
-   return Object.freeze({session:ticket,command,supplier:selectedSource,provider,receiptDirectory: recordDirectory});
+   return Object.freeze({session:ticket,command,supplier:selectedSource,provider,receiptDirectory});
   },
-  async revalidate(ticket){await storage(state(ticket),true);return true;},
+  async revalidate(ticket){await custody(state(ticket),true);return true;},
   async withStoreRead(ticket,work){
    const s=state(ticket);if(s.running||s.finished)throw new TypeError('native store assembly session is single use');
    if(typeof work!=='function')throw new TypeError('original caller native execution scope required');
-   await storage(s,true);s.running=true;
+   await custody(s,true);s.running=true;
    try{const received=await withFrozenPnpmStore({storeDirectory:s.storeDirectory,installationDirectory:s.cwd},async()=>{
-    await storage(s,false);const value=await work(s.command);await storage(s,false);return value;});
+    await custody(s,false);const value=await work(s.command);await custody(s,false);return value;});
     s.lease=received.receipt;return received.result;
    }finally{s.running=false;s.finished=true;}
   },
   async receive(ticket,outcome){
-   const s=state(ticket);closed(outcome,['invoked','code','signal']);let storageStatus='unchanged';
-   try{await storage(s,false);}catch{storageStatus='changed-or-unread';}
+   const s=state(ticket);closed(outcome,['invoked','code','signal']);let custodyStatus='unchanged';
+   try{await custody(s,false);}catch{custodyStatus='changed-or-unread';}
    let imports=null;try{imports=JSON.parse(await regular(s.events,65536));}catch{}
    const validImports=imports?.kind==='pnpm.strict-native-store-import'&&Number.isSafeInteger(imports.imports)&&imports.imports>0&&Number.isSafeInteger(imports.links)&&imports.links>0&&imports.copiedPayloadBytes===0;
-   const accepted=Boolean(storageStatus==='unchanged'&&s.finished&&s.lease&&validImports&&outcome.invoked===true&&outcome.code===0&&!outcome.signal);
-   return{accepted,evidence:{kind:'pnpm.native-store-assembly.receipt.v1',supplier:s.source,provider:s.provider,inputs:s.inputs,profile:s.profile,custody:storageStatus,lease:s.lease,imports,native:{...outcome},accepted,
+   const accepted=Boolean(custodyStatus==='unchanged'&&s.finished&&s.lease&&validImports&&outcome.invoked===true&&outcome.code===0&&!outcome.signal);
+   return{accepted,evidence:{kind:'pnpm.native-store-assembly.receipt.v1',supplier:s.source,provider:s.provider,inputs:s.inputs,profile:s.profile,custody:custodyStatus,lease:s.lease,imports,native:{...outcome},accepted,
     coverage:'original native strict cached assembly; graph and installed members require original caller receiving'}};
   }
  });
