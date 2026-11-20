@@ -1,6 +1,6 @@
 import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // Original PNPM owner: fixed reproducible Code-product transform, never a live patch.
-import {createHash} from 'node:crypto';
+
 export const UPSTREAM_DISTRIBUTION_SHA256 = 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810';
 export const UPSTREAM_INVENTORY_SHA256 = '86d641a60ea0b5e9e317e3bf76888f80ec663ca57c8572b1d29ff093d46fb0b7';
 export const PATCHED_DISTRIBUTION_SHA256 = 'fe6a7f99a5598fb3886b225de4471d704b35097147a1b6e81f34c270d9d686b8';

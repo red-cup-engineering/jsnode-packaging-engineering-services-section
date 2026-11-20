@@ -1,7 +1,7 @@
 import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze } from "@red-cup-engineering/signcell/values";
 import { boundedClone } from './native-metadata-data.mjs';
-import { createHash } from 'node:crypto';
+
 import { constants } from 'node:fs';
 import { lstat, open, realpath } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';

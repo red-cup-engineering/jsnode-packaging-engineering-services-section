@@ -2,7 +2,7 @@ import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system"
 // Construct a distinct native Code supplier from the exact original package.
 import {constants} from 'node:fs';
 import {lstat,readFile,readdir,realpath,mkdir,writeFile,chmod} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
+
 import {dirname,isAbsolute,join,relative,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {UPSTREAM_DISTRIBUTION_SHA256,UPSTREAM_INVENTORY_SHA256,

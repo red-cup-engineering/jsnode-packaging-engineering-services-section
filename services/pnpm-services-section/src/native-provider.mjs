@@ -1,7 +1,7 @@
 import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // Private original-provider qualification shared by PNPM-owned capabilities.
 import { lstat, readFile, realpath } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
+
 import { execFile } from 'node:child_process';
 import { promisify, isDeepStrictEqual } from 'node:util';
 import { dirname, isAbsolute, join } from 'node:path';

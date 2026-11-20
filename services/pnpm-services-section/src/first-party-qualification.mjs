@@ -1,10 +1,11 @@
+import { sha256Hex } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/integrity";
 import { isNonEmptyString } from "@red-cup-engineering/signcell/values";
 /** Deterministic policy over records resolved by the original receiving owner.
  * This pure function does not authenticate caller-supplied JSON. Only the
  * original receiver may bind its result to an effective native policy. */
 import { isDeepStrictEqual } from 'node:util';
 import semver from 'semver';
-import { createHash } from 'node:crypto';
+
 
 /** Exact registry selections, independent of enumeration/object key order. */
 export function dependencyClosureDigest(closure) {
@@ -14,7 +15,7 @@ export function dependencyClosureDigest(closure) {
     const left = JSON.stringify(a), right = JSON.stringify(b);
     return left < right ? -1 : left > right ? 1 : 0;
   });
-  return createHash('sha256').update(JSON.stringify(tuples)).digest('hex');
+  return sha256Hex(JSON.stringify(tuples));
 }
 
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/u.test(value);
