@@ -1,10 +1,11 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { constants } from 'node:fs';
 import { lstat, realpath, open, mkdtemp, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { hash, regular, provider } from './native-provider.mjs';
+import { regular, provider } from "./native-provider.mjs";
 import { receiveHookFreeProfile } from './native-hook-profile.mjs';
 import { createNativeObservationService } from './native-observation.mjs';
 
@@ -51,8 +52,8 @@ async function sourceIdentity() {
   const path = fileURLToPath(new URL('../package.json', import.meta.url)), bytes = await regular(path, 1048576), manifest = JSON.parse(bytes);
   if (manifest.name !== '@red-cup-engineering/pnpm-engineering-services-section' || manifest.exports?.['./native-installation'] !== './src/native-installation.mjs') throw new TypeError('native composition public supplier differs');
   const closure = [];
-  for (const name of closureNames) { const path = fileURLToPath(new URL(name, import.meta.url)); closure.push({path, sha256: hash(await regular(path, 1048576))}); }
-  return {name: manifest.name, version: manifest.version, publicExport: './native-installation', manifestPath: path, manifestSHA256: hash(bytes), closure, externalImports: 'node-builtins-only'};
+  for (const name of closureNames) { const path = fileURLToPath(new URL(name, import.meta.url)); closure.push({path, sha256: sha256Hex(await regular(path, 1048576))}); }
+  return {name: manifest.name, version: manifest.version, publicExport: './native-installation', manifestPath: path, manifestSHA256: sha256Hex(bytes), closure, externalImports: 'node-builtins-only'};
 }
 async function readerIdentity(port) {
   record(port, ['read', 'supplier'], ['read', 'supplier']); if (typeof port.read !== 'function') throw new TypeError('original archive reader port required');
@@ -70,7 +71,7 @@ async function readerIdentity(port) {
     record(item, ['path', 'sha256'], ['path', 'sha256']);
     if (!absolute(item.path) || !/^[a-f0-9]{64}$/u.test(item.sha256) || seen.has(item.path)) throw new TypeError('archive reader source custody differs');
     const bytes = await regular(item.path, 4194304); sourceBytes += bytes.length;
-    if (sourceBytes > 16777216 || hash(bytes) !== item.sha256) throw new TypeError('archive reader source custody differs');
+    if (sourceBytes > 16777216 || sha256Hex(bytes) !== item.sha256) throw new TypeError('archive reader source custody differs');
     seen.add(item.path); closure.push({...item});
   }
   return {...owner, closure, bindings};
@@ -99,7 +100,7 @@ async function stableDigest(path, expected, destination) {
 async function originalInputs(cwd) {
   const result = [];
   for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', '.npmrc']) {
-    const path = join(cwd, name); try { const bytes = await regular(path, 16777216); result.push({path, sha256: hash(bytes), bytes: bytes.length}); }
+    const path = join(cwd, name); try { const bytes = await regular(path, 16777216); result.push({path, sha256: sha256Hex(bytes), bytes: bytes.length}); }
     catch (error) { if (error.code !== 'ENOENT' || ['package.json', 'pnpm-lock.yaml'].includes(name)) throw error; result.push({path, absent: true}); }
   }
   return result;
@@ -147,7 +148,7 @@ export function createNativeInstallationService(options = {}) {
     if (!isDeepStrictEqual(s.profile, await receiveHookFreeProfile(s.cwd, s.command))) throw new TypeError('native configuration profile changed');
     if (s.reuse) {
       if (!isDeepStrictEqual(s.reader, await readerIdentity(options.archiveReader)) || options.archiveReader.read !== s.readerRead) throw new TypeError('reuse reader changed');
-      if (hash(await regular(s.configPath, 1048576)) !== s.configSHA256 || hash(await regular(s.hookPath, 1048576)) !== s.hookSHA256) throw new TypeError('reuse invocation custody changed');
+      if (sha256Hex(await regular(s.configPath, 1048576)) !== s.configSHA256 || sha256Hex(await regular(s.hookPath, 1048576)) !== s.hookSHA256) throw new TypeError('reuse invocation custody changed');
       for (const entry of s.entries) await stableDigest(entry.snapshotPath, {bytes: entry.bytes, sha256: entry.sha256, integrity: entry.integrity});
     }
     if (probe) { if (s.observed) await observation.revalidate(s.observed.session); else await provider(s.program, s.args, s.cwd, s.native); }
@@ -186,13 +187,13 @@ export function createNativeInstallationService(options = {}) {
           const identity = await stableDigest(entry.archivePath, {bytes: packed.observation.compressedBytes, sha256: packed.observation.archiveSHA256, integrity: entry.integrity}, snapshotPath);
           await stableDigest(snapshotPath, identity);
           s.entries.push({name: entry.name, version: entry.version, registry: entry.registry, tarball: entry.tarball, integrity: entry.integrity, snapshotPath, ...identity,
-            expandedBytes: packed.observation.expandedBytes, manifestSHA256: hash(packed.archive.manifestText)});
+            expandedBytes: packed.observation.expandedBytes, manifestSHA256: sha256Hex(packed.archive.manifestText)});
         }
         s.eventsPath = join(s.directory, 'events.ndjson'); s.configPath = join(s.directory, 'config.json'); s.hookPath = join(s.directory, 'pnpmfile.mjs');
         const config = {kind: 'pnpm.received-archive.config.v1', entry: native.provider.entry, entries: s.entries, eventsPath: s.eventsPath};
-        const configText = JSON.stringify(config) + '\n'; s.configSHA256 = hash(configText); s.configBytes = Buffer.byteLength(configText);
+        const configText = JSON.stringify(config) + '\n'; s.configSHA256 = sha256Hex(configText); s.configBytes = Buffer.byteLength(configText);
         const hookText = `import { createReceivedArchiveFetchers } from ${JSON.stringify(pathToFileURL(runtimePath).href)};\nexport const fetchers = await createReceivedArchiveFetchers(${JSON.stringify(s.configPath)}, ${JSON.stringify(s.configSHA256)});\n`;
-        s.hookSHA256 = hash(hookText);
+        s.hookSHA256 = sha256Hex(hookText);
         await writeFile(s.eventsPath, '', {flag: 'wx', mode: 0o600}); await writeFile(s.configPath, configText, {flag: 'wx', mode: 0o600}); await writeFile(s.hookPath, hookText, {flag: 'wx', mode: 0o600});
         delta.pnpmfile = s.hookPath;
       }
@@ -207,7 +208,7 @@ export function createNativeInstallationService(options = {}) {
       const s = state(ticket); let custodyStatus = 'unchanged', reuseEvidence = null;
       try { await custody(s, false); } catch { custodyStatus = 'changed-or-unread'; }
       if (s.reuse) {
-        try { const bytes = await regular(s.eventsPath, 262144); reuseEvidence = {...receiveArchiveReuseEvents(bytes.toString('utf8'), s.entries), stream: {bytes: bytes.length, sha256: hash(bytes)}}; }
+        try { const bytes = await regular(s.eventsPath, 262144); reuseEvidence = {...receiveArchiveReuseEvents(bytes.toString('utf8'), s.entries), stream: {bytes: bytes.length, sha256: sha256Hex(bytes)}}; }
         catch { reuseEvidence = {accepted: false, status: 'unread-or-malformed', entries: s.entries.map(e => ({name: e.name, version: e.version, state: 'unknown'}))}; }
       }
       let observed;
@@ -219,7 +220,7 @@ export function createNativeInstallationService(options = {}) {
         ...(s.reuse ? {reader: s.reader, preparedConfiguration: {sha256: s.configSHA256, bytes: s.configBytes, hookSHA256: s.hookSHA256}, archiveReuse: reuseEvidence} : {}),
         ...(observed ? {observation: observed.evidence} : {}),
         native: {invoked: outcome.invoked === true, code: Number.isSafeInteger(outcome.code) ? outcome.code : null, signal: ['SIGTERM', 'SIGKILL', 'SIGINT'].includes(outcome.signal) ? outcome.signal : null},
-        streams: {stdout: {bytes: stdout.length, sha256: hash(stdout)}, stderr: {bytes: stderr.length, sha256: hash(stderr)}}};
+        streams: {stdout: {bytes: stdout.length, sha256: sha256Hex(stdout)}, stderr: {bytes: stderr.length, sha256: sha256Hex(stderr)}}};
       return {evidence, accepted, stdout: observed?.stdout ?? '', stderr: observed?.stderr ?? '', safeFailure: accepted ? observed?.safeFailure ?? 'native-command-failed' : 'native-capability-receiving-refused'};
     }
   });

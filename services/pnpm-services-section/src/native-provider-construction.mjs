@@ -1,3 +1,4 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // Construct a distinct native Code supplier from the exact original package.
 import {constants} from 'node:fs';
 import {lstat,readFile,readdir,realpath,mkdir,writeFile,chmod} from 'node:fs/promises';
@@ -6,7 +7,7 @@ import {dirname,isAbsolute,join,relative,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {UPSTREAM_DISTRIBUTION_SHA256,UPSTREAM_INVENTORY_SHA256,
   PATCHED_DISTRIBUTION_SHA256,PATCHED_INVENTORY_SHA256,patchNativeDistribution} from './native-provider-patch.mjs';
-const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+
 const RECEIPT='.native-provider-construction.json';
 const MANIFEST='2dd7bab34254562873ed6a748748f7259b727b143c2f8cca9966069cfdcae800';
 const ENTRY='ff3224d46b47fbb24a7e9fe15fededef7e00892d07d4e376b6762d4899906bfd';
@@ -24,8 +25,8 @@ async function payload(directory,{constructed=false}={}) {
   const manifest=await originalFile(join(directory,'package.json'),1048576);
   const entry=await originalFile(join(directory,'bin/pnpm.mjs'),1048576);
   const distribution=await originalFile(join(directory,'dist/pnpm.mjs'),67108864);
-  if(digest(manifest)!==MANIFEST||digest(entry)!==ENTRY
-    ||digest(distribution)!==(constructed?PATCHED_DISTRIBUTION_SHA256:UPSTREAM_DISTRIBUTION_SHA256))
+  if(sha256Hex(manifest)!==MANIFEST||sha256Hex(entry)!==ENTRY
+    ||sha256Hex(distribution)!==(constructed?PATCHED_DISTRIBUTION_SHA256:UPSTREAM_DISTRIBUTION_SHA256))
     throw new TypeError('native provider input identity is not selected');
   const members=[];let bytes=0;
   const walk=async(dir,scope='')=>{
@@ -39,12 +40,12 @@ async function payload(directory,{constructed=false}={}) {
       else if(stat.isFile()){
         bytes+=stat.size;if(bytes>67108864)throw new TypeError('native provider payload byte bound exceeded');
         const body=await originalFile(address,67108864);
-        members.push({path,kind:'file',bytes:body.length,executable:(stat.mode&0o111)!==0,sha256:digest(body)});
+        members.push({path,kind:'file',bytes:body.length,executable:(stat.mode&0o111)!==0,sha256:sha256Hex(body)});
       }else throw new TypeError('linked or special provider members cannot form this product');
     }
   };
   await walk(directory);
-  const inventorySHA256=digest(JSON.stringify(members));
+  const inventorySHA256=sha256Hex(JSON.stringify(members));
   if(members.length!==559||inventorySHA256!==(constructed?PATCHED_INVENTORY_SHA256:UPSTREAM_INVENTORY_SHA256))
     throw new TypeError('complete native provider payload differs from its selected source');
   return {members,bytes,inventorySHA256,distribution};
@@ -62,7 +63,7 @@ export async function receiveConstructedNativeProvider(directory) {
   return {directory,entry:join(directory,'bin/pnpm.mjs'),distributionSHA256:PATCHED_DISTRIBUTION_SHA256,
     installationClaimed:false,publicationClaimed:false,
     inventorySHA256:received.inventorySHA256,members:received.members.length,bytes:received.bytes,
-    receiptSHA256:digest(await originalFile(join(directory,RECEIPT),1048576))};
+    receiptSHA256:sha256Hex(await originalFile(join(directory,RECEIPT),1048576))};
 }
 export async function constructNativeProvider(input) {
   if(!input||Object.getPrototypeOf(input)!==Object.prototype
@@ -78,22 +79,22 @@ export async function constructNativeProvider(input) {
     ||between(sourceDirectory,outputDirectory)||between(outputDirectory,sourceDirectory))
     throw new TypeError('construction needs a separate original owned output parent');
   const patched=patchNativeDistribution(source.distribution);
-  if(digest(patched)!==PATCHED_DISTRIBUTION_SHA256)throw new TypeError('native distribution recipe differs from received output');
+  if(sha256Hex(patched)!==PATCHED_DISTRIBUTION_SHA256)throw new TypeError('native distribution recipe differs from received output');
   await mkdir(outputDirectory,{mode:0o700});
   try{
     for(const member of source.members){
       const destination=join(outputDirectory,member.path);
       if(member.kind==='directory'){await mkdir(destination,{mode:0o700});continue;}
       let bytes=await originalFile(join(sourceDirectory,member.path),67108864);
-      if(digest(bytes)!==member.sha256||bytes.length!==member.bytes)throw new Error('original provider changed during construction');
+      if(sha256Hex(bytes)!==member.sha256||bytes.length!==member.bytes)throw new Error('original provider changed during construction');
       if(member.path==='dist/pnpm.mjs')bytes=patched;
       await writeFile(destination,bytes,{flag:'wx',mode:member.executable?0o755:0o644});
     }
     await payload(sourceDirectory);
     const receipt={kind:'pnpm.native-provider-construction/v1',input:{directory:sourceDirectory,
       inventorySHA256:UPSTREAM_INVENTORY_SHA256,distributionSHA256:UPSTREAM_DISTRIBUTION_SHA256,
-      members:source.members.length,bytes:source.bytes},recipe:{moduleSHA256:digest(await readFile(fileURLToPath(import.meta.url))),
-      patchModuleSHA256:digest(await readFile(new URL('./native-provider-patch.mjs',import.meta.url))),
+      members:source.members.length,bytes:source.bytes},recipe:{moduleSHA256:sha256Hex(await readFile(fileURLToPath(import.meta.url))),
+      patchModuleSHA256:sha256Hex(await readFile(new URL('./native-provider-patch.mjs',import.meta.url))),
       sharedMetadataBytes:8388608,verifierMetadataBytes:8388608,sharedTTLms:120000,verificationConcurrency:'selected networkConcurrency'},
       product:{directory:outputDirectory,inventorySHA256:PATCHED_INVENTORY_SHA256,distributionSHA256:PATCHED_DISTRIBUTION_SHA256,members:559},
       installationClaimed:false,publicationClaimed:false};

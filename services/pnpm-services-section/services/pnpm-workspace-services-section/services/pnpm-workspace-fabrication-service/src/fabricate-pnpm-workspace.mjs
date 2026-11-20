@@ -1,3 +1,4 @@
+import { compareText } from "@red-cup-engineering/semiotic-content-address-system";
 import { createHash } from "node:crypto";
 import { lstat, mkdir, readdir, writeFile } from "node:fs/promises";
 import { dirname, parse, relative, resolve, sep } from "node:path";
@@ -8,9 +9,7 @@ function text(value, name) {
 }
 
 // A deterministic ordering independent of the machine's ICU locale.
-function compare(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
+
 
 // The public API accepts JSON value trees. Copying them into canonical own-data
 // carriers rejects getters, exotic objects and values JSON would silently erase.
@@ -26,7 +25,7 @@ function canonicalJSON(value) {
   if (value && typeof value === "object" &&
       (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
     const descriptors = Object.getOwnPropertyDescriptors(value);
-    return Object.fromEntries(Object.keys(descriptors).sort(compare).map(key => {
+    return Object.fromEntries(Object.keys(descriptors).sort(compareText).map(key => {
       const entry = descriptors[key];
       if (!("value" in entry)) throw new TypeError("workspace source must contain inert JSON values");
       return [key, canonicalJSON(entry.value)];
@@ -73,7 +72,7 @@ function admitBuildPolicy(policy, pnpmVersion) {
   const [major, minor] = pnpmVersion.split(".").map(Number);
   if (entries.length && (major < 10 || (major === 10 && minor < 26)))
     throw new TypeError("build policy requires pnpm 10.26.0 or later");
-  return entries.sort(([left], [right]) => compare(left, right))
+  return entries.sort(([left], [right]) => compareText(left, right))
     .map(([matcher, allowed]) => `  ${JSON.stringify(matcher)}: ${allowed}`);
 }
 
@@ -84,7 +83,7 @@ export function projectPnpmWorkspace(specification) {
   const packages = (source.packages ?? []).map((item) => ({
     path: relativePath(item.path),
     manifest: { ...item.manifest, name: text(item.manifest?.name, "package name"), version: exactVersion(item.manifest?.version, item.manifest?.name ?? "package") },
-  })).sort((left, right) => compare(left.path, right.path));
+  })).sort((left, right) => compareText(left.path, right.path));
   const duplicatePaths = Object.entries(Object.groupBy(packages, ({ path }) => path)).filter(([, rows]) => rows.length > 1);
   const duplicateNames = Object.entries(Object.groupBy(packages, ({ manifest }) => manifest.name)).filter(([, rows]) => rows.length > 1);
   if (duplicatePaths.length || duplicateNames.length) throw new TypeError("workspace package paths and identities must be unique");
@@ -129,7 +128,7 @@ export function projectPnpmWorkspace(specification) {
     files.set(`${item.path}/package.json`, json(manifest));
   }
   const digest = createHash("sha256");
-  for (const [path, body] of [...files].sort(([left], [right]) => compare(left, right))) digest.update(path).update("\0").update(body).update("\0");
+  for (const [path, body] of [...files].sort(([left], [right]) => compareText(left, right))) digest.update(path).update("\0").update(body).update("\0");
   return Object.freeze({
     type: "PnpmWorkspaceProjection", version: 1,
     files: readonlyFiles(files), digest: digest.digest("hex"),
@@ -193,5 +192,5 @@ export async function fabricatePnpmWorkspace({ specification, outputDirectory })
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, body, { flag: "wx" });
   }
-  return Object.freeze({ type: "PnpmWorkspaceFabricationReceipt", version: 1, outputDirectory: output, digest: projection.digest, packages: projection.packages, files: Object.freeze([...projection.files.keys()].sort(compare)) });
+  return Object.freeze({ type: "PnpmWorkspaceFabricationReceipt", version: 1, outputDirectory: output, digest: projection.digest, packages: projection.packages, files: Object.freeze([...projection.files.keys()].sort(compareText)) });
 }

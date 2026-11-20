@@ -1,3 +1,4 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze } from "@red-cup-engineering/signcell/values";
 import { boundedClone, parseBatchMetadataOutput } from './native-metadata-data.mjs';
 import { mkdir, open, readFile, realpath, lstat, readdir } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { isDeepStrictEqual } from 'node:util';
 import { projectNativeMetadataQuery, receiveNativeMetadataFile, projectNativeMetadataBatchQuery, receiveNativeMetadataBatchFiles } from './native-metadata-preparation.mjs';
-import { metadataProvider as provider, regular, hash } from './native-provider.mjs';
+import { metadataProvider as provider, regular } from "./native-provider.mjs";
 import { receiveMetadataConfigurationProfile } from './native-hook-profile.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -33,7 +34,7 @@ async function directory(path) {
 async function sourceIdentity() {
   const files = ['package.json','src/native-metadata-session.mjs','src/native-metadata-data.mjs','src/native-transport-environment.mjs','src/native-metadata-preparation.mjs','src/native-provider.mjs','src/native-hook-profile.mjs'];
   const local = [];
-  for (const path of files) local.push({path:join(root,path),sha256:hash(await regular(join(root,path),1048576))});
+  for (const path of files) local.push({path:join(root,path),sha256:sha256Hex(await regular(join(root,path),1048576))});
   const resolved = createRequire(import.meta.url).resolve('semver/package.json'), manifestPath = await realpath(resolved), dependencyRoot = dirname(manifestPath);
   const manifest = JSON.parse(await regular(manifestPath,1048576));
   if (manifest.name !== 'semver' || manifest.version !== '7.7.2' || Object.keys(manifest.dependencies ?? {}).length) throw new TypeError('qualified semver source required');
@@ -47,7 +48,7 @@ async function sourceIdentity() {
       else if (entry.name.endsWith('.js') || entry.name==='package.json') {
         const bytes = await regular(path,1048576); total += bytes.length;
         if (dependency.length >= 256 || total > 1048576) throw new TypeError('semver closure bound exceeded');
-        dependency.push({path,sha256:hash(bytes)});
+        dependency.push({path,sha256:sha256Hex(bytes)});
       }
     }
   }
@@ -61,7 +62,7 @@ async function receipt(s, name, value) {
   const path = join(s.receipts,name+'.json'); const handle = await open(path,'wx',0o600);
   try { await handle.writeFile(text); } finally { await handle.close(); }
   if ((await regular(path,16*1024*1024)).toString('utf8') !== text) throw new TypeError('phase receipt readback differs');
-  return {path,bytes:Buffer.byteLength(text),sha256:hash(text)};
+  return {path,bytes:Buffer.byteLength(text),sha256:sha256Hex(text)};
 }
 
 /** Executor-free source service. Issued requests are not process authenticity or replay prevention. */
@@ -93,8 +94,8 @@ function createMetadataPreparationService(batch) {
     await provider(s.program,[s.entry],s.query.directory,s.provider,false);
     if (!isDeepStrictEqual(s.source,await sourceIdentity())) throw new TypeError('metadata supplier changed');
     if (!isDeepStrictEqual(s.profile,await receiveMetadataConfigurationProfile(s.query,s.environment.values))) throw new TypeError('metadata configuration changed');
-    for (const file of s.environmentFiles) if(hash(await regular(file.path,1048576))!==file.sha256) throw new TypeError('environment file changed');
-    const builtin=await regular(s.builtin.path,1048576); if(hash(builtin)!==s.builtin.sha256) throw new TypeError('builtin config changed');
+    for (const file of s.environmentFiles) if(sha256Hex(await regular(file.path,1048576))!==file.sha256) throw new TypeError('environment file changed');
+    const builtin=await regular(s.builtin.path,1048576); if(sha256Hex(builtin)!==s.builtin.sha256) throw new TypeError('builtin config changed');
   }
   return Object.freeze({kind:batch?'pnpm.native-metadata-batch-preparation.service.v1':'pnpm.native-metadata-preparation.service.v1',
     async prepare(input) {
@@ -112,12 +113,12 @@ function createMetadataPreparationService(batch) {
       const builtinPath=join(dirname(dirname(native.provider.entry)),'dist','pnpmrc'), builtinBytes=await regular(builtinPath,1048576);
       if(builtinBytes.toString('utf8').split('\n').some(line=>line.trim()&&!line.trim().startsWith('#'))) throw new TypeError('unsupported builtin metadata configuration');
       const environmentFiles=[];
-      for(const key of ['NODE_EXTRA_CA_CERTS','SSL_CERT_FILE']) if(environment.values[key]) environmentFiles.push({path:environment.values[key],sha256:hash(await regular(environment.values[key],1048576))});
+      for(const key of ['NODE_EXTRA_CA_CERTS','SSL_CERT_FILE']) if(environment.values[key]) environmentFiles.push({path:environment.values[key],sha256:sha256Hex(await regular(environment.values[key],1048576))});
       await mkdir(query.directory,{mode:0o700});
       for(const [name,text]of Object.entries(query.files)) {const handle=await open(join(query.directory,name),'wx',0o600);try{await handle.writeFile(text);}finally{await handle.close();}}
       const profile=await receiveMetadataConfigurationProfile(query,environment.values);
       const s={phase:'prepared-producer',busy:false,query,environment,environmentPolicy:deepFreeze(copy(input.environmentPolicy)),environmentFiles,
-        source,provider:native,program:input.program,entry:input.entry,receipts:input.receiptDirectory,limits:deepFreeze(copy(input.limits)),profile,builtin:{path:builtinPath,sha256:hash(builtinBytes)}};
+        source,provider:native,program:input.program,entry:input.entry,receipts:input.receiptDirectory,limits:deepFreeze(copy(input.limits)),profile,builtin:{path:builtinPath,sha256:sha256Hex(builtinBytes)}};
       const saved=await receipt(s,'prepared',{kind:kind('prepared'),query,provider:native,source,profile,environment:environment.identity});
       const ticket=Object.freeze({kind:kind('ticket')});sessions.set(ticket,s);
       return deepFreeze({ticket,projection:query,prepared:saved,provider:native});
@@ -134,7 +135,7 @@ function createMetadataPreparationService(batch) {
         else {const mirror=await observe(s.query);if(!unchanged(mirror,s.mirror))throw new TypeError('received metadata changed');}
         const request=deepFreeze({type:'JavascriptNodeCommandExecutionRequest',version:1,command:s.program,
           arguments:[s.entry,...s.query.arguments,...(input.phase==='reader'?['--config.offline=true']:[])],directory:s.query.directory,environment:environment.values,input:null});
-        await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:hash(JSON.stringify(request)),environment:environment.identity});
+        await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:sha256Hex(JSON.stringify(request)),environment:environment.identity});
         s.request=request;s.phase=input.phase+'-in-flight';return deepFreeze({request,policy:s.limits});
       } catch(error){s.phase='failed';throw error;} finally{s.busy=false;}
     },

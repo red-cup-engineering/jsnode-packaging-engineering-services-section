@@ -1,6 +1,7 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze } from "@red-cup-engineering/signcell/values";
 // Original metadata transport grammar, shared without importing its effectful composition.
-import { hash } from './native-provider.mjs';
+
 const own = (value, allowed, required = allowed) => {
   if (!value || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw new TypeError('own data record required');
   for (const key of Reflect.ownKeys(value)) {
@@ -27,14 +28,14 @@ export function receiveNativeTransportEnvironment(input, policy) {
       const expected = policy.relays[key]; own(expected, ['protocol','hostnameSHA256']);
       if (!['http:','https:','socks5:','socks5h:'].includes(expected.protocol) || !/^[a-f0-9]{64}$/u.test(expected.hostnameSHA256)) throw new TypeError('fixed relay role required');
       let url; try { url = new URL(value); } catch { throw new TypeError('malformed relay URL'); }
-      if (url.protocol !== expected.protocol || hash(url.hostname) !== expected.hostnameSHA256 || url.username || url.password || url.search || url.hash
+      if (url.protocol !== expected.protocol || sha256Hex(url.hostname) !== expected.hostnameSHA256 || url.username || url.password || url.search || url.hash
         || !['','/'].includes(url.pathname) || !url.port || Number(url.port) < 1) throw new TypeError('relay role changed or credential bearing');
     } else {
-      if (typeof policy.stable[key] !== 'string' || !/^[a-f0-9]{64}$/u.test(policy.stable[key]) || hash(value) !== policy.stable[key]) throw new TypeError('stable environment changed');
-      stable[key] = hash(value);
+      if (typeof policy.stable[key] !== 'string' || !/^[a-f0-9]{64}$/u.test(policy.stable[key]) || sha256Hex(value) !== policy.stable[key]) throw new TypeError('stable environment changed');
+      stable[key] = sha256Hex(value);
     }
     result[key] = value;
   }
   if (Object.keys(policy.stable).some(key => !Object.hasOwn(result,key)) || Object.keys(policy.relays).some(key => !Object.hasOwn(result,key))) throw new TypeError('environment input absent');
-  return { values: deepFreeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: hash(JSON.stringify(result)) } };
+  return { values: deepFreeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: sha256Hex(JSON.stringify(result)) } };
 }

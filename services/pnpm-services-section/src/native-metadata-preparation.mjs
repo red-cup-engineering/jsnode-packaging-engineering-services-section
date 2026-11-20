@@ -1,3 +1,4 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze } from "@red-cup-engineering/signcell/values";
 import { boundedClone } from './native-metadata-data.mjs';
 import { createHash } from 'node:crypto';
@@ -7,7 +8,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import semver from 'semver';
 
-const sha = value => createHash('sha256').update(value).digest('hex');
+
 const namePattern = /^(?:@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*|[a-z0-9][a-z0-9._-]*)$/u;
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const policyKeys = new Set(['minimumReleaseAge', 'minimumReleaseAgeStrict', 'minimumReleaseAgeExclude',
@@ -95,7 +96,7 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
   return deepFreeze({ kind: 'pnpm.native-metadata-query.v1', installableGraph: false, name, registry, representative,
     selectedVersions: selected.map(record => record.version), originalSelections: retained, canonical: identity, policy: clone(policy),
     directory, cacheDirectory, expectedMirrorPath, files, arguments: args,
-    projectionSHA256: sha(projectionBytes),
+    projectionSHA256: sha256Hex(projectionBytes),
     requiredProvider: { node: '24.19.0', supportedNodeVersions: ['24.18.0', '24.19.0'], pnpm: '11.28.5', distributionSHA256: 'e3738fda08262f74611d7a1ffc11b3e87fa52b466c07eb73211d179ebcb98810' } });
 }
 
@@ -135,7 +136,7 @@ export function projectNativeMetadataBatchQuery(input) {
     originalSelections: first.originalSelections, canonical: first.canonical, policy: first.policy,
     ...refinement,
     directory: first.directory, cacheDirectory: first.cacheDirectory, files,
-    arguments: [...first.arguments.slice(0, -1), ...names], projectionSHA256: sha(projectionBytes),
+    arguments: [...first.arguments.slice(0, -1), ...names], projectionSHA256: sha256Hex(projectionBytes),
     requiredProvider: first.requiredProvider });
 }
 
@@ -184,7 +185,7 @@ function inspectRawNativeMetadataProfile(bytes, { name, selectedVersions }, abbr
         && fragment.name === name && fragment.version === version);
       const validTimestamp = typeof timestamp === 'string' && timestamp.length <= 64 && Number.isFinite(Date.parse(timestamp));
       return { version, manifestPresent, validTimestamp, timestamp: validTimestamp ? timestamp : null,
-        fragmentSHA256: span ? sha(bytes.subarray(base + span.offset, base + span.offset + span.length)) : null };
+        fragmentSHA256: span ? sha256Hex(bytes.subarray(base + span.offset, base + span.offset + span.length)) : null };
     });
     const timestampCoverageComplete = versions.every(item => item.validTimestamp);
     const modified = headers?.modified;
@@ -224,7 +225,7 @@ async function observeNativeMetadataFile(expected, maximumBytes, inspect = bytes
     if (offset !== bytes.length || JSON.stringify(statReceipt(opened)) !== JSON.stringify(statReceipt(after))
       || JSON.stringify(statReceipt(after)) !== JSON.stringify(statReceipt(named)) || await realpath(path) !== path)
       return { ...result, reason: 'file-changed-during-read' };
-    return { ...result, fileObserved: true, regularFile: true, symlink: false, bytes: bytes.length, sha256: sha(bytes),
+    return { ...result, fileObserved: true, regularFile: true, symlink: false, bytes: bytes.length, sha256: sha256Hex(bytes),
       before: statReceipt(before), after: statReceipt(after), ...inspect(bytes) };
   } catch (error) { return { ...result, reason: error.code === 'ENOENT' ? 'missing-native-file' : 'unavailable-native-file' }; }
   finally { await handle?.close(); }

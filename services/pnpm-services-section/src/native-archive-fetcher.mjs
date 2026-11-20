@@ -1,10 +1,11 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // Runs only as the original native custom-fetcher extension. No transport,
 // extraction, store-key writer, policy override or installer lives here.
 import { constants, lstatSync, readFileSync, realpathSync, openSync, fstatSync, writeSync, closeSync } from 'node:fs';
 import { open, lstat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { isMainThread } from 'node:worker_threads';
-const digest = value => createHash('sha256').update(value).digest('hex');
+
 
 export async function createReceivedArchiveFetchers(configPath, expectedSHA256) {
   // Do not validate main-process argv or touch session files in inherited workers.
@@ -12,7 +13,7 @@ export async function createReceivedArchiveFetchers(configPath, expectedSHA256) 
   const configStat = lstatSync(configPath);
   if (!configStat.isFile() || configStat.size > 1048576 || realpathSync(configPath) !== configPath) throw new Error('archive reuse config refused');
   const raw = readFileSync(configPath);
-  if (digest(raw) !== expectedSHA256) throw new Error('archive reuse config changed');
+  if (sha256Hex(raw) !== expectedSHA256) throw new Error('archive reuse config changed');
   const config = JSON.parse(raw);
   if (config.kind !== 'pnpm.received-archive.config.v1' || process.version !== 'v24.19.0'
     || realpathSync(process.argv[1]) !== config.entry || !Array.isArray(config.entries) || config.entries.length > 64) throw new Error('archive reuse native context refused');

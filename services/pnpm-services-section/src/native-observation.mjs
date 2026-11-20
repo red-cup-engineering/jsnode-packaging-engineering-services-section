@@ -1,10 +1,11 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { lstat, mkdtemp, open, readFile, realpath, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import { isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { hash, regular, provider } from './native-provider.mjs';
+import { regular, provider } from "./native-provider.mjs";
 const providerPath = fileURLToPath(new URL('./native-provider.mjs', import.meta.url));
 const servicePath = fileURLToPath(import.meta.url);
 const preloadPath = fileURLToPath(new URL('./native-observation-preload.mjs', import.meta.url));
@@ -35,8 +36,8 @@ async function supplier() {
   const manifest = JSON.parse(manifestBytes);
   if (manifest.name !== '@red-cup-engineering/pnpm-engineering-services-section'
     || manifest.exports?.['./native-observation'] !== './src/native-observation.mjs') throw new TypeError('observation public supplier identity differs');
-  return { name: manifest.name, version: manifest.version, manifestPath, manifestSHA256: hash(manifestBytes),
-    publicExport: './native-observation', closure: [{ path: servicePath, sha256: hash(service) }, { path: preloadPath, sha256: hash(preload) }, { path: providerPath, sha256: hash(providerBytes) }],
+  return { name: manifest.name, version: manifest.version, manifestPath, manifestSHA256: sha256Hex(manifestBytes),
+    publicExport: './native-observation', closure: [{ path: servicePath, sha256: sha256Hex(service) }, { path: preloadPath, sha256: sha256Hex(preload) }, { path: providerPath, sha256: sha256Hex(providerBytes) }],
     externalImports: 'node-builtins-only' };
 }
 function validateRequest(input, context) {
@@ -209,11 +210,11 @@ export function createNativeObservationService(options = {}) {
         signal: ['SIGTERM', 'SIGKILL', 'SIGINT'].includes(outcome.signal) ? outcome.signal : null,
         errorCode: outcome.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? outcome.code : null };
       const evidence = { kind: 'pnpm.native-observation.receipt.v1', context: { ...context }, provider: s.native, supplier: s.owner,
-        preparedConfiguration: { sha256: hash(s.configText), bytes: Buffer.byteLength(s.configText) },
+        preparedConfiguration: { sha256: sha256Hex(s.configText), bytes: Buffer.byteLength(s.configText) },
         custody, coverage: { status: native.partial || transport.partial || readError || custody.afterSettlement !== 'unchanged' ? 'partial' : 'observed-prefix',
           scope: 'selected-main-process-events', selectionComplete: false, nativePartial: native.partial,
           transportPartial: transport.partial, readError, finalMarker: transport.final, discardedNativeRecords: native.discarded },
-        terminal, streams: { stdout: { representation: Buffer.isBuffer(outcome.stdout) ? 'original-bytes' : 'utf8-representation', bytes: stdoutBytes.length, sha256: hash(stdoutBytes) }, stderr: { representation: Buffer.isBuffer(outcome.stderr) ? 'original-bytes' : 'utf8-representation', bytes: stderrBytes.length, sha256: hash(stderrBytes) } },
+        terminal, streams: { stdout: { representation: Buffer.isBuffer(outcome.stdout) ? 'original-bytes' : 'utf8-representation', bytes: stdoutBytes.length, sha256: sha256Hex(stdoutBytes) }, stderr: { representation: Buffer.isBuffer(outcome.stderr) ? 'original-bytes' : 'utf8-representation', bytes: stderrBytes.length, sha256: sha256Hex(stderrBytes) } },
         native: native.events, transport: transport.events };
       return { evidence, stdout: native.events.map(event => JSON.stringify(event)).join('\n'), stderr: '',
         safeFailure: terminal.errorCode ?? terminal.signal ?? (terminal.code === null ? 'native-command-failed' : 'native-exit-' + terminal.code) };
@@ -278,7 +279,7 @@ export function receiveNativeOfflineVerification(input) {
   else reason = 'fresh-native-verification-observed';
   return Object.freeze({ kind: 'pnpm.native-offline-verification.observation.v1', accepted: reason === 'fresh-native-verification-observed', reason,
     terminal: Object.freeze({ ...terminal }), observation: Object.freeze({ ...observation }), lockfilePath,
-    stream: Object.freeze({ bytes: bytes.length, sha256: hash(bytes), records, discarded, partial,
+    stream: Object.freeze({ bytes: bytes.length, sha256: sha256Hex(bytes), records, discarded, partial,
       representation: Buffer.isBuffer(stdout) ? 'original-bytes' : 'utf8-representation' }),
     events: Object.freeze(events.map(event => Object.freeze(event))) });
 }

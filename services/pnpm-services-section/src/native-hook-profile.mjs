@@ -1,8 +1,9 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // A deliberately closed absence profile, not a second PNPM configuration loader.
 import { lstat, realpath } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
-import { hash, regular } from './native-provider.mjs';
+import { regular } from "./native-provider.mjs";
 
 const settingKey = key => key.toLowerCase().replace(/[_.-]/gu, '');
 const environmentSetting = name => {
@@ -52,7 +53,7 @@ function selectors(args) {
   return result;
 }
 async function optional(path) {
-  try { const bytes = await regular(path, 1048576); return { path, exists: true, sha256: hash(bytes), bytes: bytes.length, text: bytes.toString('utf8') }; }
+  try { const bytes = await regular(path, 1048576); return { path, exists: true, sha256: sha256Hex(bytes), bytes: bytes.length, text: bytes.toString('utf8') }; }
   catch (error) { if (error.code === 'ENOENT') return { path, exists: false }; throw error; }
 }
 export async function receiveHookFreeProfile(cwd, args) {
@@ -62,7 +63,7 @@ export async function receiveHookFreeProfile(cwd, args) {
   const environment = {};
   for (const name of Object.keys(process.env).sort()) {
     if (blocked.has(environmentSetting(name)) || environmentSetting(name) === 'noignorepnpmfile') throw new TypeError('ambient native context or hooks are outside the profile');
-    if (['XDG_CONFIG_HOME', 'HOME'].includes(name)) environment[name] = hash(process.env[name]);
+    if (['XDG_CONFIG_HOME', 'HOME'].includes(name)) environment[name] = sha256Hex(process.env[name]);
   }
   const xdg = process.env.XDG_CONFIG_HOME;
   if (xdg && !isAbsolute(xdg)) throw new TypeError('relative native configuration home is unsupported');
@@ -101,7 +102,7 @@ export async function receiveMetadataConfigurationProfile(query, environment) {
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
   return { kind: 'pnpm.closed-metadata-profile.v1', cwd, absent: paths,
-    files: Object.entries(query.files).map(([name, text]) => ({ path: join(cwd, name), sha256: hash(text) })) };
+    files: Object.entries(query.files).map(([name, text]) => ({ path: join(cwd, name), sha256: sha256Hex(text) })) };
 }
 
 // A separate owned-hook profile for strict cached assembly. Existing hook-free
@@ -112,7 +113,7 @@ export async function receiveOwnedHookProfile(cwd) {
  for(const name of Object.keys(process.env).sort()){
   const key=environmentSetting(name);
   if(key||name==='NODE_OPTIONS'||name==='PNPM_NATIVE_OBSERVATION_CONFIG')throw new TypeError('ambient native configuration is outside the assembly profile');
-  if(['HOME','XDG_CONFIG_HOME'].includes(name))environment[name]=hash(process.env[name]);
+  if(['HOME','XDG_CONFIG_HOME'].includes(name))environment[name]=sha256Hex(process.env[name]);
  }
  const xdg=process.env.XDG_CONFIG_HOME;
  if(xdg&&!isAbsolute(xdg))throw new TypeError('relative native configuration home is unsupported');

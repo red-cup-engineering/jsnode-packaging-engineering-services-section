@@ -1,10 +1,11 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // Private original-provider qualification shared by PNPM-owned capabilities.
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify, isDeepStrictEqual } from 'node:util';
 import { dirname, isAbsolute, join } from 'node:path';
-export const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+
 const run = promisify(execFile);
 import {PATCHED_DISTRIBUTION_SHA256 as distributionSHA256} from './native-provider-patch.mjs';
 import {receiveConstructedNativeProvider} from './native-provider-construction.mjs';
@@ -23,11 +24,11 @@ async function qualifiedProvider(program, args, cwd, expected, probeVersion, nod
   if (manifest.name !== 'pnpm' || manifest.version !== '11.28.5' || typeof manifest.bin?.pnpm !== 'string'
     || await realpath(join(root, manifest.bin.pnpm)) !== entry) throw new TypeError('observation requires original PNPM11.28.5');
   const distPath = join(root, 'dist', 'pnpm.mjs'), dist = await regular(distPath, 67108864);
-  if (hash(dist) !== distributionSHA256) throw new TypeError('unqualified PNPM observation distribution');
+  if (sha256Hex(dist) !== distributionSHA256) throw new TypeError('unqualified PNPM observation distribution');
   await receiveConstructedNativeProvider(root);
-  const selected = { manager: { name: 'pnpm', version: manifest.version, entrySHA256: hash(bytes) }, provider: {
-    entry, entrySHA256: hash(bytes), manifestPath, manifestSHA256: hash(manifestBytes), distPath,
-    distSHA256: hash(dist), shimTargetFormat: 'pnpm11-cmd-shim-target' } };
+  const selected = { manager: { name: 'pnpm', version: manifest.version, entrySHA256: sha256Hex(bytes) }, provider: {
+    entry, entrySHA256: sha256Hex(bytes), manifestPath, manifestSHA256: sha256Hex(manifestBytes), distPath,
+    distSHA256: sha256Hex(dist), shimTargetFormat: 'pnpm11-cmd-shim-target' } };
   if (expected && !isDeepStrictEqual(selected, expected)) throw new TypeError('native provider custody changed');
   if (probeVersion) {
     const version = (await run(program, [...args, '--version'], { cwd, timeout: 10000, maxBuffer: 65536 })).stdout.trim();

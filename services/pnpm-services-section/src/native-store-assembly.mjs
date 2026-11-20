@@ -1,9 +1,10 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import {lstat,readFile,realpath,mkdtemp,writeFile} from 'node:fs/promises';
 import {join,resolve,isAbsolute} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {isDeepStrictEqual,promisify} from 'node:util';
 import {execFile} from 'node:child_process';
-import {hash,regular,storeAssemblyProvider} from './native-provider.mjs';
+import { regular, storeAssemblyProvider } from "./native-provider.mjs";
 import {receiveOwnedHookProfile} from './native-hook-profile.mjs';
 import {withFrozenPnpmStore} from './native-store-lease.mjs';
 import {receiveExistingNativeStoreOwnerPermissions} from './native-store-custody.mjs';
@@ -19,11 +20,11 @@ const directory=async path=>{
 async function source(){
  const manifestPath=fileURLToPath(new URL('../package.json',import.meta.url)),bytes=await regular(manifestPath,1048576),manifest=JSON.parse(bytes);
  if(manifest.name!=='@red-cup-engineering/pnpm-engineering-services-section'||manifest.exports?.['./native-store-assembly']!=='./src/native-store-assembly.mjs')throw new TypeError('original assembly supplier export required');
- const closure=[];for(const name of names){const path=fileURLToPath(new URL(name,import.meta.url));closure.push({path,sha256:hash(await regular(path,1048576))});}
- return{name:manifest.name,version:manifest.version,publicExport:'./native-store-assembly',manifestPath,manifestSHA256:hash(bytes),closure};
+ const closure=[];for(const name of names){const path=fileURLToPath(new URL(name,import.meta.url));closure.push({path,sha256:sha256Hex(await regular(path,1048576))});}
+ return{name:manifest.name,version:manifest.version,publicExport:'./native-store-assembly',manifestPath,manifestSHA256:sha256Hex(bytes),closure};
 }
 async function inputs(cwd){
- const files=[];for(const name of['package.json','pnpm-lock.yaml']){const path=join(cwd,name),bytes=await regular(path,16777216);files.push({path,sha256:hash(bytes),bytes:bytes.length});}return files;
+ const files=[];for(const name of['package.json','pnpm-lock.yaml']){const path=join(cwd,name),bytes=await regular(path,16777216);files.push({path,sha256:sha256Hex(bytes),bytes:bytes.length});}return files;
 }
 /** Original PNPM capability. The original Code caller owns the finite native process. */
 export function createNativeStoreAssemblyService(){
@@ -31,7 +32,7 @@ export function createNativeStoreAssemblyService(){
  async function custody(s,probe){
   if(!isDeepStrictEqual(s.source,await source())||!isDeepStrictEqual(s.inputs,await inputs(s.cwd))||!isDeepStrictEqual(s.profile,await receiveOwnedHookProfile(s.cwd)))throw new TypeError('native assembly source, inputs or configuration changed');
   await storeAssemblyProvider(process.execPath,[s.entry],s.cwd,s.provider,probe);
-  if(hash(await regular(s.hook,1048576))!==s.hookSHA256)throw new TypeError('native assembly importer changed');
+  if(sha256Hex(await regular(s.hook,1048576))!==s.hookSHA256)throw new TypeError('native assembly importer changed');
  }
  return Object.freeze({
   kind:'pnpm.native-store-assembly.service.v1',
@@ -65,7 +66,7 @@ export function createNativeStoreAssemblyService(){
    await writeFile(hook,hookText,{flag:'wx',mode:0o600});
    await writeFile(events,'null\n',{flag:'wx',mode:0o600});
    const command=Object.freeze({program:process.execPath,arguments:Object.freeze([input.entry,'--dir',input.cwd,...input.policyArguments,'install','--ignore-scripts','--frozen-lockfile','--offline','--frozen-store','--store-dir',input.storeBase,'--global-pnpmfile',hook,'--config.enable-global-virtual-store=false','--reporter=append-only'])});
-   const s={entry:input.entry,cwd:input.cwd,source:selectedSource,inputs:selectedInputs,profile,provider,storeDirectory,hook,hookSHA256:hash(hookText),events,command,lease:null,running:false,finished:false};
+   const s={entry:input.entry,cwd:input.cwd,source:selectedSource,inputs:selectedInputs,profile,provider,storeDirectory,hook,hookSHA256:sha256Hex(hookText),events,command,lease:null,running:false,finished:false};
    const ticket=Object.freeze({kind:'pnpm.native-store-assembly.session.v1'});sessions.set(ticket,s);
    return Object.freeze({session:ticket,command,supplier:selectedSource,provider,receiptDirectory});
   },

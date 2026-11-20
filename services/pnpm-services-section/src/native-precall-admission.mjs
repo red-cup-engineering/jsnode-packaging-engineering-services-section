@@ -1,3 +1,4 @@
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze, isRecord } from "@red-cup-engineering/signcell/values";
 // PNPM-owned closed publisher admission. This module never launches a process.
 import { access, lstat, realpath } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { dirname, isAbsolute, join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { inspectHookFreeYaml } from './native-hook-profile.mjs';
-import { hash, regular, provider } from './native-provider.mjs';
+import { regular, provider } from "./native-provider.mjs";
 import { receiveNativeTransportEnvironment } from './native-transport-environment.mjs';
 import { boundedClone } from './native-metadata-data.mjs';
 import { receiveNativeOfflineVerification, receiveNativeCachedVerification } from './native-observation.mjs';
@@ -131,7 +132,7 @@ function commands(args, mode, operation) {
   return [args.slice(), ['--version'], ['list', '--recursive', '--depth=-1', '--json']];
 }
 async function identity(path, required = false, limit = 16777216) {
-  try { const bytes = await regular(path, limit); return {path, exists: true, sha256: hash(bytes), bytes: bytes.length, text: bytes.toString('utf8')}; }
+  try { const bytes = await regular(path, limit); return {path, exists: true, sha256: sha256Hex(bytes), bytes: bytes.length, text: bytes.toString('utf8')}; }
   catch (error) { if (error.code === 'ENOENT' && !required) return {path, exists: false}; throw error; }
 }
 async function absent(path) {
@@ -170,7 +171,7 @@ function environment(input) {
   if (values.npm_config_ignore_scripts !== 'true') refusal('original worker npm control required');
   for (const key of ['npm_config_update_notifier','npm_config_audit','npm_config_fund']) if (values[key] !== 'false') refusal('original worker control required: ' + key);
   if (values.XDG_CONFIG_HOME !== undefined && (!isAbsolute(values.XDG_CONFIG_HOME) || resolve(values.XDG_CONFIG_HOME) !== values.XDG_CONFIG_HOME)) refusal('non-normalized configuration home');
-  return {values, sha256: hash(JSON.stringify(Object.keys(values).sort().map(key => [key, values[key]])))};
+  return {values, sha256: sha256Hex(JSON.stringify(Object.keys(values).sort().map(key => [key, values[key]])))};
 }
 function workspace(text, registry = false, projection = false) {
   inspectHookFreeYaml(text);
@@ -251,7 +252,7 @@ async function snapshot(input) {
     : input.qualificationMode === preparedOnlineMode ? 'pnpm.prepared-online-frozen.v1'
     : input.qualificationMode === onlineMode ? 'pnpm.publisher-online-frozen.v1'
     : offline ? 'pnpm.publisher-offline-frozen.v1' : 'pnpm.publisher-lifecycle-disabled.v1', originalArguments: input.originalInstallArguments.slice(), derivedArguments: derived};
-  transformation.identity = hash(JSON.stringify(transformation));
+  transformation.identity = sha256Hex(JSON.stringify(transformation));
   const selected = await executable(input.pnpm, env);
   if (await executable('node', env) !== await realpath(process.execPath)) refusal('PATH Node differs from receiving runtime');
   const root = dirname(dirname(selected)), entry = join(root, 'bin', 'pnpm.mjs');
@@ -272,7 +273,7 @@ async function snapshot(input) {
   if (builtin.text.split(/\r?\n/u).some(line => line.trim() && !/^\s*#/u.test(line))) refusal('provider builtin settings unsupported');
   files.push(builtin);
   const nodePath = await realpath(process.execPath), nodeBytes = await regular(nodePath, 268435456);
-  files.push({path: nodePath, exists: true, sha256: hash(nodeBytes), bytes: nodeBytes.length});
+  files.push({path: nodePath, exists: true, sha256: sha256Hex(nodeBytes), bytes: nodeBytes.length});
   const manifest = await identity(join(input.cwd, 'package.json'), true), pkg = JSON.parse(manifest.text);
   if (!isRecord(pkg) || (input.sourceProfile === noManagerPin ? own(pkg, 'packageManager')
     : input.sourceProfile === registryConsumer ? own(pkg,'packageManager') && pkg.packageManager !== 'pnpm@11.28.5'
@@ -342,7 +343,7 @@ async function receivePrecall(input, sourceObservationOnly) {
     ...(input.qualificationMode === undefined ? {} : {qualificationMode: input.qualificationMode, cacheRoot: input.cacheRoot}), installArguments: input.installArguments?.slice(), originalInstallArguments: input.originalInstallArguments?.slice()};
   const received = await snapshot(frozen);
   const transformation = Object.freeze({...received.transformation, originalArguments: Object.freeze(received.transformation.originalArguments.slice()), derivedArguments: Object.freeze(received.transformation.derivedArguments.slice())});
-  const capability = Object.freeze({kind: sourceObservationOnly ? 'pnpm.registry-projection-source-custody.v1' : received.kind, identity: hash(JSON.stringify(received)), transformation});
+  const capability = Object.freeze({kind: sourceObservationOnly ? 'pnpm.registry-projection-source-custody.v1' : received.kind, identity: sha256Hex(JSON.stringify(received)), transformation});
   const projection = frozen.registryProjectionPolicy && !sourceObservationOnly ? await registryProjectionAdmission(frozen, received) : null;
   if (sourceObservationOnly) await registryProjectionConfiguration(frozen,received);
   capabilities.set(capability, {input: frozen, received, projection, sourceObservationOnly, offlineReceived: false});
@@ -471,7 +472,7 @@ async function receiveInitialFrozenInstall(capability,result,mode) {
   return Object.freeze({kind: mode === offlineMode ? 'pnpm.publisher-offline-installation.v1' : 'pnpm.publisher-online-installation.v1', admissionIdentity: capability.identity,
     nativeProvider: Object.freeze(boundedClone(current.supplier, 65536)),
     policyVerification: 'fresh-native', verification,
-    persistedVerification: Object.freeze({verifiedAt: emitted.record.verifiedAt, lockfilePath: result.lockfilePath, recordSHA256: hash(emitted.line)}),
+    persistedVerification: Object.freeze({verifiedAt: emitted.record.verifiedAt, lockfilePath: result.lockfilePath, recordSHA256: sha256Hex(emitted.line)}),
     priorVerdict: Object.freeze(priorVerdict), verdict: Object.freeze(verdict)});
   } catch (error) {
     const publicIdentity = value => value ? (({text, ...identity}) => identity)(value) : null;
@@ -505,7 +506,7 @@ async function preparedHistory(snapshot, interval) {
     || row.lockfile.mtimeNs !== String(stat.mtimeNs) || row.lockfile.inode !== String(stat.ino)
     || !ownRecord(row.policy) || (interval && (at < interval.startedAt || at > interval.endedAt)))
     refusal('prepared same-path native history/stat causality is unreceived');
-  return {lineSHA256: hash(selected.line), row: boundedClone(row, 1048576),
+  return {lineSHA256: sha256Hex(selected.line), row: boundedClone(row, 1048576),
     stat: {size: Number(stat.size), mtimeNs: String(stat.mtimeNs), inode: String(stat.ino)}};
 }
 function preparedTerminal(result) {
@@ -540,7 +541,7 @@ export async function receiveNativePreparedInstallAdmission(predecessor, options
   const current = await snapshot(input);
   if (!isDeepStrictEqual(sharedPreparedCustody(current), sharedPreparedCustody(priorNow))) refusal('prepared operation changes original custody');
   const capability = Object.freeze({kind: 'pnpm.prepared-native-installation-precall.v1',
-    identity: hash(JSON.stringify(current)), offline, predecessorIdentity: predecessor.identity,
+    identity: sha256Hex(JSON.stringify(current)), offline, predecessorIdentity: predecessor.identity,
     transformation: Object.freeze({...current.transformation})});
   const projection = previous.projection ? await registryProjectionAdmission(input,current) : null;
   if (projection && !projection.before.exists) refusal('prepared registry store must already exist');
@@ -622,12 +623,12 @@ async function registryProjectionConfiguration(input, received) {
     source:'explicit-workspace-false/closed-native-config-v1',
     resolver:{distributionSHA256:received.supplier.provider.distSHA256,defaultLine:177557,resolverLines:[179010,179022]},
     files:received.files.filter(file => ['package.json','pnpm-workspace.yaml','.npmrc'].includes(file.path.slice(file.path.lastIndexOf('/')+1)))};
-  return {configuration,configSHA256:hash(JSON.stringify(configuration)),lockSHA256:lock.sha256};
+  return {configuration,configSHA256:sha256Hex(JSON.stringify(configuration)),lockSHA256:lock.sha256};
 }
 async function registryProjectionAdmission(input, received) {
   return {...await registryProjectionConfiguration(input,received),before:await effectiveRegistryStore(input),
     allocation:received.cache.directories,
-    storeAllocationSHA256:hash(JSON.stringify(received.cache.directories))};
+    storeAllocationSHA256:sha256Hex(JSON.stringify(received.cache.directories))};
 }
 async function receiveRegistryStoreTransition(state) {
   const after = await effectiveRegistryStore(state.input), before = state.projection.before;
@@ -652,7 +653,7 @@ export async function receiveNativeRegistryProjectionBinding(capability) {
     platform:'linux',normalization:'pnpm11-posix-registry-files-v1',ignorePolicy:'none',lifecycleScripts:false,hooks:false,
     cafsLifetime:'fresh-cli-worker-pool/private-allocation',allocatedStoreRoot:state.input.cacheRoot,
     allocatedStoreBase:join(state.input.cacheRoot,'pnpm-store'),effectiveStoreRoot:p.after.path,
-    storeBeforeSHA256:hash(JSON.stringify(p.before)),storeAfterSHA256:hash(JSON.stringify(p.after)),
+    storeBeforeSHA256:sha256Hex(JSON.stringify(p.before)),storeAfterSHA256:sha256Hex(JSON.stringify(p.after)),
     storeAllocationSHA256:p.storeAllocationSHA256,storeAllocation:boundedClone(p.allocation,65536),
     storeBefore:{...p.before},storeAfter:{...p.after},configSHA256:p.configSHA256,lockSHA256:p.lockSHA256,
     sideEffectsCacheRead:false,remoteSideEffects:false,patches:false,alternateManifestTransforms:false,
