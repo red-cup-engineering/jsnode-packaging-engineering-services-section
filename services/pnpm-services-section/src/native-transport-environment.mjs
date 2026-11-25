@@ -1,4 +1,4 @@
-import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { sha256Hex, semanticHex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze } from "@red-cup-engineering/signcell/values";
 // Original metadata transport grammar, shared without importing its effectful composition.
 
@@ -37,5 +37,5 @@ export function receiveNativeTransportEnvironment(input, policy) {
     result[key] = value;
   }
   if (Object.keys(policy.stable).some(key => !Object.hasOwn(result,key)) || Object.keys(policy.relays).some(key => !Object.hasOwn(result,key))) throw new TypeError('environment input absent');
-  return { values: deepFreeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: sha256Hex(JSON.stringify(result)) } };
+  return { values: deepFreeze(result), identity: { keys: Object.keys(result).sort(), stable, sha256: semanticHex(result) } };
 }

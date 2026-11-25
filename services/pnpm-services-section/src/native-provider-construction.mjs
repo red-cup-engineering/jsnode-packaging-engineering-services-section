@@ -1,4 +1,4 @@
-import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { sha256Hex, semanticHex } from "@red-cup-engineering/semiotic-content-address-system";
 // Construct a distinct native Code supplier from the exact original package.
 import {constants} from 'node:fs';
 import {lstat,readFile,readdir,realpath,mkdir,writeFile,chmod} from 'node:fs/promises';
@@ -45,7 +45,7 @@ async function payload(directory,{constructed=false}={}) {
     }
   };
   await walk(directory);
-  const inventorySHA256=sha256Hex(JSON.stringify(members));
+  const inventorySHA256=semanticHex(members);
   if(members.length!==559||inventorySHA256!==(constructed?PATCHED_INVENTORY_SHA256:UPSTREAM_INVENTORY_SHA256))
     throw new TypeError('complete native provider payload differs from its selected source');
   return {members,bytes,inventorySHA256,distribution};

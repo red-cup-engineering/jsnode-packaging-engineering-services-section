@@ -1,4 +1,4 @@
-import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { sha256Hex, semanticHex } from "@red-cup-engineering/semiotic-content-address-system";
 import { deepFreeze } from "@red-cup-engineering/signcell/values";
 import { boundedClone, parseBatchMetadataOutput } from './native-metadata-data.mjs';
 import { mkdir, open, readFile, realpath, lstat, readdir } from 'node:fs/promises';
@@ -135,7 +135,7 @@ function createMetadataPreparationService(batch) {
         else {const mirror=await observe(s.query);if(!unchanged(mirror,s.mirror))throw new TypeError('received metadata changed');}
         const request=deepFreeze({type:'JavascriptNodeCommandExecutionRequest',version:1,command:s.program,
           arguments:[s.entry,...s.query.arguments,...(input.phase==='reader'?['--config.offline=true']:[])],directory:s.query.directory,environment:environment.values,input:null});
-        await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:sha256Hex(JSON.stringify(request)),environment:environment.identity});
+        await receipt(s,input.phase+'-launch',{kind:kind('launch-intent'),phase:input.phase,projectionSHA256:s.query.projectionSHA256,requestSHA256:semanticHex(request),environment:environment.identity});
         s.request=request;s.phase=input.phase+'-in-flight';return deepFreeze({request,policy:s.limits});
       } catch(error){s.phase='failed';throw error;} finally{s.busy=false;}
     },
