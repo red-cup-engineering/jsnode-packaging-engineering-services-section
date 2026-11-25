@@ -4,8 +4,8 @@
  * Native npm tests cannot substitute for a real dependency manager install.
  * In CI, install pnpm 12.9.1 first and then run npm run verify:pnpm.
  */
+import { sha256HexOfChunks } from "@red-cup-engineering/semiotic-content-address-system";
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -83,9 +83,9 @@ try {
     const receipt = JSON.parse(mustPass(run(process.execPath, [packedCLI, '--specification', specPath, '--output', output], temp), `fabricate ${decision}`));
 
     // Independently read bytes from the filesystem, not from its projection.
-    const digest = createHash('sha256');
-    for (const file of receipt.files) digest.update(file).update('\0').update(await readFile(join(output, file))).update('\0');
-    assert.equal(digest.digest('hex'), receipt.digest);
+    const digestParts = [];
+    for (const file of receipt.files) digestParts.push(file, '\0', await readFile(join(output, file)), '\0');
+    assert.equal(await sha256HexOfChunks(digestParts), receipt.digest);
 
     const marker = join(temp, `${decision}.marker`);
     const env = { PNPM_ASSAY_MARKER: marker };

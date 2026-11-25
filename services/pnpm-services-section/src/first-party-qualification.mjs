@@ -1,4 +1,4 @@
-import { sha256Hex } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/integrity";
+import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { isNonEmptyString } from "@red-cup-engineering/signcell/values";
 /** Deterministic policy over records resolved by the original receiving owner.
  * This pure function does not authenticate caller-supplied JSON. Only the

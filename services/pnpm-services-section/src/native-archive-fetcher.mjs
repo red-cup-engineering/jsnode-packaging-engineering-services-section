@@ -1,9 +1,9 @@
-import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { subresourceIntegrity } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/hash";
+import { concatBytes, sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 // Runs only as the original native custom-fetcher extension. No transport,
 // extraction, store-key writer, policy override or installer lives here.
 import { constants, lstatSync, readFileSync, realpathSync, openSync, fstatSync, writeSync, closeSync } from 'node:fs';
 import { open, lstat } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import { isMainThread } from 'node:worker_threads';
 
 
@@ -37,10 +37,10 @@ export async function createReceivedArchiveFetchers(configPath, expectedSHA256) 
     try {
       const before = await handle.stat();
       if (!before.isFile() || before.size !== entry.bytes || before.size > 67108864) refuse(entry, 'snapshot-changed');
-      const sha256 = createHash('sha256'), sha512 = createHash('sha512'), buffer = Buffer.alloc(65536); let count = 0;
-      for (;;) { const { bytesRead } = await handle.read(buffer, 0, buffer.length, null); if (!bytesRead) break; count += bytesRead; if (count > entry.bytes) refuse(entry, 'snapshot-changed'); sha256.update(buffer.subarray(0, bytesRead)); sha512.update(buffer.subarray(0, bytesRead)); }
+      const parts = [], buffer = Buffer.alloc(65536); let count = 0;
+      for (;;) { const { bytesRead } = await handle.read(buffer, 0, buffer.length, null); if (!bytesRead) break; count += bytesRead; if (count > entry.bytes) refuse(entry, 'snapshot-changed'); parts.push(Buffer.from(buffer.subarray(0, bytesRead))); }
       const after = await handle.stat(), pathStat = await lstat(entry.snapshotPath);
-      if (count !== entry.bytes || sha256.digest('hex') !== entry.sha256 || 'sha512-' + sha512.digest('base64') !== entry.integrity
+      if (count !== entry.bytes || sha256Hex(concatBytes(...parts)) !== entry.sha256 || subresourceIntegrity('sha512', ...parts) !== entry.integrity
         || before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size || before.mtimeMs !== after.mtimeMs || before.ctimeMs !== after.ctimeMs
         || pathStat.isSymbolicLink() || pathStat.dev !== after.dev || pathStat.ino !== after.ino) refuse(entry, 'snapshot-changed');
     } finally { await handle.close(); }

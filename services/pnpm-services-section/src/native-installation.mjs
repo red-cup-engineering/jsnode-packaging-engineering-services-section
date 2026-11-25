@@ -1,7 +1,7 @@
-import { sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
+import { subresourceIntegrity } from "@red-cup-engineering/cryptographic-computer-data-engineering-services-section/hash";
+import { concatBytes, sha256Hex } from "@red-cup-engineering/semiotic-content-address-system";
 import { constants } from 'node:fs';
 import { lstat, realpath, open, mkdtemp, writeFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import { isAbsolute, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
@@ -84,14 +84,14 @@ async function stableDigest(path, expected, destination) {
   try {
     const before = await input.stat({bigint: true}); if (statIdentity(before) !== statIdentity(beforePath)) throw new TypeError('archive changed before opening');
     if (destination) output = await open(destination, 'wx', 0o600);
-    const sha256 = createHash('sha256'), sha512 = createHash('sha512'), buffer = Buffer.alloc(65536); let bytes = 0;
+    const parts = [], buffer = Buffer.alloc(65536); let bytes = 0;
     for (;;) {
       const {bytesRead} = await input.read(buffer, 0, buffer.length, null); if (!bytesRead) break; bytes += bytesRead;
       if (bytes > Number(before.size)) throw new TypeError('archive grew while reading');
-      const chunk = buffer.subarray(0, bytesRead); sha256.update(chunk); sha512.update(chunk);
+      const chunk = buffer.subarray(0, bytesRead); parts.push(Buffer.from(chunk));
       if (output) { let offset = 0; while (offset < chunk.length) { const written = await output.write(chunk, offset, chunk.length - offset, null); if (!written.bytesWritten) throw new Error('archive snapshot write stalled'); offset += written.bytesWritten; } }
     }
-    const result = {bytes, sha256: sha256.digest('hex'), integrity: 'sha512-' + sha512.digest('base64')};
+    const result = {bytes, sha256: sha256Hex(concatBytes(...parts)), integrity: subresourceIntegrity('sha512', ...parts)};
     if (statIdentity(before) !== statIdentity(await input.stat({bigint: true})) || statIdentity(before) !== statIdentity(await lstat(path, {bigint: true}))
       || bytes !== Number(before.size) || (expected && !Object.entries(expected).every(([key, value]) => result[key] === value))) throw new TypeError('archive identity changed');
     return result;

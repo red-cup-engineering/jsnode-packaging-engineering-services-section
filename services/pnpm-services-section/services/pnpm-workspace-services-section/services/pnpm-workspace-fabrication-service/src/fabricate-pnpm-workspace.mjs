@@ -1,5 +1,4 @@
-import { compareText } from "@red-cup-engineering/semiotic-content-address-system";
-import { createHash } from "node:crypto";
+import { compareText, concatBytes, sha256Hex, utf8Bytes } from "@red-cup-engineering/semiotic-content-address-system";
 import { lstat, mkdir, readdir, writeFile } from "node:fs/promises";
 import { dirname, parse, relative, resolve, sep } from "node:path";
 
@@ -127,11 +126,11 @@ export function projectPnpmWorkspace(specification) {
     }
     files.set(`${item.path}/package.json`, json(manifest));
   }
-  const digest = createHash("sha256");
-  for (const [path, body] of [...files].sort(([left], [right]) => compareText(left, right))) digest.update(path).update("\0").update(body).update("\0");
+  const digestParts = [];
+  for (const [path, body] of [...files].sort(([left], [right]) => compareText(left, right))) digestParts.push(path, "\0", body, "\0");
   return Object.freeze({
     type: "PnpmWorkspaceProjection", version: 1,
-    files: readonlyFiles(files), digest: digest.digest("hex"),
+    files: readonlyFiles(files), digest: sha256Hex(concatBytes(...digestParts.map(part => typeof part === "string" ? utf8Bytes(part) : part))),
     packages: Object.freeze(packages.map(({ path, manifest }) =>
       Object.freeze({ path, name: manifest.name, version: manifest.version }))),
   });
