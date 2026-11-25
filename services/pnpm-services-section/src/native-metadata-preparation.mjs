@@ -41,7 +41,7 @@ function supportedIntegrity(value) {
     return bytes.length === lengths[match[1]] && bytes.toString('base64') === match[2];
   });
 }
-function digest(value) { if (typeof value !== 'string' || !/^[a-f0-9]{64}$/u.test(value)) throw new TypeError('canonical SHA256 required'); return value; }
+function requireSha256Hex(value) { if (typeof value !== 'string' || !/^[a-f0-9]{64}$/u.test(value)) throw new TypeError('canonical SHA256 required'); return value; }
 function absolute(path) { if (typeof path !== 'string' || path.length > 4096 || !isAbsolute(path) || resolve(path) !== path || /[\r\n\0]/u.test(path)) throw new TypeError('normalized absolute private path required'); return path; }
 function registryURL(registry) {
   if (typeof registry !== 'string' || registry.length > 2048) throw new TypeError('bounded registry required');
@@ -76,9 +76,9 @@ export function projectNativeMetadataQuery({ name, selections, policy, canonical
   if (!selected.length) throw new TypeError('query name absent from original inventory');
   policy = boundedPolicy(policy);
   canonical = boundedClone(canonical, 4096);
-  const identity = { sourceHead: canonical?.sourceHead, manifestSHA256: digest(canonical?.manifestSHA256),
-    lockSHA256: digest(canonical?.lockSHA256), workspaceSHA256: digest(canonical?.workspaceSHA256),
-    registryConfigurationSHA256: digest(canonical?.registryConfigurationSHA256), selectionSHA256: digest(canonical?.selectionSHA256) };
+  const identity = { sourceHead: canonical?.sourceHead, manifestSHA256: requireSha256Hex(canonical?.manifestSHA256),
+    lockSHA256: requireSha256Hex(canonical?.lockSHA256), workspaceSHA256: requireSha256Hex(canonical?.workspaceSHA256),
+    registryConfigurationSHA256: requireSha256Hex(canonical?.registryConfigurationSHA256), selectionSHA256: requireSha256Hex(canonical?.selectionSHA256) };
   if (!/^[a-f0-9]{40}$/u.test(identity.sourceHead ?? '')) throw new TypeError('canonical source revision required');
   const representative = selected[0].version;
   const files = {
